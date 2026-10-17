@@ -4,6 +4,7 @@ from __future__ import annotations
 PLATFORM_ALIASES = {
     "b站": "B站", "b 站": "B站", "bilibili": "B站", "哔哩哔哩": "B站",
     "youtube": "YouTube", "twitch": "Twitch", "patreon": "Patreon", "upwork": "Upwork",
+    "fiverr": "Fiverr", "freelancer.com": "Freelancer.com", "freelancer": "Freelancer.com", "contra": "Contra",
 }
 
 
@@ -34,6 +35,11 @@ def grade(question: dict, submitted: dict | None) -> tuple[bool, str | None]:
 
     if question["unit"] == "platform":
         if _platform(got) == expected:
+            return True, None
+        return False, f"WrongAnswer: expected {expected}, got {got!r}"
+
+    if question["unit"] == "date":
+        if str(got).strip()[:10] == expected:
             return True, None
         return False, f"WrongAnswer: expected {expected}, got {got!r}"
 

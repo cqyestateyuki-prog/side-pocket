@@ -16,6 +16,9 @@ EXPORTS = {
     "twitch": ("twitch_payouts.csv", "Username", "utf-8"),
     "patreon": ("patreon_earnings.csv", "Creator", "utf-8"),
     "upwork": ("upwork_transactions.csv", "Freelancer", "utf-8"),
+    "fiverr": ("fiverr_earnings.csv", "Seller", "utf-8"),
+    "freelancer": ("freelancer_transactions.csv", "username", "utf-8"),
+    "contra": ("contra_payments.csv", "Profile", "utf-8"),
 }
 
 
@@ -59,5 +62,13 @@ def export_csv(platform: str, account: str) -> str:
 
 @lru_cache
 def fx_rates() -> dict[str, float]:
+    """CNY per 1 USD, by date."""
     with open(DATA / "fx_rates_cny_per_usd.csv", encoding="utf-8", newline="") as f:
         return {r["date"]: float(r["cny_per_usd"]) for r in csv.DictReader(f)}
+
+
+@lru_cache
+def fx_usd_per_unit() -> dict[str, dict[str, float]]:
+    """USD per 1 EUR / 1 GBP, by date (the opposite direction to the CNY table)."""
+    with open(DATA / "fx_rates_usd_per_unit.csv", encoding="utf-8", newline="") as f:
+        return {r["date"]: {"EUR": float(r["EUR"]), "GBP": float(r["GBP"])} for r in csv.DictReader(f)}

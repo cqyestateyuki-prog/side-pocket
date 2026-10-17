@@ -17,5 +17,26 @@
   "upwork_service_fee": "每个合同自己的费率，见 upwork 文件的 Service Fee Rate 列；每笔服务费 = 金额 × 费率，四舍五入到分",
   "upwork_withdrawal_fee_usd": 2.0,
   "rounding": "所有金额四舍五入（ROUND_HALF_UP）到 0.01；换算过程保留全部精度，最后才四舍五入",
-  "set_aside_rule": "应预留税金 = 当月总到手（美元）× 创作者自己设定的预留比例"
+  "set_aside_rule": "应预留税金 = 当月总到手（美元）× 创作者自己设定的预留比例",
+  "fiverr_service_fee": 0.2,
+  "fiverr_service_fee_note": "真实规则：订单、小费（Tip）、加购（Extra）一律抽 20%；每笔费用先四舍五入到分再加总",
+  "fiverr_withdrawal_fee_usd": 3.0,
+  "fiverr_withdrawal_fee_note": "模拟：每次提现收 $3",
+  "freelancer_fee_rate": 0.1,
+  "freelancer_min_fee": 5.0,
+  "freelancer_fee_note": "真实规则：固定价项目抽项目金额的 10% 或 $5，取较高者；非美元项目先按当天汇率换成美元再算；每个项目的费用按美元四舍五入到分",
+  "freelancer_withdrawal_fee_usd": 1.0,
+  "freelancer_withdrawal_fee_note": "模拟：每次提现收 $1",
+  "contra_fee": 0.0,
+  "contra_note": "真实规则：自由职业者 0% 抽成；模拟：提现不收手续费",
+  "fx2_unit": "1 欧元 / 1 英镑 = X 美元（USD per unit），方向和人民币那张表相反",
+  "fx2_rule": "每笔欧元/英镑记录按它自己日期当天的汇率换算：USD = 金额 × 汇率；先换算再加总，最后才四舍五入",
+  "us_estimated_tax_due_dates": [
+    "2026-04-15",
+    "2026-06-15",
+    "2026-09-15",
+    "2027-01-15"
+  ],
+  "us_estimated_tax_note": "IRS 2026 纳税年度季度预估税截止日（真实）",
+  "quarter_set_aside_rule": "季度应预留 = 季度内各月总到手（美元，不先四舍五入）之和 × 预留比例"
 }

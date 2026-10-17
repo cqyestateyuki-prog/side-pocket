@@ -3,7 +3,7 @@
 
 全部为虚构数据，仅用于 MONEY TALKS 2 黑客松 demo。
 运行：python3 tools/generate_testdata.py
-输出：data/ 下的 5 个平台 CSV、汇率表、创作者档案、假设值、标准答案和问题集。
+输出：data/ 下的 8 个平台 CSV、两张汇率表、创作者档案、假设值、标准答案和问题集。
 同一个随机种子每次生成的数据完全一样。
 """
 import csv
@@ -22,9 +22,15 @@ DATA.mkdir(parents=True, exist_ok=True)
 
 MONTHS = ["2026-07", "2026-08", "2026-09"]
 MISSING_FX_DATE = "2026-09-07"  # 故意缺失，只有 C09 的一条记录会用到，用来触发告警
-PLATFORMS = ["bilibili", "youtube", "twitch", "patreon", "upwork"]
+MISSING_FX2_DATE = "2026-08-21"  # 欧元/英镑汇率表故意缺这一天，只有 C11 的一个欧元项目落在这天
+ORIG_PLATFORMS = ["bilibili", "youtube", "twitch", "patreon", "upwork"]
+NEW_PLATFORMS = ["fiverr", "freelancer", "contra"]
+PLATFORMS = ORIG_PLATFORMS + NEW_PLATFORMS
 PLATFORM_LABEL = {"bilibili": "B站", "youtube": "YouTube", "twitch": "Twitch",
-                  "patreon": "Patreon", "upwork": "Upwork"}
+                  "patreon": "Patreon", "upwork": "Upwork", "fiverr": "Fiverr",
+                  "freelancer": "Freelancer.com", "contra": "Contra"}
+# IRS 2026 纳税年度的季度预估税截止日（真实日期）
+US_ESTIMATED_TAX_DUE = ["2026-04-15", "2026-06-15", "2026-09-15", "2027-01-15"]
 
 ASSUMPTIONS = {
     "note": "全部为模拟假设值，仅用于黑客松 demo，真实费率以平台官方规则为准",
@@ -42,6 +48,22 @@ ASSUMPTIONS = {
     "upwork_withdrawal_fee_usd": 2.00,
     "rounding": "所有金额四舍五入（ROUND_HALF_UP）到 0.01；换算过程保留全部精度，最后才四舍五入",
     "set_aside_rule": "应预留税金 = 当月总到手（美元）× 创作者自己设定的预留比例",
+    "fiverr_service_fee": 0.20,
+    "fiverr_service_fee_note": "真实规则：订单、小费（Tip）、加购（Extra）一律抽 20%；每笔费用先四舍五入到分再加总",
+    "fiverr_withdrawal_fee_usd": 3.00,
+    "fiverr_withdrawal_fee_note": "模拟：每次提现收 $3",
+    "freelancer_fee_rate": 0.10,
+    "freelancer_min_fee": 5.00,
+    "freelancer_fee_note": "真实规则：固定价项目抽项目金额的 10% 或 $5，取较高者；非美元项目先按当天汇率换成美元再算；每个项目的费用按美元四舍五入到分",
+    "freelancer_withdrawal_fee_usd": 1.00,
+    "freelancer_withdrawal_fee_note": "模拟：每次提现收 $1",
+    "contra_fee": 0.0,
+    "contra_note": "真实规则：自由职业者 0% 抽成；模拟：提现不收手续费",
+    "fx2_unit": "1 欧元 / 1 英镑 = X 美元（USD per unit），方向和人民币那张表相反",
+    "fx2_rule": "每笔欧元/英镑记录按它自己日期当天的汇率换算：USD = 金额 × 汇率；先换算再加总，最后才四舍五入",
+    "us_estimated_tax_due_dates": US_ESTIMATED_TAX_DUE,
+    "us_estimated_tax_note": "IRS 2026 纳税年度季度预估税截止日（真实）",
+    "quarter_set_aside_rule": "季度应预留 = 季度内各月总到手（美元，不先四舍五入）之和 × 预留比例",
 }
 
 # ---------------------------------------------------------------- helpers
@@ -89,10 +111,12 @@ while d <= dt.date(2026, 9, 30):
 # ---------------------------------------------------------------- creators
 
 CREATORS = [
-    dict(creator_id="C01", name="月之灵", profile="VTuber，同时在 Upwork 接设计稿（demo 主角）",
+    dict(creator_id="C01", name="月之灵",
+         profile="纽约的设计师，副业在全球平台接设计单（Upwork、Fiverr、Contra）并做内容（YouTube、Twitch、Patreon、B 站）（demo 主角）",
          tax_country="US", set_aside_rate=0.25, active_months=MONTHS,
          accounts=dict(bilibili="bili_330121", youtube="UC-yzl-moonspirit", twitch="yuezhiling_tv",
-                       patreon="yuezhiling", upwork="moonspirit_design")),
+                       patreon="yuezhiling", upwork="moonspirit_design", fiverr="moonspirit_studio",
+                       contra="moonspirit")),
     dict(creator_id="C02", name="小鹿", profile="只在 B 站直播的中文主播",
          tax_country="CN", set_aside_rate=0.0, active_months=MONTHS,
          accounts=dict(bilibili="bili_552047")),
@@ -117,6 +141,14 @@ CREATORS = [
     dict(creator_id="C09", name="Kiki", profile="告警测试用户：9 月有一条 B 站记录落在缺汇率的日期",
          tax_country="US", set_aside_rate=0.25, active_months=["2026-09"],
          accounts=dict(bilibili="bili_123987")),
+    dict(creator_id="C10", name="Diego Alvarez",
+         profile="插画师，在 Fiverr 接单（小费和加购多），也在 Freelancer.com 接小项目（会触发 $5 最低服务费）",
+         tax_country="US", set_aside_rate=0.22, active_months=MONTHS,
+         accounts=dict(fiverr="diegodraws", freelancer="diego_alv")),
+    dict(creator_id="C11", name="Lena Koch",
+         profile="柏林的 UI 设计师，Freelancer.com 接欧元/英镑项目，也用 Contra；8 月有一个欧元项目落在缺汇率的日期（告警测试）",
+         tax_country="DE", set_aside_rate=0.30, active_months=MONTHS,
+         accounts=dict(freelancer="lenakoch_ui", contra="lenakoch")),
 ]
 BY_ID = {c["creator_id"]: c for c in CREATORS}
 
@@ -287,6 +319,117 @@ for c in CREATORS:
         recs.sort(key=lambda r: r["date"])
         uw_rows.extend(recs)
 
+# ---------------------------------------------------------------- 新平台：Fiverr、Freelancer.com、Contra
+# 用单独的一条随机数流，原有 5 个平台的数据保持不变
+
+rng2 = random.Random(SEED + 101)
+
+
+def rand_date2(month):
+    _, last = month_bounds(month)
+    while True:
+        d = dt.date(last.year, last.month, rng2.randint(1, last.day - 1))
+        if d.isoformat() not in (MISSING_FX_DATE, MISSING_FX2_DATE):
+            return d
+
+
+# 欧元/英镑汇率表：1 单位外币 = X 美元，故意缺 MISSING_FX2_DATE 这一天
+fx2 = {}
+eur, gbp = 1.115, 1.305
+d = dt.date(2026, 7, 1)
+while d <= dt.date(2026, 9, 30):
+    eur = min(max(eur + rng2.uniform(-0.004, 0.004), 1.08), 1.15)
+    gbp = min(max(gbp + rng2.uniform(-0.005, 0.005), 1.26), 1.35)
+    if d.isoformat() != MISSING_FX2_DATE:
+        fx2[d.isoformat()] = {"EUR": round(eur, 4), "GBP": round(gbp, 4)}
+    d += dt.timedelta(days=1)
+
+FIVERR = {"C01": ((60, 260), (2, 4)), "C10": ((40, 180), (4, 6))}  # 订单金额范围、每月订单数
+FIVERR_BUYERS = ["kaito_k", "jessmakes", "brightloop", "olive.design", "marco_r", "tinyforge", "nordbyte"]
+fv_rows = []
+for c in CREATORS:
+    cid = c["creator_id"]
+    if "fiverr" not in c["accounts"]:
+        continue
+    acct = c["accounts"]["fiverr"]
+    (lo, hi), (nlo, nhi) = FIVERR[cid]
+    for month in c["active_months"]:
+        recs = []
+        for _ in range(rng2.randint(nlo, nhi)):
+            base = dict(acct=acct, date=rand_date2(month), hour=rng2.randint(0, 23), minute=rng2.randint(0, 59),
+                        order=f"FO{rng2.randint(100000, 999999)}", buyer=rng2.choice(FIVERR_BUYERS))
+            recs.append(dict(base, item="Order", amount=r2(rng2.uniform(lo, hi))))
+            if rng2.random() < 0.4:
+                recs.append(dict(base, item="Extra", amount=r2(rng2.uniform(10, 60))))
+            if rng2.random() < 0.5:
+                recs.append(dict(base, item="Tip", amount=r2(rng2.uniform(5, 40))))
+        if not any(r["item"] == "Tip" for r in recs):  # 每月至少一笔小费，保证"小费也抽 20%"能测到
+            first = next(r for r in recs if r["item"] == "Order")
+            recs.append(dict(first, item="Tip", amount=r2(rng2.uniform(5, 40))))
+        _, last = month_bounds(month)
+        wd = min(max(r["date"] for r in recs) + dt.timedelta(days=3), last)
+        recs.append(dict(acct=acct, date=wd, hour=9, minute=0, order="", buyer="", item="Withdrawal Fee",
+                         amount=ASSUMPTIONS["fiverr_withdrawal_fee_usd"]))
+        recs.sort(key=lambda r: (r["date"], r["hour"], r["minute"], r["item"]))
+        fv_rows.extend(recs)
+
+FL_TITLES = ["Logo refresh", "Landing page mockup", "Icon set", "Pitch deck polish", "App onboarding screens",
+             "Poster design", "Banner ads", "Brand guide"]
+FL_CURRENCIES = {"C10": ["USD"], "C11": ["EUR", "EUR", "GBP"]}
+fl_rows = []
+fl_small_project = {}  # cid -> 触发 $5 最低费的项目号（出题用）
+
+
+def fl_project(acct, d, cur, amount):
+    return dict(acct=acct, date=d, project=f"FL-{rng2.randint(10000, 99999)}", title=rng2.choice(FL_TITLES),
+                currency=cur, amount=r2(amount), type="Project Payment")
+
+
+for c in CREATORS:
+    cid = c["creator_id"]
+    if "freelancer" not in c["accounts"]:
+        continue
+    acct = c["accounts"]["freelancer"]
+    for month in c["active_months"]:
+        recs = [fl_project(acct, rand_date2(month), rng2.choice(FL_CURRENCIES[cid]), rng2.uniform(120, 900))
+                for _ in range(rng2.randint(2, 3))]
+        if cid == "C10" and month == "2026-07":  # 小项目：10% 不到 $5，按 $5 收
+            recs.append(fl_project(acct, rand_date2(month), "USD", rng2.uniform(20, 45)))
+            fl_small_project[cid] = recs[-1]["project"]
+        if cid == "C11" and month == "2026-08":  # 告警触发点：欧元项目落在缺汇率的那天
+            recs.append(fl_project(acct, dt.date.fromisoformat(MISSING_FX2_DATE), "EUR", rng2.uniform(300, 700)))
+        if cid == "C11" and month == "2026-09":  # 欧元小项目：换成美元后 10% 不到 $5，按 $5 收
+            recs.append(fl_project(acct, rand_date2(month), "EUR", rng2.uniform(30, 45)))
+        _, last = month_bounds(month)
+        wd = min(max(r["date"] for r in recs) + dt.timedelta(days=2), last)
+        if wd.isoformat() in (MISSING_FX_DATE, MISSING_FX2_DATE):
+            wd += dt.timedelta(days=1)
+        recs.append(dict(acct=acct, date=wd, project="", title="Withdrawal to bank (express)", currency="USD",
+                         amount=ASSUMPTIONS["freelancer_withdrawal_fee_usd"], type="Withdrawal Fee"))
+        recs.sort(key=lambda r: (r["date"], r["type"]))
+        fl_rows.extend(recs)
+
+CONTRA = {"C01": (300, 1400), "C11": (500, 2000)}
+CONTRA_CLIENTS = ["Fable & Fern", "Northstar Labs", "Quiet Oak", "Helio Health", "Paperplane"]
+ct_rows = []
+for c in CREATORS:
+    cid = c["creator_id"]
+    if "contra" not in c["accounts"]:
+        continue
+    acct = c["accounts"]["contra"]
+    lo, hi = CONTRA[cid]
+    for month in c["active_months"]:
+        recs = [dict(acct=acct, date=rand_date2(month), client=rng2.choice(CONTRA_CLIENTS),
+                     project=rng2.choice(FL_TITLES), amount=r2(rng2.uniform(lo, hi)))
+                for _ in range(rng2.randint(1, 2))]
+        recs.sort(key=lambda r: r["date"])
+        ct_rows.extend(recs)
+
+
+def fl_fee(amount):
+    return r2(max(amount * ASSUMPTIONS["freelancer_fee_rate"], ASSUMPTIONS["freelancer_min_fee"]))
+
+
 # ---------------------------------------------------------------- write files
 
 
@@ -331,6 +474,24 @@ write_csv("upwork_transactions.csv",
 
 write_csv("fx_rates_cny_per_usd.csv", ["date", "cny_per_usd"],
           [[k, f"{v:.4f}"] for k, v in sorted(fx.items())])
+
+write_csv("fiverr_earnings.csv",
+          ["Seller", "Completed At (UTC)", "Order ID", "Item", "Buyer", "Amount (USD)"],
+          [[r["acct"], f"{r['date'].isoformat()}T{r['hour']:02d}:{r['minute']:02d}:00Z", r["order"], r["item"],
+            r["buyer"], money(r["amount"])] for r in fv_rows])
+
+write_csv("freelancer_transactions.csv",
+          ["username", "date", "project_id", "description", "currency", "project_amount", "entry_type"],
+          [[r["acct"], r["date"].strftime("%Y%m%d"), r["project"], r["title"], r["currency"], money(r["amount"]),
+            r["type"]] for r in fl_rows])
+
+write_csv("contra_payments.csv",
+          ["Profile", "Paid On", "Client", "Project", "Amount"],
+          [[r["acct"], f"{r['date']:%B} {r['date'].day}, {r['date'].year}", r["client"], r["project"],
+            f"${r['amount']:,.2f}"] for r in ct_rows])
+
+write_csv("fx_rates_usd_per_unit.csv", ["date", "EUR", "GBP"],
+          [[k, f"{v['EUR']:.4f}", f"{v['GBP']:.4f}"] for k, v in sorted(fx2.items())])
 
 with open(DATA / "creators.json", "w", encoding="utf-8") as f:
     json.dump(CREATORS, f, ensure_ascii=False, indent=2)
@@ -398,6 +559,41 @@ def compute(cid, month):
             wfee = sum(r["amount"] for r in rows if r["type"] == "Withdrawal Fee")
             out["upwork"] = dict(gross=gross, platform_fee=fee, payment_fee=wfee, withheld=0.0,
                                  net=gross - fee - wfee)
+    if "fiverr" in acc:
+        rows = [r for r in fv_rows if r["acct"] == acc["fiverr"] and ym(r["date"]) == month]
+        if rows:
+            rate_ = ASSUMPTIONS["fiverr_service_fee"]
+            pays = [r for r in rows if r["item"] != "Withdrawal Fee"]
+            gross = sum(r["amount"] for r in pays)
+            fee = sum(r2(r["amount"] * rate_) for r in pays)
+            wfee = sum(r["amount"] for r in rows if r["item"] == "Withdrawal Fee")
+            out["fiverr"] = dict(gross=gross, platform_fee=fee, payment_fee=wfee, withheld=0.0,
+                                 net=gross - fee - wfee,
+                                 tip_fee=sum(r2(r["amount"] * rate_) for r in pays if r["item"] == "Tip"))
+    if "freelancer" in acc:
+        rows = [r for r in fl_rows if r["acct"] == acc["freelancer"] and ym(r["date"]) == month]
+        if rows:
+            p = dict(gross=0.0, platform_fee=0.0, payment_fee=0.0, withheld=0.0, net=0.0)
+            for r in rows:
+                if r["type"] == "Withdrawal Fee":
+                    p["payment_fee"] += r["amount"]
+                    p["net"] -= r["amount"]
+                    continue
+                rate_ = 1.0 if r["currency"] == "USD" else fx2.get(r["date"].isoformat(), {}).get(r["currency"])
+                if rate_ is None:
+                    error = f"缺少 {r['date'].isoformat()} 的 {r['currency']} 汇率"
+                    break
+                gross_usd = r["amount"] * rate_
+                fee = fl_fee(gross_usd)
+                p["gross"] += gross_usd
+                p["platform_fee"] += fee
+                p["net"] += gross_usd - fee
+            out["freelancer"] = p
+    if "contra" in acc:
+        rows = [r for r in ct_rows if r["acct"] == acc["contra"] and ym(r["date"]) == month]
+        if rows:
+            gross = sum(r["amount"] for r in rows)
+            out["contra"] = dict(gross=gross, platform_fee=0.0, payment_fee=0.0, withheld=0.0, net=gross)
     total = {k: sum(p[k] for p in out.values()) for k in ["gross", "platform_fee", "payment_fee", "withheld", "net"]}
     return dict(platforms=out, total=total, error=error)
 
@@ -482,7 +678,7 @@ for m in MONTHS:
     add("C01", m, "total_net_usd", f"月之灵 2026 年 {MON_ZH[m]}所有平台加起来一共到手多少美元？",
         net("C01", m), "USD", ["currency", "missing_platform", "withholding", "upwork_rate"])
 S = "2026-09"
-for p in PLATFORMS:
+for p in ORIG_PLATFORMS:
     add("C01", S, "platform_net_usd", f"月之灵 2026 年 9 月在 {PLATFORM_LABEL[p]} 到手多少美元？",
         pnet("C01", S, p), "USD", {"bilibili": ["currency", "withholding"], "upwork": ["upwork_rate"]}.get(p, ["gross_vs_net"]), platform=p)
 add("C01", S, "platform_net_cny", "月之灵 2026 年 9 月 B 站到手多少人民币？",
@@ -594,22 +790,97 @@ add("C08", "2026-07~2026-09", "upwork_contract_fee_usd",
 add("C08", S, "mom_change_usd", "How much did Sam Ito's total take-home change from August to September 2026 (USD)?",
     mom("C08", S, A), "USD", ["empty_month"], lang="en", compare_to="2026-08")
 
-n_accuracy = len(questions)
-
 # C09 Kiki：告警用例，正确行为是换算步骤报错，不能编数字
-for text in ["Kiki 2026 年 9 月一共到手多少美元？",
-             "Kiki 2026 年 9 月 B 站到手多少美元？",
-             "Kiki 2026 年 9 月应该预留多少美元税金？"]:
-    questions.append(dict(id=f"Q{len(questions) + 1:03d}", creator_id="C09", creator_name="Kiki",
-                          month="2026-09", category="alert_missing_fx", lang="zh", question=text,
-                          expected_answer=None, unit=None, tolerance=None,
-                          expected_behavior=f"人民币换美元的步骤应报错（缺少 {MISSING_FX_DATE} 的汇率），触发 PRISM 告警；agent 必须说明无法计算，不能编造数字",
+def add_alert(cid, month, text, behavior, lang="zh", **extra):
+    questions.append(dict(id=f"Q{len(questions) + 1:03d}", creator_id=cid, creator_name=BY_ID[cid]["name"],
+                          month=month, category="alert_missing_fx", lang=lang, **extra, question=text,
+                          expected_answer=None, unit=None, tolerance=None, expected_behavior=behavior,
                           v1_traps=["missing_fx"]))
+
+
+KIKI = f"人民币换美元的步骤应报错（缺少 {MISSING_FX_DATE} 的汇率），触发 PRISM 告警；agent 必须说明无法计算，不能编造数字"
+add_alert("C09", "2026-09", "Kiki 2026 年 9 月一共到手多少美元？", KIKI)
+add_alert("C09", "2026-09", "Kiki 2026 年 9 月 B 站到手多少美元？", KIKI, platform="bilibili")
+add_alert("C09", "2026-09", "Kiki 2026 年 9 月应该预留多少美元税金？", KIKI)
+
+# ---------------------------------------------------------------- 新平台和税务层（Q065 起）
+
+Q3 = ["2026-07", "2026-08", "2026-09"]
+Q3_LABEL = "2026-07~2026-09"
+
+
+def quarter_total(cid, key):
+    return sum(T(cid, m)["total"][key] for m in Q3)
+
+
+def next_due(after):
+    return next(d for d in US_ESTIMATED_TAX_DUE if d > after)
+
+
+def fiverr_tip_fee(cid, m):
+    return r2(T(cid, m)["platforms"]["fiverr"]["tip_fee"])
+
+
+def fl_project_fee(cno):
+    r = next(r for r in fl_rows if r["project"] == cno)
+    assert r["currency"] == "USD"
+    return fl_fee(r["amount"])
+
+
+withheld_platforms = sorted({p for m in Q3 for p, v in T("C01", m)["platforms"].items() if v["withheld"]})
+assert withheld_platforms == ["bilibili"], withheld_platforms
+
+add("C01", S, "platform_fee_usd", "月之灵 2026 年 9 月在 Fiverr 一共被收了多少美元服务费？（订单、小费、加购都算）",
+    r2(T("C01", S)["platforms"]["fiverr"]["platform_fee"]), "USD", ["fiverr_tip_fee"], platform="fiverr")
+add("C01", S, "platform_net_usd", "月之灵 2026 年 9 月在 Contra 到手多少美元？",
+    pnet("C01", S, "contra"), "USD", ["zero_fee"], platform="contra")
+add("C10", A, "platform_net_usd",
+    "How much did Diego Alvarez take home from Fiverr in August 2026 after Fiverr's fees and withdrawal fees (USD)?",
+    pnet("C10", A, "fiverr"), "USD", ["fiverr_tip_fee", "fee_classification"], lang="en", platform="fiverr")
+add("C10", S, "fiverr_tip_fee_usd", "How much did Fiverr keep from Diego Alvarez's tips in September 2026 (USD)?",
+    fiverr_tip_fee("C10", S), "USD", ["fiverr_tip_fee"], lang="en", platform="fiverr")
+add("C10", "2026-07", "platform_fee_usd",
+    "How much did Diego Alvarez pay in Freelancer.com project fees in July 2026, excluding withdrawal fees (USD)?",
+    r2(T("C10", "2026-07")["platforms"]["freelancer"]["platform_fee"]), "USD", ["min_fee"], lang="en",
+    platform="freelancer")
+add("C10", Q3_LABEL, "freelancer_project_fee_usd",
+    f"What fee did Freelancer.com charge Diego Alvarez on project {fl_small_project['C10']} (USD)?",
+    fl_project_fee(fl_small_project["C10"]), "USD", ["min_fee"], lang="en", platform="freelancer",
+    project_id=fl_small_project["C10"])
+add("C11", S, "platform_net_usd",
+    "How much did Lena Koch take home from Freelancer.com in September 2026, converted to USD?",
+    pnet("C11", S, "freelancer"), "USD", ["currency", "min_fee"], lang="en", platform="freelancer")
+add("C11", "2026-07", "total_net_usd", "How much did Lena Koch take home in total across all platforms in July 2026 (USD)?",
+    net("C11", "2026-07"), "USD", ["currency", "zero_fee", "missing_platform"], lang="en")
+add("C01", Q3_LABEL, "quarter_withheld_usd", "月之灵 2026 年第三季度（7–9 月）各平台一共替她预扣了多少美元的税？",
+    r2(quarter_total("C01", "withheld")), "USD", ["withholding", "currency"])
+add("C01", Q3_LABEL, "quarter_set_aside_usd", "月之灵 2026 年第三季度（7–9 月）按她设定的比例一共应该预留多少美元税金？",
+    r2(quarter_total("C01", "net") * BY_ID["C01"]["set_aside_rate"]), "USD", ["currency", "set_aside_base"])
+add("C01", Q3_LABEL, "withholding_platform", "月之灵 2026 年第三季度哪个平台替她预扣过税？",
+    PLATFORM_LABEL[withheld_platforms[0]], "platform", ["withholding"])
+add("C01", S, "next_estimated_tax_due", "2026 年 9 月 20 日之后，月之灵下一次美国季度预估税的截止日是哪天？",
+    next_due("2026-09-20"), "date", ["tax_calendar"], after_date="2026-09-20")
+add("C10", S, "next_estimated_tax_due",
+    "After September 10, 2026, when is Diego Alvarez's next US estimated tax payment due?",
+    next_due("2026-09-10"), "date", ["tax_calendar"], lang="en", after_date="2026-09-10")
+add("C10", Q3_LABEL, "quarter_set_aside_usd",
+    "How much should Diego Alvarez set aside for taxes for Q3 2026 (July–September), using his own set-aside rate (USD)?",
+    r2(quarter_total("C10", "net") * BY_ID["C10"]["set_aside_rate"]), "USD",
+    ["fiverr_tip_fee", "min_fee", "set_aside_base"], lang="en")
+
+LENA = f"欧元换美元的步骤应报错（缺少 {MISSING_FX2_DATE} 的 EUR 汇率），触发 PRISM 告警；agent 必须说明无法计算，不能编造数字"
+add_alert("C11", A, "How much did Lena Koch take home in total across all platforms in August 2026 (USD)?", LENA, lang="en")
+add_alert("C11", A, "How much did Lena Koch earn on Freelancer.com in August 2026, in USD after fees?", LENA, lang="en",
+          platform="freelancer")
+add_alert("C11", A, "How much should Lena Koch set aside for taxes for August 2026, using her own rate (USD)?", LENA,
+          lang="en")
 
 with open(DATA / "questions.jsonl", "w", encoding="utf-8") as f:
     for q in questions:
         f.write(json.dumps(q, ensure_ascii=False) + "\n")
 
 print(f"bilibili rows: {len(bili_rows)}, youtube: {len(yt_rows)}, twitch: {len(tw_rows)}, "
-      f"patreon: {len(pt_rows)}, upwork: {len(uw_rows)}, fx days: {len(fx)}")
-print(f"questions: {len(questions)} (accuracy {n_accuracy}, alert {len(questions) - n_accuracy})")
+      f"patreon: {len(pt_rows)}, upwork: {len(uw_rows)}, fiverr: {len(fv_rows)}, freelancer: {len(fl_rows)}, "
+      f"contra: {len(ct_rows)}, fx days: {len(fx)} CNY / {len(fx2)} EUR+GBP")
+n_alert = sum(q["category"] == "alert_missing_fx" for q in questions)
+print(f"questions: {len(questions)} (accuracy {len(questions) - n_alert}, alert {n_alert})")

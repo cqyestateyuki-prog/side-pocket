@@ -2,7 +2,7 @@
   {
     "creator_id": "C01",
     "name": "月之灵",
-    "profile": "VTuber，同时在 Upwork 接设计稿（demo 主角）",
+    "profile": "纽约的设计师，副业在全球平台接设计单（Upwork、Fiverr、Contra）并做内容（YouTube、Twitch、Patreon、B 站）（demo 主角）",
     "tax_country": "US",
     "set_aside_rate": 0.25,
     "active_months": [
@@ -15,7 +15,9 @@
       "youtube": "UC-yzl-moonspirit",
       "twitch": "yuezhiling_tv",
       "patreon": "yuezhiling",
-      "upwork": "moonspirit_design"
+      "upwork": "moonspirit_design",
+      "fiverr": "moonspirit_studio",
+      "contra": "moonspirit"
     }
   },
   {
@@ -140,6 +142,38 @@
     ],
     "accounts": {
       "bilibili": "bili_123987"
+    }
+  },
+  {
+    "creator_id": "C10",
+    "name": "Diego Alvarez",
+    "profile": "插画师，在 Fiverr 接单（小费和加购多），也在 Freelancer.com 接小项目（会触发 $5 最低服务费）",
+    "tax_country": "US",
+    "set_aside_rate": 0.22,
+    "active_months": [
+      "2026-07",
+      "2026-08",
+      "2026-09"
+    ],
+    "accounts": {
+      "fiverr": "diegodraws",
+      "freelancer": "diego_alv"
+    }
+  },
+  {
+    "creator_id": "C11",
+    "name": "Lena Koch",
+    "profile": "柏林的 UI 设计师，Freelancer.com 接欧元/英镑项目，也用 Contra；8 月有一个欧元项目落在缺汇率的日期（告警测试）",
+    "tax_country": "DE",
+    "set_aside_rate": 0.3,
+    "active_months": [
+      "2026-07",
+      "2026-08",
+      "2026-09"
+    ],
+    "accounts": {
+      "freelancer": "lenakoch_ui",
+      "contra": "lenakoch"
     }
   }
 ]
