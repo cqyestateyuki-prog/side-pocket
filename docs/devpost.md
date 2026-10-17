@@ -30,7 +30,7 @@ We moved every calculation into code. The AI orchestrates the tools and explains
 
 Through Nicrron, we ran initial versions on Claude Fable 5.1 and the full v2 dry run on Claude Opus 5.5. GPT-6 Astra wrote product and pitch copy. Google nano-banana-pro generated Atlas and the app icon.
 
-PRISM traces every model and tool call. One v2 run shows 17 steps. We configured alerts for error rate and failed traces.
+PRISM traces every model and tool call. One v2 run shows 17 steps. Our error-rate alert on the v2 agent fired on a real run: 12.5% against a threshold of 5%, when a missing exchange rate stopped the calculation.
 
 Live demo https://side-atlas.vercel.app
 
