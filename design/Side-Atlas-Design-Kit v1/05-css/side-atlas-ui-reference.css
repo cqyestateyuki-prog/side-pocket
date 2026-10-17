@@ -63,8 +63,9 @@ body { background: var(--sa-page); color: var(--sa-ink); font: var(--sa-body); -
 .sa-hero .orb { position: absolute; right: -150px; bottom: -190px; width: 340px; height: 340px; border-radius: 50%; background: var(--sa-lime); }
 .sa-hero .orb::after { content: ""; position: absolute; inset: 58px; border-radius: 50%; border: 18px solid var(--sa-forest); border-left-color: transparent; border-bottom-color: transparent; transform: rotate(-20deg); }
 .sa-hero .glass { position: relative; display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18); border-radius: var(--sa-r-pill); padding: 7px 14px; font: 600 13px/1 var(--sa-font); color: #fff; }
+/* v1.1: the full maroon hero is retired (user ruling). A stop is a light warning card next to the forest hero. */
 .sa-hero.warn { background: var(--sa-warn); }
-.sa-hero.warn .lead, .sa-hero.warn .sub { color: #F2D3D7; }
+.sa-hero.warn .lead, .sa-hero.warn .sub { color: var(--sa-warn-tint); }
 
 /* ---------- KPI ---------- */
 .sa-kpi .label { display: flex; align-items: center; gap: 8px; }
@@ -193,3 +194,47 @@ body { background: var(--sa-page); color: var(--sa-ink); font: var(--sa-body); -
 .sa-kpirow .sa-card { padding: 16px 20px; }
 .sa-kpirow .sa-fig { font: 800 24px/1.1 var(--sa-font); letter-spacing: -0.02em; margin-top: 8px; }
 .sa-hero .chips { position: relative; display: flex; flex-wrap: wrap; gap: 10px; max-width: 62%; margin-top: 22px; }
+
+/* ---------- v1.1 additions (tokens only) ---------- */
+.sa-warncard { position: relative; background: var(--sa-warn-tint); border: 1px solid var(--sa-line); border-left: 4px solid var(--sa-warn); border-radius: var(--sa-r-card); padding: 22px 24px; }
+.sa-warncard .tag { display: flex; gap: 8px; align-items: center; font: var(--sa-label); letter-spacing: var(--sa-tracking-label); text-transform: uppercase; color: var(--sa-warn-text); }
+.sa-warncard .title { font: 800 21px/1.25 var(--sa-font); letter-spacing: var(--sa-tracking-tight); color: var(--sa-ink); margin: 10px 0 6px; }
+.sa-warncard .body { font: 500 14.5px/1.5 var(--sa-font); color: var(--sa-text-mid); margin: 0 0 14px; }
+.sa-warncard .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.sa-kv { display: grid; grid-template-columns: auto 1fr; gap: 7px 18px; margin: 0; padding: 14px 16px; background: var(--sa-surface); border-radius: var(--sa-r-inner); font: 500 13.5px/1.35 var(--sa-font); }
+.sa-kv dt { color: var(--sa-meta); }
+.sa-kv dd { margin: 0; color: var(--sa-ink); font-weight: 700; text-align: right; }
+.sa-kv dd.miss { color: var(--sa-warn-text); }
+.sa-srcgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.sa-src { background: var(--sa-surface); border: 1px solid var(--sa-line); border-radius: var(--sa-r-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 7px; min-height: 148px; }
+.sa-src.off { background: transparent; border: 1.5px dashed var(--sa-line-strong); }
+.sa-src .name { display: flex; align-items: center; justify-content: space-between; gap: 8px; font: 800 16px/1.2 var(--sa-font); color: var(--sa-ink); }
+.sa-src .name > span { display: flex; align-items: center; gap: 8px; }
+.sa-src .file { font: 600 12.5px/1.3 var(--sa-mono); color: var(--sa-text-mid); display: flex; gap: 6px; align-items: center; }
+.sa-src .fmt { font: 500 12.5px/1.4 var(--sa-font); color: var(--sa-meta); }
+.sa-src .stats { display: flex; justify-content: space-between; gap: 8px; font: 600 12.5px/1.2 var(--sa-font); color: var(--sa-text-mid); border-top: 1px solid var(--sa-line); padding-top: 9px; margin-top: auto; }
+.sa-drop { border: 2px dashed var(--sa-line-strong); border-radius: var(--sa-r-card); background: var(--sa-sage); padding: 24px 26px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 10px; height: 100%; }
+.sa-drop .ico { width: 48px; height: 48px; border-radius: 14px; background: var(--sa-surface); display: grid; place-items: center; color: var(--sa-forest); }
+.sa-drop h2 { margin: 4px 0 0; font: var(--sa-h2); color: var(--sa-ink); }
+.sa-drop p { margin: 0; color: var(--sa-text-mid); font: 500 14px/1.45 var(--sa-font); max-width: 520px; }
+.sa-checklist { list-style: none; margin: 0; padding: 0; }
+.sa-checklist li { display: grid; grid-template-columns: 20px 1fr auto; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--sa-line); font: 500 13.5px/1.35 var(--sa-font); color: var(--sa-ink); }
+.sa-checklist li:first-child { border-top: 0; }
+.sa-checklist li .ok { color: var(--sa-ok-text); }
+.sa-checklist li .bad { color: var(--sa-warn); }
+.sa-checklist li .r { color: var(--sa-meta); font-size: 12.5px; }
+.sa-range { width: 100%; accent-color: var(--sa-forest); height: 26px; margin: 6px 0 2px; cursor: pointer; }
+.sa-scale { display: flex; justify-content: space-between; font: 600 11.5px/1 var(--sa-font); color: var(--sa-meta); }
+.sa-rateinput { display: inline-flex; align-items: center; gap: 4px; border: 1.5px solid var(--sa-line-strong); border-radius: var(--sa-r-input); padding: 7px 12px; font: 800 16px/1 var(--sa-font); background: var(--sa-surface); color: var(--sa-ink); }
+.sa-rateinput input { width: 40px; border: 0; font: inherit; color: inherit; background: transparent; text-align: right; outline: none; }
+.sa-toggle { width: 40px; height: 24px; border-radius: var(--sa-r-pill); background: var(--sa-line-strong); position: relative; flex: none; border: 0; cursor: pointer; padding: 0; }
+.sa-toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--sa-surface); transition: left .15s; }
+.sa-toggle.on { background: var(--sa-forest); }
+.sa-toggle.on::after { left: 19px; }
+.sa-togglelist { list-style: none; margin: 0; padding: 0; }
+.sa-togglelist li { display: grid; grid-template-columns: 1fr auto auto; gap: 14px; align-items: center; padding: 8px 0; border-top: 1px solid var(--sa-line); font: 600 14px/1.3 var(--sa-font); color: var(--sa-ink); }
+.sa-togglelist li:first-child { border-top: 0; }
+.sa-togglelist li .amt { font-variant-numeric: tabular-nums; color: var(--sa-text-mid); }
+.sa-togglelist li.off { color: var(--sa-meta); }
+.sa-steps .n.range { font-size: 9.5px; letter-spacing: -.02em; }
+.sa-platchips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 2px; }

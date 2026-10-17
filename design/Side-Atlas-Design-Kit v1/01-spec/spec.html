@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Side Atlas Look and Feel · v1</title>
+<title>Side Atlas Look and Feel · v1.1</title>
 <link rel="stylesheet" href="../05-css/side-atlas-ui-reference.css">
 <script src="../03-icons/side-atlas-icons.js"></script>
 <style>
@@ -45,7 +45,15 @@
 <div class="doc">
   <img src="../02-logos/side-atlas-lockup.svg" alt="Side Atlas" style="height:48px">
   <h1>Side Atlas Look and Feel</h1>
-  <p class="mid">Design spec · v1 · 17 October 2026 · desktop · MONEY TALKS 2 demo build</p>
+  <p class="mid">Design spec · v1.1 · 17 October 2026 · desktop · MONEY TALKS 2 demo build</p>
+
+  <h2>What's new in v1.1</h2>
+  <ul>
+    <li><b>Stop state reworked (user ruling).</b> The full maroon hero is retired. A stopped calculation keeps the forest hero (partial total, marked incomplete) and shows a light warning card beside it: warn tint, maroon only for the label, icon, left rule and the word "missing".</li>
+    <li><b>Form view vs bank view uses real numbers</b> from <code>GET /api/forms</code>: $14,356.59 on forms vs $11,956.06 landed (gap $2,400.53); possible duplicate = Fiverr (paid out to PayPal); no 1099-K platform over the real $20,000 AND 200-transaction threshold; form types are simulated and labelled.</li>
+    <li><b>Three new screens:</b> 07 Sources (import), 08 Set-aside settings (interactive), 09 Ask in Chinese (steps from a real v2 run).</li>
+    <li>Three icons added (upload, sliders, file → 25). Prototype colours now come only from <code>--sa-*</code> tokens, including the logo, so the palette can be swapped in the token file alone.</li>
+  </ul>
 
   <h2>What this is</h2>
   <p>The first complete visual language for Side Atlas, the ledger for global side income with a tax layer on top. Everything here — tokens, components, every desktop screen — is decided at once, in one version. The clickable prototype is <code>07-mockups/app.html</code>; the screen images in <code>08-screens/desktop</code> are exported from it with real numbers from the fictional test set.</p>
@@ -53,18 +61,18 @@
   <div class="test"><b>The brand test.</b> A screen passes if it reads like a creator's own money notebook — one confident forest-green field, calm white tables, every figure dark and tabular — and fails if any number sits on a bright colour or the page looks like a sticker sheet, even when every token matches.</div>
   <table class="spec">
     <tr><th>Principle</th><th>Rules</th></tr>
-    <tr><td>One bold field per screen</td><td>Exactly one <code>.sa-hero</code> (forest, or maroon in a stopped state). Everything else is white or sage.</td></tr>
+    <tr><td>One bold field per screen</td><td>Exactly one <code>.sa-hero</code>, always forest. Everything else is white, sage or a light tint.</td></tr>
     <tr><td>Money is calm</td><td>Money figures are ink or forest on white/sage, tabular, right-aligned in tables. A deduction may use its semantic text colour. The only figure on a colour field is the hero figure: white, ≥48px, on forest.</td></tr>
     <tr><td>Lime is a shape, not a text colour</td><td>Lime only for large shapes, bars, dots and the countdown numeral (≥48px). Never small text on lime; never small lime text.</td></tr>
     <tr><td>Fees and tax never share a colour</td><td>Platform fee = clay, payout fee = stone, FX = slate, tax withheld = tax blue, net = forest.</td></tr>
-    <tr><td>Stop, don't guess</td><td>Missing data turns the screen's hero maroon, names the record and offers one action. Totals that skip a record say so.</td></tr>
+    <tr><td>Stop, don't guess</td><td>Missing data shows a light warning card beside the forest hero, names the record and offers one action. Totals that skip a record are marked incomplete and say what they leave out.</td></tr>
     <tr><td>Pills and big radii</td><td>Buttons, chips and segmented controls are full pills. Cards 24px, inner panels 16px, inputs 14px, badges 8px.</td></tr>
   </table>
 
   <h2>1 · Logo and icons</h2>
   <div class="row"><img src="../02-logos/side-atlas-lockup.svg" style="height:56px"><span style="background:var(--sa-forest);border-radius:18px;padding:12px 18px"><img src="../02-logos/side-atlas-lockup-on-forest.svg" style="height:44px;display:block"></span><img src="../02-logos/side-atlas-mark.svg" style="height:40px"><img src="../02-logos/side-atlas-mark.svg" style="height:24px"></div>
   <p>The mark is a globe — one meridian, one parallel — in lime on a forest rounded square (radius 18/64). The lockup sets "Side Atlas" in Plus Jakarta Sans 800 with the Chinese name 副业图谱 below, smaller, letter-spaced. Don't recolour the mark, don't put the lockup on lime, don't use the wordmark without the mark under 120px wide.</p>
-  <h3>Icons · 22, adapted from Lucide (ISC), 24px grid, 2px stroke, currentColor, no emoji</h3>
+  <h3>Icons · 25, adapted from Lucide (ISC), 24px grid, 2px stroke, currentColor, no emoji</h3>
   <div class="icons" id="icons"></div>
 
   <h2>2 · Core tokens</h2>
@@ -114,8 +122,11 @@
     <tr><td><b>Platform chip</b></td><td>Pill 32px, white, 1px strong line, 9px platform dot, 13/600. Selected: forest-100 fill, forest border and text.</td></tr>
     <tr><td><b>Ledger row</b></td><td>Dense table, 13px, 10/11 padding, hairlines. Date MM/DD · platform dot + name · type with ref below in mono · original amount; non-USD shows <code>÷ 7.1800 · 2026-09-03</code> (rate and its date) in slate mono below · gross · fee (clay) · payout (stone) · withheld (tax blue, bold) · net (forest, bold). Zero shows an em dash in line-strong.</td></tr>
     <tr><td><b>Tax item card</b></td><td>White card; country badge in tax tint; amount 28/800 tax-text, native currency below; sage info note under it.</td></tr>
-    <tr><td><b>Form vs bank row</b></td><td>Platform · form badge (sage, "simulated") · form view (gross) · bank view (net, forest bold) · 120px gap bar (clay/stone/tax) + gap amount · records · status badge: below threshold (sage), possible duplicate (warn), CN record (tax).</td></tr>
-    <tr><td><b>Missing-data alert</b></td><td>Hero becomes maroon. "Stopped" label, headline 32/800, body, white pill action + white-outline secondary. Record panel (white 10% glass) lists platform, type, ref, amount, date, rate = missing. Totals elsewhere are marked incomplete and say what they leave out.</td></tr>
+    <tr><td><b>Form vs bank row</b></td><td>Platform · form badge (sage; "No US form" in tax tint for B站) · paid out to (PayPal bold) · form view (gross) · bank view (landed, forest bold) · 120px gap bar (clay/stone/tax/line for refunds) + gap amount · transactions · status: below 1099-K threshold / 1099-MISC likely / projected (sage), possible duplicate (warn), CN tax record (tax). Total row for platforms with US forms. Above the table: sage threshold banner; below: simulated-forms note, duplicate (warn) and contrast (sage) notes.</td></tr>
+    <tr><td><b>Missing-data warning card</b> (v1.1)</td><td><code>.sa-warncard</code>: warn-tint fill, 1px hairline, 4px maroon left rule, radius 24. "Calculation stopped" label (12/700 uppercase, maroon, alert icon), title 21/800 ink, body 14.5 text-mid, white key–value panel (platform, reference, amount, date, rate = <span style="color:var(--sa-warn-text)">missing</span>), primary "Add the rate" + secondary "Open record", PRISM chip. The hero stays forest and shows the partial total with an "Incomplete" glass chip.</td></tr>
+    <tr><td><b>Source card</b> (v1.1)</td><td><code>.sa-src</code> white card radius 24, platform dot + name 16/800, status badge (ok "Connected" / sage "Not connected", dashed border), file name mono, detected format 12.5 meta, footer: records · date range · payout target.</td></tr>
+    <tr><td><b>Upload zone</b> (v1.1)</td><td><code>.sa-drop</code>: sage fill, 2px dashed line-strong border, radius 24, white icon tile, h2, one sentence, primary "Choose CSV files".</td></tr>
+    <tr><td><b>Rate control</b> (v1.1)</td><td>Number input (radius 14), preset segmented pills 15–35%, range slider (accent forest), sage note "you choose; Side Atlas doesn't suggest a rate". Preview updates the hero figure live. Platform include/exclude: <code>.sa-toggle</code> pill switch, forest when on.</td></tr>
     <tr><td><b>Agent step timeline</b></td><td>Numbered 32px nodes on a 2px rail; tool name mono 13.5/700 · args in meta; one-line result below; check icon at right. Final step filled forest. Answer figures carry step references (<code>.sa-ref</code>).</td></tr>
     <tr><td><b>Sidebar / nav</b></td><td>248px white, hairline right. Lockup at top. Nav items 44px pills, icon 20 + 15/600; active forest fill white text; hover sage. Footer: tagline (forest 14/700), PRISM chip, disclaimer.</td></tr>
   </table>
@@ -123,27 +134,30 @@
   <h2 class="page">5 · Desktop screens (1440 × 900)</h2>
   <img class="shot" src="../08-screens/desktop/01-overview.png"><p class="cap"><b>01 Overview.</b> September net as the hero, set-aside and best keep-rate beside it; where the gross went; net by platform.</p>
   <img class="shot" src="../08-screens/desktop/02-ledger.png"><p class="cap"><b>02 Ledger.</b> Every record, with its own exchange rate and date; fees, payout fees and tax withheld in separate columns.</p>
-  <img class="shot" src="../08-screens/desktop/03b-tax-full.png"><p class="cap"><b>03 Tax items (hero).</b> Set-aside at her own 25%, countdown to the next US estimated-tax date, tax withheld by country, form view vs bank view per platform (placeholder numbers), accountant checklist and export.</p>
+  <img class="shot" src="../08-screens/desktop/03b-tax-full.png"><p class="cap"><b>03 Tax items (hero).</b> Set-aside at her own 25%, countdown to the next US estimated-tax date, tax withheld by country, form view vs bank view per platform with real numbers (Fiverr flagged as a possible PayPal double report; no 1099-K expected, income still reportable), accountant checklist and export.</p>
   <img class="shot" src="../08-screens/desktop/04-ask.png"><p class="cap"><b>04 Ask.</b> The answer with every figure tied to a step, the agent's 11 tool calls, traced in PRISM.</p>
   <img class="shot" src="../08-screens/desktop/05-report.png"><p class="cap"><b>05 Report.</b> The quarter on one sheet for the accountant; export as PDF or CSV.</p>
-  <img class="shot" src="../08-screens/desktop/06-missing.png"><p class="cap"><b>06 Missing data.</b> Lena Koch, August: no EUR rate for 2026-08-21, so the app stops, names the record and asks for the rate. Nothing is estimated.</p>
+  <img class="shot" src="../08-screens/desktop/06-missing.png"><p class="cap"><b>06 Missing data.</b> Lena Koch, August: the forest hero shows the partial net marked incomplete; a light warning card names the record (FL-49196, €491.33, no EUR rate for 2026-08-21) and asks for the rate. Nothing is estimated.</p>
+  <img class="shot" src="../08-screens/desktop/07-sources.png"><p class="cap"><b>07 Sources.</b> Upload zone, import check per file (B站: 42 CNY rates found), the 8 platforms as cards with file, detected format, records, date range and payout target; Freelancer.com not connected; Lena's file flagged for the missing EUR rate.</p>
+  <img class="shot" src="../08-screens/desktop/08-settings.png"><p class="cap"><b>08 Set-aside.</b> She chooses the rate (presets, slider or number); the Q3 preview ($15,910.15 × 25% = $3,977.54) and next due date update live; platforms can be left out of the base.</p>
+  <img class="shot" src="../08-screens/desktop/09-ask-zh.png"><p class="cap"><b>09 Ask in Chinese.</b> "我九月为什么比八月多到手了？" — +$499.41 with the per-platform reasons and September deductions; 21 tool calls from a real v2 run, numbers tied to steps 18–20.</p>
 
   <h2>6 · Mobile</h2>
   <p>Out of scope for v1 (desktop demo). Layouts must not break below 1280px; a phone layout is a later version.</p>
 
   <h2>7 · Notifications</h2>
-  <p>Two levels only. <b>Stop</b> (maroon hero, nav count badge): missing exchange rate or any input the math needs; the run is marked failed in PRISM and the alert fires. <b>Note</b> (sage or warn-tint inline note): threshold and duplicate-report information, placeholder data. No toasts in v1.</p>
+  <p>Two levels only. <b>Stop</b> (light warning card + nav count badge; v1.1): missing exchange rate or any input the math needs; the run is marked failed in PRISM and the alert fires. <b>Note</b> (sage or warn-tint inline note): threshold and duplicate-report information, import results. No toasts.</p>
 
   <h2 class="page">8 · Fix list</h2>
   <table class="spec"><tr><th>ID</th><th>Need</th><th>Status</th><th>What remains</th></tr>
-    <tr><td>F1</td><td>Multi-platform import (8 formats)</td><td><span class="pill par">Partial</span></td><td>Ledger shows parsed records; no upload/import screen in v1.</td></tr>
+    <tr><td>F1</td><td>Multi-platform import (8 formats)</td><td><span class="pill cov">Covered</span></td><td>v1.1 Sources screen: upload zone, per-file import check, 8 platform cards.</td></tr>
     <tr><td>F2</td><td>Currency unified, rate + date traceable per record</td><td><span class="pill cov">Covered</span></td><td>—</td></tr>
     <tr><td>F3</td><td>Deduction breakdown, withholding on its own line</td><td><span class="pill cov">Covered</span></td><td>FX loss vs mid-market not modelled (rates are the conversion rates).</td></tr>
     <tr><td>F4</td><td>Dashboard: net, share, best keep-rate, MoM</td><td><span class="pill cov">Covered</span></td><td>—</td></tr>
-    <tr><td>F5</td><td>Set-aside at the user's own rate + quarterly reminder</td><td><span class="pill cov">Covered</span></td><td>Rate editing UI not drawn.</td></tr>
-    <tr><td>F6</td><td>AI Q&amp;A, every number from a calculation step</td><td><span class="pill cov">Covered</span></td><td>Chinese-language example not drawn.</td></tr>
+    <tr><td>F5</td><td>Set-aside at the user's own rate + quarterly reminder</td><td><span class="pill cov">Covered</span></td><td>v1.1 Set-aside screen with presets, slider and number input.</td></tr>
+    <tr><td>F6</td><td>AI Q&amp;A, every number from a calculation step</td><td><span class="pill cov">Covered</span></td><td>v1.1 Chinese Ask screen (real v2 steps).</td></tr>
     <tr><td>F7</td><td>Monthly / quarterly report</td><td><span class="pill cov">Covered</span></td><td>PDF export styling = print of the sheet.</td></tr>
-    <tr><td>R1</td><td>Tax form ≠ what landed (1099-K gross, double reporting, no form below threshold)</td><td><span class="pill par">Partial</span></td><td>Form view vs bank view uses placeholder numbers; needs the form_check API.</td></tr>
+    <tr><td>R1</td><td>Tax form ≠ what landed (1099-K gross, double reporting, no form below threshold)</td><td><span class="pill cov">Covered</span></td><td>Real form_check numbers; form types simulated, 1099-K threshold real.</td></tr>
     <tr><td>R2</td><td>Opaque, undocumented platform fees</td><td><span class="pill cov">Covered</span></td><td>Per-record fee column; Fiverr tip fees visible.</td></tr>
     <tr><td>R3</td><td>No tax set aside, quarterly deadlines</td><td><span class="pill cov">Covered</span></td><td>—</td></tr>
     <tr><td>R4</td><td>Hidden withdrawal + FX cost</td><td><span class="pill par">Partial</span></td><td>Payout fees shown; FX spread vs mid-market needs source data.</td></tr>
@@ -161,9 +175,10 @@
     <li>Every money figure uses tabular figures (<code>font-variant-numeric: tabular-nums</code>) and money columns are right-aligned.</li>
     <li>Tax withheld never uses the fee colour; fee columns are clay, withheld is tax blue.</li>
     <li>Every non-USD ledger row shows its rate and the rate's date.</li>
-    <li>A missing rate turns the hero maroon, names the record and leaves it out of totals — no estimated value anywhere on the page.</li>
+    <li>A missing rate shows the light warning card (hero stays forest, marked incomplete), names the record and leaves it out of totals — no estimated value anywhere on the page.</li>
+    <li>Colours in pages come only from <code>--sa-*</code> tokens (no hex in markup or component CSS beyond the token file).</li>
     <li>Set-aside copy says the rate was chosen by the person; the disclaimer is visible on every screen.</li>
-    <li>All six 08-screens match the built pages side by side (ui-diff compare) with no clipped column at 1440×900.</li>
+    <li>All ten 08-screens match the built pages side by side (ui-diff compare) with no clipped column at 1440×900.</li>
     <li>Only Plus Jakarta Sans (local woff2) and the CJK system font load; no CDN fonts.</li>
     <li>Icons render from the sprite with currentColor; no emoji in the UI.</li>
   </ul>

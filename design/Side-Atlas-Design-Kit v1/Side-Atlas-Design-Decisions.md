@@ -2,7 +2,18 @@
 
 The single place where visual rulings live. Changing a ruling means a new kit version, not an edit to one component.
 
-## v1 · 17 October 2026 — the standard
+## v1.1 · 17 October 2026 — current standard
+
+| # | Decision | Why |
+|---|---|---|
+| 13 | **Supersedes #10.** A stop keeps the forest hero (partial total, "Incomplete" chip) and adds a light warning card (`.sa-warncard`: warn tint, maroon only for label, icon, left rule and "missing"). The full maroon hero is retired. | User ruling after review: the full maroon block was too alarming. |
+| 14 | Primary `#1F4B2C` confirmed. | User sign-off. |
+| 15 | Form view vs bank view uses the real `form_check` output (`GET /api/forms`): forms $14,356.59 vs landed $11,956.06, gap $2,400.53; possible duplicate = Fiverr (PayPal payout); no 1099-K platform over the real $20,000 AND 200 threshold. Form types and the $2,000 1099-MISC example threshold stay labelled simulated. | User approved swapping in real numbers; resolves the v1 placeholder TODO. |
+| 16 | New screens drawn: Sources (import), Set-aside settings, Ask in Chinese. The Chinese Ask steps come from a real v2 dry run (Opus 5.5, temperature 0, not traced): 21 tool calls. | User asked for the three missing screens. |
+| 17 | Pages use colours only via `--sa-*` tokens (logo included); no hex outside `04-tokens`. | Coordinator note: the palette may be swapped (Instagram-style pink/purple is under consideration) by editing the token file only. |
+| 18 | Icons 22 → 25: upload, sliders, file (Lucide, ISC). | Needed by Sources and Set-aside. |
+
+## v1 · 17 October 2026 — the first standard
 
 | # | Decision | Why |
 |---|---|---|
@@ -15,14 +26,16 @@ The single place where visual rulings live. Changing a ruling means a new kit ve
 | 7 | **Platform colours are ours** (lagoon, poppy, iris, orchid, moss, sun, graphite, cocoa), each with fill / tint / text-on-white. They appear only as dots, chips and the share bar; deduction colours never appear in the same chart. | Platforms' own brand colours would make the app look like a logo wall and clash with the semantic set. |
 | 8 | **Font: Plus Jakarta Sans (OFL, variable 200–800)** as the free substitute for Link Sans; headlines 800 at −0.02em; body 500. Tabular figures verified (1111 and 0000 both 96.0px at 40px with `tabular-nums`). CJK falls back to PingFang SC / Noto Sans SC. | Closest free geometric-rounded grotesk with real tabular numerals; the user saw it on the board. |
 | 9 | **Anti-toy rules:** one hero field per screen; money in ink/forest on light surfaces (a deduction may use its semantic text colour; the hero figure is white ≥48px on forest); never small text on lime; calm tables (white, hairlines, tabular, right-aligned). | Big colour + finance numbers looked like a toy on the board; these rules keep the creator feel without losing trust. |
-| 10 | **Missing data is a full stop state** (maroon hero, named record, one action, totals marked incomplete). | Matches the product rule "stop, don't guess" and the PRISM alert story. |
+| 10 | ~~**Missing data is a full stop state**~~ (superseded by #13) (maroon hero, named record, one action, totals marked incomplete). | Matches the product rule "stop, don't guess" and the PRISM alert story. |
 | 11 | **Product copy by GPT-6 Astra** (tagline, hero lines, tax and forms copy, missing-data copy, report cover) via `scripts/astra.py`; UI labels written by hand. | User rule: all product copy comes from GPT-6 Astra. |
 | 12 | **Desktop only, 1440×900.** | User choice for the demo. |
 
 ## Open TODOs (need sign-off or data)
 
-- **Form view vs bank view uses placeholder numbers.** In `07-mockups/data.js` → `forms_placeholder`: form view = ledger gross, bank view = ledger net, gap = platform fee + payout fee + withheld; form types "1099-K (simulated)" for US platforms, "No US form · CN withholding record" for B站; the possible-duplicate flag on Patreon (PayPal payout) is invented for the mock. Replace with the `form_check` API output when it lands, and re-export `08-screens`.
+- ~~Form view vs bank view uses placeholder numbers~~ — done in v1.1 (#15).
 - **Ask timeline order is illustrative.** The 11 steps and their results match the backend's verification run (find_creator → load_platform ×7 → convert_currency → compute_breakdown → submit_answer), but the order of the `load_platform` calls is drawn from the overview, not from the trace.
 - **Logo text is live text**, not outlined; outline before print or app-store use.
-- **No import/upload screen** (F1 partial), no set-aside rate editor, no Chinese-language Ask example, no mobile layout.
+- No mobile layout. (Import, set-aside editor and Chinese Ask were added in v1.1.)
+- The English Ask timeline order is still illustrative; the Chinese Ask uses real steps.
+- Palette may change (pink/purple under consideration): edit `04-tokens` only, then re-run `08-screens/capture.sh` and print the spec.
 - FX loss versus mid-market is not modelled (the data has one rate per date), so the FX semantic colour is used for rate labels only.
