@@ -1,5 +1,9 @@
 # Side Atlas
 
+- Live demo: https://side-atlas.vercel.app (Ask Atlas replays a recorded real traced run)
+- Code: https://github.com/cqyestateyuki-prog/hackson_global_income
+- Track: Money Operations · Built on PRISM by Block Convey · Models via Nicrron
+
 ## Elevator pitch
 Side Atlas brings global side income into one multi-currency ledger, with a tax layer that organises the items you will probably need. It separates fees from withholding, compares form-style totals with payouts, and prepares a report for your accountant.
 
