@@ -1,139 +1,156 @@
 # Side Atlas
 
-**One ledger for your global side income, with the tax items you’ll probably need in view.**
+**One ledger for global side income, with a tax layer on top.**
 
 ## The problem
 
-Side income crosses platforms, currencies and payout methods. Your records are scattered, and no single platform shows the whole picture.
+Reddit’s recurring tax-season complaints start with money that does not add up:
 
-Each platform takes its cut differently:
-
-- **Upwork:** 0–15%, set per contract.
-- **Fiverr:** 20%, including tips and extras.
-- **Freelancer.com:** 10% of a fixed-price project or $5, whichever is greater.
-- **Contra:** 0% for the freelancer.
-
-Withdrawal fees and currency conversion add more deductions. Platform commissions and tax withheld on your behalf can look alike, even though they belong in different categories.
-
-Tax preparation adds another layer: which country already withheld tax, what to set aside when nothing was withheld, when the next US estimated-tax payment is due, and what to discuss with an accountant.
+- **Forms do not match deposits.** A 1099-K reports gross income, including platform fees. PayPal can report the same money again. Below the $20,000 / 200-transaction threshold, no 1099-K arrives, but income is still reportable.
+- **Platform cuts are hard to track.** Upwork charges 0–15% per contract; Fiverr takes 20%, including tips; Freelancer.com charges 10% or $5, whichever is greater; Contra charges 0%.
+- **Fees get confused with taxes.** Sellers struggle to document platform fees; some call Upwork’s service fee “tax.”
+- **Quarterly taxes arrive as a surprise.** US platforms withhold nothing for US persons.
+- **Withdrawals and currency conversion hide costs.** A “$0 fee” conversion can still lose roughly 6% to the spread.
+- **The spreadsheet keeps growing.** Multiple income streams get stitched together by hand, month after month.
 
 ## What Side Atlas does
 
 ### One ledger for every side gig
 
-Side Atlas brings global gig and creator income into one ledger. It imports each platform’s own export format and separates every record into:
+Side Atlas brings global platform income into one ledger. Drop multiple statement exports into the import panel: it detects each platform and shows where to download its export.
 
-**Gross → platform fee → payout/payment fees → tax withheld → net**
+Each record separates **gross → platform fee → payout/payment fees → tax withheld → net**. Withholding gets its own line, never mixed into fees.
 
-Tax withheld stays on its own line, never mixed into fees. Every non-USD record is converted to USD using its transaction date’s exchange rate, with the date and rate traceable.
+Non-USD records convert at their own transaction date’s exchange rate, with the date and rate traceable. If a rate is missing, Side Atlas stops and names the record instead of guessing.
 
-See income by platform and month, month-over-month changes, and which platform keeps the most of each dollar.
-
-The fictional demo follows Moon Spirit, a New York–based designer earning through Upwork, Fiverr, Contra, YouTube, Twitch, Patreon and Bilibili. Bilibili pays her in CNY and withholds Chinese individual income tax; the other platforms pay USD.
+The fictional demo covers eight platforms. Its persona, Moon Spirit, is a New York–based designer earning from gigs and content, including Bilibili payments in CNY with Chinese individual income tax withheld.
 
 ### Tax items, sorted
 
-The tax layer lists items you’ll probably need:
+The ledger supports a tax layer that organises:
 
 - Tax already withheld, by platform and country.
-- A set-aside amount using a rate **you choose**.
-- The next US estimated-tax due date.
-- Items to raise with an accountant, including foreign tax withheld.
+- A set-aside at an editable rate **you choose**; Side Atlas does not suggest one.
+- A countdown to the next US estimated-tax date.
+- **Forms vs bank:** simulated 1099-style totals beside actual deposits, with gaps itemised into platform fees, payout fees, withholding and refunds.
+- The 1099-K threshold and possible-duplicate flags, such as Fiverr payouts through PayPal.
+- An accountant checklist and an **“Export for my accountant”** report.
 
-Monthly and quarterly reports give you something to hand to an accountant. Ask questions in Chinese or English about income changes, deductions or quarterly tax items. Every number in an answer comes from calculation steps, never from the model.
+Form types are simulated assumptions.
+
+### Ask Atlas
+
+Ask questions and watch the agent’s tool steps live. Every number in an answer links to the step that produced it, and every run is traced in PRISM.
 
 ## What we learned building it
 
-On our first 64-question test set, v1 let the model calculate directly from raw exports. It answered 61 exactly right. All three failures shared one cause: a missing exchange rate. The model silently borrowed a nearby day’s rate.
+In v1, the model read raw exports and did the math: **72/81 answers were correct**. Six failures came from silently borrowing a nearby day’s exchange rate when the required rate was missing.
 
-In v2, code does every calculation; AI orchestrates and explains. It answered 64 of 64 exactly right. Missing data now stops the run with an explicit error and triggers a PRISM alert for a person to fix it. PRISM by Block Convey traces every model and tool call and groups failures by root cause.
+In v2, code does every calculation; AI orchestrates and explains. Missing data stops the run explicitly. Results reached **81/81 on the same set**, then **89/89** across the full fictional test set, independently re-checked by a separate script.
+
+PRISM rated v1’s missing-rate runs **CRITICAL/HIGH** and v2’s corresponding refusals **LOW**. But PRISM also called v1’s arithmetic accurate while flagging missing disclaimers. The invented rate was caught only by the reference-answer check. Both checks matter.
 
 ## What Side Atlas will not do
 
-Side Atlas does not judge tax residency, calculate tax owed, assess whether withholding was correct, suggest a set-aside rate, or provide tax or investment advice.
+No tax-residency judgments, tax-owed calculations, withholding-correctness judgments, or tax or investment advice.
 
-This demo uses fictional data, some simulated fee assumptions, and no real bank or platform connections. Growth coaching is roadmap only.
+The demo uses fictional data, some simulated fees, and no real bank or platform connections.
 
 Estimate only — not tax, legal, or financial advice.
-
-## 中文简介
-
-Side Atlas（副业图谱）把分散在接单、创作和内容平台上的副业收入放进同一本账，方便你看清每个平台、每个月的收入变化。  
-平台抽成、提现或支付手续费、平台代扣税会分开列出，非美元收入则按每笔记录当天的汇率换算成美元，日期和汇率都有据可查。  
-税务层帮你整理可能需要准备的事项：哪些国家已经代扣税、按你自己选定的比例预留多少，以及下一个美国预估税缴款截止日。  
-你可以用中文或英文询问收入和扣款，也可以把月度或季度报告交给会计师；回答里的数字来自计算步骤，不由模型编造。  
-目前演示使用虚构数据，不连接真实银行或平台，也不替你判断税务居民身份或计算应缴税额；所有估算都不构成税务、法律或财务建议。
 ---
+
+**Live demo:** LIVE_URL_TBD · **Pitch script:** [`docs/pitch_script.md`](docs/pitch_script.md) · **Submission:** [`docs/submission.md`](docs/submission.md)
 
 ## How it works
 
-Side Atlas is a tool-calling agent. Every model call goes through the [Nicrron API](https://nicrron.ai) (OpenAI-compatible) to `anthropic/claude-fable-5-1` at temperature 0, and every run is traced into [PRISM by Block Convey](https://prism.blockconvey.com).
+Side Atlas is a tool-calling agent behind a small web app. Every model call goes through the [Nicrron API](https://nicrron.ai) (OpenAI-compatible) at temperature 0, and every run is traced into [PRISM by Block Convey](https://prism.blockconvey.com).
 
-| | v1 — the model does the math | v2 — code does the math |
+| | v1: the model does the math | v2: code does the math |
 |---|---|---|
 | Code | `daoshou/agent_v1.py` | `daoshou/agent_v2.py` + `daoshou/ledger.py` |
-| Tools | `find_creator`, `read_platform_export` (raw CSV), `read_fx_rates`, `submit_answer` | `find_creator`, `load_platform`, `convert_currency`, `compute_breakdown`, `compute_set_aside`, `simulate_patreon_ios`, `compare_months`, `get_upwork_contract_fees`, `submit_answer` |
+| Tools | `find_creator`, `read_platform_export` (raw CSV), `read_fx_rates`, `submit_answer` | `find_creator`, `load_platform`, `convert_currency`, `compute_breakdown`, `compute_set_aside`, `tax_items`, `form_check`, `compare_months`, `get_fee_details`, `submit_answer`, … |
 | Math | Inside the model | `Decimal`, rounded half-up to cents only when reported |
-| Missing exchange rate | Borrows a nearby day's rate and answers anyway | `convert_currency` raises `MissingFXRate`; the agent refuses and PRISM alerts |
+| Missing exchange rate | Borrows a nearby day's rate and answers anyway | `convert_currency` raises `MissingFXRate`; the agent refuses and the run is marked failed in PRISM |
+| Model | Claude Fable 5.1 | Claude Fable 5.1, then Claude Opus 5.5 |
 
-A monthly-total question for the demo persona runs 9 tool steps in v2: look up the creator, load each platform, convert currencies, break down deductions, submit.
+`daoshou/prism_tracing.py` sends each run to PRISM three ways:
+- a run-level trace (`/api/traces`);
+- the span tree of every LLM and tool call (`/api/spans/ingest`), which is the Sessions → Steps tab;
+- a trajectory (`/api/trajectories`).
 
-`daoshou/prism_tracing.py` sends each run to PRISM three ways: a run-level trace (`/api/traces`), the span tree of every LLM and tool call (`/api/spans/ingest`, shown on the Sessions → Steps tab) and a trajectory (`/api/trajectories`). A run is marked failed when a tool raises or when its answer does not match the reference answer, which is what PRISM's Root Cause clusters and error-rate alerts work from.
+A run is marked failed when a tool raises or when its answer does not match the reference answer. That failure signal is what PRISM's Root Cause clusters and alerts work from.
+
+The web app (`web/`, plain HTML + ES modules, no build step) is served by FastAPI (`api/main.py`). Every money figure on screen comes from `daoshou/ledger.py` through the API. `POST /api/ask` streams the v2 agent's steps live as server-sent events.
 
 ## PRISM proofs (Money Operations track)
 
-| Requirement | How Side Atlas shows it |
-|---|---|
-| **Sessions** — one run with 6+ tool calls on the Steps tab | A v2 monthly-total question walks every platform, conversion, breakdown and set-aside step |
-| **Alert** — fires on a real run | The v2 currency tool fails on a date with no rate; the run is marked failed and the error-rate alert fires |
-| **Root Cause** — cluster of 3+ failed runs, then v2 fixes them | v1's fabricated-rate answers cluster under one cause; v2 on the same inputs refuses instead of guessing |
+| Requirement | What we show | Screenshot |
+|---|---|---|
+| **Sessions**: one run with 6+ tool calls on the Steps tab | A v2 monthly-total run for Moon Spirit: 17 steps, each tool call with its input and output | [`01-sessions-steps-v2.jpg`](docs/prism_screens/01-sessions-steps-v2.jpg) |
+| **Alert**: fires on a real run | Rules on failed runs for agent `daoshou-v2`. A missing exchange rate stops the run, which is marked failed, so a person is alerted instead of a number being guessed. PRISM's trace-failure alert fired on real runs | [`02-alert-rules.jpg`](docs/prism_screens/02-alert-rules.jpg) |
+| **Root Cause**: 3+ failed runs clustered, then v2 on the same inputs | Clusters: `daoshou-v1` has 11 failed runs (cause class *prompt*, evidence *likely*); `daoshou-v2` has the deliberate `MissingFXRate` stops (cause class *tool*). On the 9 questions v1 failed, v2 scored 9/9 | [`03-root-cause-v1-cluster.jpg`](docs/prism_screens/03-root-cause-v1-cluster.jpg), [`04-root-cause-clusters.jpg`](docs/prism_screens/04-root-cause-clusters.jpg) |
+| Per-trace analysis | PRISM's AI rated v1's missing-rate runs CRITICAL/HIGH ("AI agent fabricated detailed freelancer earnings data") and v2 on the same inputs LOW ("Agent correctly refused … due to missing exchange rate") | [`05-trace-analysis-v1-critical.jpg`](docs/prism_screens/05-trace-analysis-v1-critical.jpg), [`06-trace-analysis-v2-low.jpg`](docs/prism_screens/06-trace-analysis-v2-low.jpg) |
 
 ## Evaluation
 
-The first test set in [`daoshou_testdata/`](daoshou_testdata/README.md) has 9 fictional creators, 5 platforms with deliberately different export formats, July–September 2026, and 64 questions with reference answers (39 in Chinese, 25 in English). `daoshou_testdata/tools/check_answers.py` recomputes every answer independently: 64/64 match. Fiverr, Freelancer.com and Contra are being added.
+The test set in [`daoshou_testdata/`](daoshou_testdata/README.md) covers:
+- 12 fictional creators across 8 platforms, each with its own deliberately messy export format;
+- July–September 2026;
+- 89 questions with reference answers.
 
-| Version (dry run, Claude Fable 5.1) | Correct | Failures |
-|---|---|---|
-| v1 | 61 / 64 | 3: Kiki's September questions, where one record's date has no exchange rate and the model invented a rate |
-| v2 | 64 / 64 | none; the 3 missing-rate questions are refused with a `MissingFXRate` error |
+`daoshou_testdata/tools/check_answers.py` recomputes every answer independently.
 
-Per-question results: `results/v1_all_dry.jsonl`, `results/v2_all_dry.jsonl`.
+| Run | Model | Correct | Notes |
+|---|---|---|---|
+| v1, traced into PRISM | Claude Fable 5.1 | 72 / 81 | 6 of the 9 failures invented an exchange rate for a date with no rate |
+| v2 on exactly the questions v1 failed, traced | Claude Fable 5.1 | 9 / 9 | Missing-rate questions refused with `MissingFXRate` |
+| v2, full set (dry run) | Claude Opus 5.5 | 89 / 89 | |
+
+Per-question results are in `results/*.jsonl`.
 
 ## Run it
 
 ```bash
 python3.13 -m venv .venv && .venv/bin/pip install -r requirements.txt
-cp .env.example .env        # add your PRISM and Nicrron keys
-.venv/bin/python scripts/smoke_test.py                                  # one traced run, checks both connections
-.venv/bin/python scripts/run_batch.py --version v2 --pilot --no-trace   # 6 questions, not sent to PRISM
-.venv/bin/python scripts/run_batch.py --version v1 --all --workers 8    # every question, traced into PRISM
+cp .env.example .env                    # add your PRISM and Nicrron keys
+.venv/bin/uvicorn api.main:app --port 8811
+# open http://127.0.0.1:8811/
 ```
+
+- **Replay mode:** `http://127.0.0.1:8811/#ask?replay=1` replays a recorded real traced run on the Ask Atlas screen, so no model call is made. Useful offline or without keys.
+- **Batch evaluation:**
+  ```bash
+  .venv/bin/python scripts/run_batch.py --version v2 --all --no-trace --workers 8   # not sent to PRISM
+  .venv/bin/python scripts/run_batch.py --version v1 --all --workers 8              # traced into PRISM
+  ```
 
 PRISM analyses up to 200 runs a day per workspace, so use `--no-trace` while iterating.
 
 ## Repository layout
 
 ```
-daoshou/                 agent code (internal codename 到手 Daoshou)
+api/main.py              FastAPI: ledger, tax items, forms, report, streamed Ask
+daoshou/                 agent code (internal codename)
   prism_tracing.py       Nicrron tool-calling loop + PRISM tracing
   agent_v1.py            v1: raw exports, the model does the math
   agent_v2.py            v2: tools do the math, the model orchestrates
-  ledger.py              deterministic ledger: parsing, FX, fee breakdown
-  data.py                reads the fictional test data
-  grading.py             compares an answer with the reference answer
-scripts/
-  run_batch.py           runs questions, grades them, traces each run
-  smoke_test.py          end-to-end connection check
-  astra.py               product copy via GPT-6 Astra on Nicrron
-daoshou_testdata/        fictional platform exports, FX rates, questions + answers
-docs/                    product fact sheet, PRISM API notes
+  ledger.py              deterministic ledger: parsing, FX, fees, tax items, form check
+  data.py, grading.py    test-data access, answer grading
+web/                     the Side Atlas app (Overview, Ledger, Tax, Ask Atlas)
+scripts/                 run_batch.py, smoke_test.py, astra.py (copy), gen_image.py (mascot)
+daoshou_testdata/        fictional platform exports, FX rates, 89 questions + answers
+design/                  design kit (tokens, spec, prototype), mascot, logo, references
+docs/                    fact sheet, Reddit research, PRISM notes + screenshots, pitch, submission
 results/                 batch results (JSONL)
 ```
 
 ## Built with
 
-- **Nicrron API**: Claude Fable 5.1 runs the agent; GPT-6 Astra wrote the product copy above.
-- **PRISM by Block Convey**: tracing, root-cause clustering and alerts.
+- **Nicrron API:**
+  - Claude Fable 5.1 and Claude Opus 5.5 run the agent;
+  - GPT-6 Astra wrote all product copy;
+  - Google nano-banana-pro drew the Atlas mascot and icon.
+- **PRISM by Block Convey:** tracing, alerts, root-cause clustering and per-trace analysis.
 - Built at **MONEY TALKS 2** (AI × Finance hackathon, New York, October 17 2026), Money Operations track.
 
-All data is fictional and some fee rates are simulated. Estimate only — not tax, legal, or financial advice.
+All data is fictional and some fees are simulated. Estimate only — not tax, legal, or financial advice.
