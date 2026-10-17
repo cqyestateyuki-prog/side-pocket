@@ -157,15 +157,18 @@ class TracedAgent:
             "start_time": run_start, "end_time": _now(), "duration_ms": total_ms,
             "status": "error" if failed else "ok",
         })
-        self._post("/api/spans/ingest", {"trace_id": trace_id, "project_id": self.project_id,
-                                         "session_id": session, "spans": spans})
-        # One /api/traces record per run so model, tokens and cost show up in Traces.
+        # The run-level trace goes first: it is what carries agent identity, and a
+        # trace record created implicitly by the span batch would not have it.
         self._post("/api/traces", {
             "project_id": self.project_id, "trace_id": trace_id, "model": self.model,
             "input_messages": [{"role": "user", "content": user_input}], "output_message": final_text,
             "latency_ms": int(total_ms), "token_count_input": tokens_in, "token_count_output": tokens_out,
             "agent_id": self.agent_id, "agent_name": self.agent_name, "session_id": session,
             "metadata": {**meta, "final_status": "error" if failed else "success"},
+        })
+        self._post("/api/spans/ingest", {
+            "trace_id": trace_id, "project_id": self.project_id, "session_id": session, "spans": spans,
+            "metadata": {**meta, "agent_id": self.agent_id, "agent_name": self.agent_name},
         })
         traj = self._post("/api/trajectories", {
             "project_id": self.project_id, "conversation_id": session, "request_id": trace_id,

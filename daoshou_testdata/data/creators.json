@@ -1,0 +1,145 @@
+[
+  {
+    "creator_id": "C01",
+    "name": "月之灵",
+    "profile": "VTuber，同时在 Upwork 接设计稿（demo 主角）",
+    "tax_country": "US",
+    "set_aside_rate": 0.25,
+    "active_months": [
+      "2026-07",
+      "2026-08",
+      "2026-09"
+    ],
+    "accounts": {
+      "bilibili": "bili_330121",
+      "youtube": "UC-yzl-moonspirit",
+      "twitch": "yuezhiling_tv",
+      "patreon": "yuezhiling",
+      "upwork": "moonspirit_design"
+    }
+  },
+  {
+    "creator_id": "C02",
+    "name": "小鹿",
+    "profile": "只在 B 站直播的中文主播",
+    "tax_country": "CN",
+    "set_aside_rate": 0.0,
+    "active_months": [
+      "2026-07",
+      "2026-08",
+      "2026-09"
+    ],
+    "accounts": {
+      "bilibili": "bili_552047"
+    }
+  },
+  {
+    "creator_id": "C03",
+    "name": "Maya Chen",
+    "profile": "只用美国平台的游戏主播",
+    "tax_country": "US",
+    "set_aside_rate": 0.3,
+    "active_months": [
+      "2026-07",
+      "2026-08",
+      "2026-09"
+    ],
+    "accounts": {
+      "youtube": "UC-mayachen-plays",
+      "twitch": "mayachenplays",
+      "patreon": "mayachen"
+    }
+  },
+  {
+    "creator_id": "C04",
+    "name": "阿柚",
+    "profile": "中英双平台 VTuber，YouTube 有美国预扣税",
+    "tax_country": "CN",
+    "set_aside_rate": 0.1,
+    "active_months": [
+      "2026-07",
+      "2026-08",
+      "2026-09"
+    ],
+    "accounts": {
+      "bilibili": "bili_771390",
+      "youtube": "UC-ayou-vt"
+    }
+  },
+  {
+    "creator_id": "C05",
+    "name": "Leo Park",
+    "profile": "主播，9 月有一笔 Super Chat 退款",
+    "tax_country": "US",
+    "set_aside_rate": 0.28,
+    "active_months": [
+      "2026-07",
+      "2026-08",
+      "2026-09"
+    ],
+    "accounts": {
+      "youtube": "UC-leopark-live",
+      "twitch": "leoparklive"
+    }
+  },
+  {
+    "creator_id": "C06",
+    "name": "Nina Rossi",
+    "profile": "Upwork 自由设计师，5 个合同抽成各不相同",
+    "tax_country": "US",
+    "set_aside_rate": 0.28,
+    "active_months": [
+      "2026-07",
+      "2026-08",
+      "2026-09"
+    ],
+    "accounts": {
+      "upwork": "nina_rossi_studio"
+    }
+  },
+  {
+    "creator_id": "C07",
+    "name": "墨白",
+    "profile": "画师主播，8 月有一笔总督大额收入，Patreon iOS 订阅占比高",
+    "tax_country": "CA",
+    "set_aside_rate": 0.2,
+    "active_months": [
+      "2026-07",
+      "2026-08",
+      "2026-09"
+    ],
+    "accounts": {
+      "bilibili": "bili_908163",
+      "patreon": "mobai_art"
+    }
+  },
+  {
+    "creator_id": "C08",
+    "name": "Sam Ito",
+    "profile": "创作者兼自由职业者，8 月没有任何收入，YouTube 有美国预扣税",
+    "tax_country": "JP",
+    "set_aside_rate": 0.15,
+    "active_months": [
+      "2026-07",
+      "2026-09"
+    ],
+    "accounts": {
+      "youtube": "UC-samito-makes",
+      "patreon": "samitomakes",
+      "upwork": "sam_ito_dev"
+    }
+  },
+  {
+    "creator_id": "C09",
+    "name": "Kiki",
+    "profile": "告警测试用户：9 月有一条 B 站记录落在缺汇率的日期",
+    "tax_country": "US",
+    "set_aside_rate": 0.25,
+    "active_months": [
+      "2026-09"
+    ],
+    "accounts": {
+      "bilibili": "bili_123987"
+    }
+  }
+]

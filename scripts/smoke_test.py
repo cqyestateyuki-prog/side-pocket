@@ -1,5 +1,6 @@
 """End-to-end setup check: one Nicrron tool-calling run, traced into PRISM."""
 import sys
+import uuid
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -43,6 +44,6 @@ agent = TracedAgent(
 )
 
 res = agent.run("What did I earn in USD from YouTube and Bilibili this month?",
-                session_id="setup-smoke-1")
+                session_id=f"setup-smoke-{uuid.uuid4().hex[:6]}")
 print({k: v for k, v in res.items() if k != "output"})
 print(res["output"])
