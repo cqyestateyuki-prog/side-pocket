@@ -1,6 +1,6 @@
 # Side Atlas · 3-minute pitch (EN / 中文)
 
-Deck: 1 cover · 2 problem · 3 demo video (backup) · 4 ledger · 5 tax · 6 failure · 7 PRISM · 8 fix · 9 close.
+Deck: 1 cover · 2 problem · 3 demo video (backup) · 4 ledger · 5 tax · 6 failure · 7 PRISM · 8 v1 vs v2 · 9 fix · 10 close.
 
 ## 0:00–0:20 · Slides 1–2 · Opening
 
@@ -52,13 +52,19 @@ Deck: 1 cover · 2 problem · 3 demo video (backup) · 4 ledger · 5 tax · 6 fa
 
 **中文：** 有意思的是，PRISM 的分析认为 v1 的算术是对的，因为加法本身没错。只有我们用标准答案核对，才发现汇率是编的。两层检查都需要。
 
-## 2:20–2:45 · Slide 8 · The fix (switch to the Alerts page when you mention the alert)
+## 2:15–2:25 · Slide 8 · v1 vs v2 (same question)
+
+**EN:** Same question, same data. v1 borrowed the August 20 rate and answered 3,051.80 dollars. v2 stopped at the missing rate and asked for it. PRISM rated the first critical and the second compliant.
+
+**中文：** 同一道题、同一份数据。v1 借用了 8 月 20 日的汇率，答出 3,051.80 美元；v2 在缺汇率的地方停下来，要求补数据。PRISM 给前者打“严重”，给后者打“合规”。
+
+## 2:25–2:45 · Slide 9 · The fix (switch to the Alerts page when you mention the alert)
 
 **EN:** In version two, code does every calculation, and the model only calls the tools and explains the results. When data is missing, the run stops, names the record, and our error-rate alert fires. It fired on a real run at 12.5%, against a 5% threshold. Version two got 9 of 9 on the questions v1 failed, and 89 of 89 on our fictional test set.
 
 **中文：** 第二版里，所有计算都由代码完成，模型只负责调用工具和解释结果。缺数据时，运行会停下，指出是哪一笔，并触发我们的失败率告警，它在一次真实运行中以 12.5% 超过了 5% 的门槛。第二版在 v1 错的 9 题上全对，89 道测试题也全对。
 
-## 2:45–3:00 · Slide 9 · Close
+## 2:45–3:00 · Slide 10 · Close
 
 **EN:** Side Atlas gives side earners one ledger they can trust. When it comes to your income and your taxes, every number needs a source, not a confident guess. Thank you.
 
