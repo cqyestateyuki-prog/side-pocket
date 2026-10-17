@@ -98,8 +98,11 @@ class TracedAgent:
 
     def run(self, user_input: str, *, session_id: str | None = None, max_iterations: int = 15,
             metadata: dict | None = None, tool_impls: dict[str, Callable[..., Any]] | None = None,
-            grade: Grader | None = None) -> dict:
+            grade: Grader | None = None, on_step: Callable[[dict], None] | None = None) -> dict:
+        """Run the tool loop once and trace it. `on_step`, if given, receives each LLM and
+        tool step as it finishes (used to stream progress to the UI)."""
         impls = tool_impls or self.tool_impls
+        emit = on_step or (lambda _step: None)
         trace_id = str(uuid.uuid4())
         session = resolve_session(session_id, str(uuid.uuid4()))
         root_id = str(uuid.uuid4())
@@ -140,6 +143,8 @@ class TracedAgent:
                 "output_summary": (msg.content or ", ".join(tc.function.name for tc in tool_calls))[:200],
                 "duration_ms": int(dur), "token_count": ti + to, "status": "success",
             })
+            emit({"type": "llm", "name": self.model, "status": "ok", "duration_ms": int(dur),
+                  "tool_calls": [tc.function.name for tc in tool_calls], "text": msg.content or ""})
             if not tool_calls:
                 final_text = msg.content or ""
                 break
@@ -172,6 +177,8 @@ class TracedAgent:
                     "duration_ms": int(tdur), "token_count": 0,
                     "status": "error" if error else "success",
                 })
+                emit({"type": "tool", "name": tc.function.name, "args": args, "result": result,
+                      "status": "error" if error else "ok", "error": error, "duration_ms": int(tdur)})
                 messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
 
         graded_ok, grade_reason = grade(final_text, tool_errors) if grade else (True, None)
