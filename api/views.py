@@ -118,12 +118,15 @@ def book(creator: dict, months: list[str], currency: str = "USD") -> dict:
                     row.update({"fx": None, **({"fx_cny": None} if currency == "CNY" else {}),
                                 **{f"{k}_{sfx}": None for k in MONEY}, "issue": "missing_fx"})
                     rows.append(row)
-                    issues.append({"type": "missing_fx", "currency": e.currency, "date": rec.date,
-                                   "platform": ledger.LABEL[p],
-                                   "record": {"type": rec.kind, "ref": ref, "currency": rec.currency,
-                                              "amount": float(rec.gross)},
-                                   "message": f"No {e.currency}/USD rate for {rec.date}; this record is left out "
-                                              f"of the totals until the rate is added."})
+                    issue = {"type": "missing_fx", "currency": e.currency, "date": rec.date,
+                             "platform": ledger.LABEL[p],
+                             "record": {"type": rec.kind, "ref": ref, "currency": rec.currency,
+                                        "amount": float(rec.gross)},
+                             "message": e.detail or f"No {e.currency}/USD rate for {rec.date}; this record is left "
+                                                    f"out of the totals until the rate is added."}
+                    if e.reason:  # uploaded statements say why: not in the rate file, ECB unavailable, …
+                        issue["reason"] = e.reason
+                    issues.append(issue)
                     continue
                 vals = {"gross": conv["gross"], "platform_fee": conv["platform_fee"],
                         "payout_fee": conv["payment_fee"], "withheld": conv["withheld"], "net": conv["net"]}
@@ -274,14 +277,15 @@ def report(c: dict, period: str, months: list[str], after: str, currency: str = 
         mb = book(c, [m], currency)
         by_month.append({"month": m, **money(mb["total"]), "complete": not mb["issues"],
                          "platforms": len(mb["per"])})
-    used = {(s["currency"], s["rate_date"], s["rate"]) for r in bk["rows"]
+    used = {(s["currency"], s["rate_date"], s["rate"], s.get("source")) for r in bk["rows"]
             for s in (r.get("fx"), r.get("fx_cny")) if s}
     return {"title": f"Side income report — {c['name']} — {period}", "creator": profile(c), "period": period,
             "months": months, "generated_on": date.today().isoformat(), "currency": currency,
             "complete": not bk["issues"], "issues": bk["issues"],
             "totals": money(bk["total"]), "waterfall": waterfall(bk["total"]),
             "by_month": by_month, "by_platform": platforms, "best_keep_rate": best(platforms),
-            "fx_used": [{"currency": cur, "date": d, "rate": rate} for cur, d, rate in sorted(used)],
+            "fx_used": [{"currency": cur, "date": d, "rate": rate, **({"source": src} if src else {})}
+                        for cur, d, rate, src in sorted(used, key=lambda u: u[:3])],
             "tax": tax(c, months, period, after, currency),
             "assumptions_note": ledger.assumptions().get("note"), "disclaimer": DISCLAIMER}
 

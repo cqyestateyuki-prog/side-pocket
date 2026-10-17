@@ -11,6 +11,7 @@ in memory, answers, and keeps nothing:
 - the only outbound calls are ECB reference rates (currency codes and a date range, see
   daoshou/fx.py) and, for /ask, the model (totals only) and PRISM (content-free).
 
+    GET  /api/personal/formats    how files are recognised (static, no user data)
     POST /api/personal/detect     what each file is
     POST /api/personal/overview   one month          (month)
     POST /api/personal/ledger     one month's records (month)
@@ -42,6 +43,7 @@ from daoshou.prism_tracing import TracedAgent, default_model, nicrron_client
 
 PREFIX = "/api/personal"
 MAX_BODY = 4_000_000
+MAX_FILES = 40
 NO_STORE = [(b"cache-control", b"no-store, max-age=0"), (b"pragma", b"no-cache")]
 
 router = APIRouter(prefix=PREFIX)
@@ -56,7 +58,7 @@ class StatementFile(BaseModel):
 
 
 class PersonalRequest(BaseModel):
-    files: list[StatementFile] = Field(min_length=1, max_length=40)
+    files: list[StatementFile] = Field(min_length=1, max_length=MAX_FILES)
     tax_home: Literal["US", "CN", "BOTH"] = "US"
     currency: Literal["USD", "CNY"] = "USD"
     set_aside_rate: float = Field(0.25, ge=0, le=0.6)
@@ -157,6 +159,13 @@ def _tax(c: dict, months: list[str], period: str, after: str, req: PersonalReque
 
 
 # ---------------------------------------------------------------- endpoints
+
+@router.get("/formats")
+def formats() -> dict:
+    """How files are recognised, so the browser can relabel the account column before uploading."""
+    return {**statements.formats(), "limits": {"max_files": MAX_FILES, "max_body_bytes": MAX_BODY,
+                                               "max_skipped_rows_listed": statements.MAX_SKIPPED}}
+
 
 @router.post("/detect")
 def detect(req: PersonalRequest) -> dict:

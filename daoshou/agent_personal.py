@@ -3,13 +3,17 @@
 Same rule as v2: code does the math, the model orchestrates and explains. On top of that, the
 model only ever sees totals. The tools return per-platform and per-month aggregates, the tax
 layer and the forms check; never a record, a date of payment, an order or contract id, an
-account name or a client. Accounts are shown as "account 1", "account 2". The question the
+account name or a client. The browser already replaces account names with its own labels before
+uploading; on top of that, accounts reach the model only as "acct-NNNN" codes drawn from a salt
+made fresh for each request, so not even the browser's labels get through. The question the
 user types is the one thing that reaches the model as they wrote it.
 
 Runs are traced to PRISM content-free (see prism_tracing.py).
 """
 from __future__ import annotations
 
+import hashlib
+import secrets
 from decimal import Decimal
 
 from . import ledger, tax_home
@@ -88,10 +92,24 @@ def _missing(e: ledger.MissingFXRate) -> ToolError:
                      f"converted and no rate may be estimated")
 
 
+def pseudonyms(accounts: dict[str, list[str]], salt: bytes) -> dict[tuple[str, str], str]:
+    """(platform, account) -> "acct-NNNN", 4 digits from a salted hash; a clash takes the next free code."""
+    out, used = {}, set()
+    for platform, names in accounts.items():
+        for name in names:
+            n = int(hashlib.sha256(salt + f"{platform}\0{name}".encode()).hexdigest(), 16) % 10_000
+            while n in used:
+                n = (n + 1) % 10_000
+            used.add(n)
+            out[(platform, name)] = f"acct-{n:04d}"
+    return out
+
+
 def make_tools(creator: dict, *, currency: str, home: str, today: str, state: dict) -> dict:
     """Tools bound to one request's upload. `creator` is statements.profile(...)."""
     sfx = currency.lower()
     cents = ledger.cents
+    codes = pseudonyms(creator["account_list"], secrets.token_bytes(16))
 
     def months_of(period: str) -> list[str]:
         try:
@@ -135,9 +153,8 @@ def make_tools(creator: dict, *, currency: str, home: str, today: str, state: di
                 issues.append({"month": m, "records_without_a_rate": n})
         return {"currency": currency, "tax_home": home, "set_aside_rate": creator["set_aside_rate"],
                 "months": creator["active_months"],
-                "platforms": [{"platform": ledger.LABEL[p],
-                               "accounts": [f"account {i}" for i in range(1, len(accts.split(", ")) + 1)]}
-                              for p, accts in creator["accounts"].items()],
+                "platforms": [{"platform": ledger.LABEL[p], "accounts": [codes[(p, a)] for a in accts]}
+                              for p, accts in creator["account_list"].items()],
                 "months_with_missing_rates": issues}
 
     def compute_breakdown(month: str) -> dict:

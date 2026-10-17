@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from types import SimpleNamespace
 
 import pytest
@@ -106,6 +107,7 @@ def test_ask_sends_totals_only_and_traces_content_free(client, monkeypatch, trac
     assert events[-2][1]["answer"] == 5341.79 and events[-1][1]["failed"] is False
 
     tool_output = "".join(model.seen[1:])  # everything after the first call is tool results
+    assert re.search(r"acct-\d{4}", model.seen[1])  # get_summary: the server's own 4-digit codes
     for secret in ACCOUNT_IDS + ["FO226285", "UW-2101", "Lumen Studio", "2026-09-16"]:
         assert secret not in tool_output.replace(QUESTION, ""), secret
 

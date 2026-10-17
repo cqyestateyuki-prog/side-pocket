@@ -1,144 +1,250 @@
 # Your own statements: API
 
-Backend for "bring your own statements". The screens for it are waiting on the design kit, so
-this is the contract the UI will build on.
+This is the contract the frontend builds on. Implementation: `api/personal.py`, plus
+`daoshou/statements.py`, `daoshou/fx.py`, `daoshou/tax_home.py` and `daoshou/agent_personal.py`.
 
 ## Flow
 
-1. The user drops statement files. The browser keeps them (IndexedDB), never the server.
-2. `POST /api/personal/detect` says what each file is: platform, accounts, months, rows, skipped rows.
-3. Every page request sends the files again with the settings. The server parses them in memory,
-   answers, and forgets them.
+1. On start, call `GET /api/personal/formats` once.
+2. When the user drops files, the browser:
+   - finds each file's header row and platform with `formats`;
+   - replaces every value in the platform's `account_column` with its own stable label
+     (`acct-NNNN`, 4 digits from a salted hash the browser keeps);
+   - may drop every column that isn't the account column or in `columns`, because the server
+     ignores them;
+   - stores the result in IndexedDB.
 
-## Request (all endpoints)
+   The server never sees real account names.
+3. `POST /api/personal/detect` shows what was recognised.
+4. Every page request sends the stored files plus the settings. The server computes in memory
+   and keeps nothing.
+
+The server doesn't care what the account values look like. They only group rows. Before
+anything reaches the model, it swaps them again for codes of its own (see `/ask`).
+
+## `GET /api/personal/formats`
+
+Static, with no user data.
+
+```json
+{
+  "matching": {"header_scan_lines": 10,
+               "rule": "A file is a platform's statement when its header row (one of the first 10 lines) contains every column in `columns`.",
+               "normalise": ["drop a byte-order mark (U+FEFF)", "full-width brackets （） become ()",
+                             "remove all whitespace", "lowercase"]},
+  "statements": [
+    {"platform": "bilibili", "label": "B站", "account_column": "账号ID",
+     "columns": ["日期", "收入类型", "流水(元)", "平台分成(元)", "已代扣个税(元)", "实际到账(元)"],
+     "date_column": "日期", "date_format": "%Y/%m/%d",
+     "currency": "CNY", "currency_column": null, "ref_column": null},
+    {"platform": "freelancer", "label": "Freelancer.com", "account_column": "username",
+     "columns": ["date", "project_id", "currency", "project_amount", "entry_type"],
+     "date_column": "date", "date_format": "%Y%m%d",
+     "currency": null, "currency_column": "currency", "ref_column": "project_id"}
+    // … all 8 platforms: bilibili, youtube, twitch, patreon, upwork, fiverr, freelancer, contra
+  ],
+  "rate_files": [
+    {"columns": ["date", "cny_per_usd"], "direction": "CNY per 1 USD", "date_format": "%Y-%m-%d"},
+    {"columns": ["date", "<ISO currency code>, …"], "example": ["date", "EUR", "GBP"],
+     "direction": "USD per 1 unit", "date_format": "%Y-%m-%d"}
+  ],
+  "limits": {"max_files": 40, "max_body_bytes": 4000000, "max_skipped_rows_listed": 20}
+}
+```
+
+Notes on the fields:
+- `date_format` is a Python strptime pattern. Fiverr's date is a full timestamp.
+- The platform's currency is either fixed (`currency`) or read per row (`currency_column`).
+- Match a header like this: normalise each header cell, then check that every normalised name in
+  `columns` is present. Platforms are tried in the order listed.
+- `label` is the ledger label. The UI shows "B站" as "Bilibili".
+
+## Request body (every POST)
 
 ```json
 {
   "files": [{"name": "bilibili_income.csv", "content": "账号ID,日期,…"},
             {"name": "export.csv", "content_base64": "…"}],
-  "tax_home": "US",              // "US" | "CN" | "BOTH"
-  "currency": "USD",             // "USD" | "CNY": the currency amounts are shown in
-  "set_aside_rate": 0.25,        // 0 to 0.6, chosen by the user
-  "payout_methods": {"fiverr": "PayPal"},
-  "reference_rates": true,       // false: only rate files the user uploaded
-  "month": "2026-09",            // overview, ledger. Default: latest month in the files
-  "period": "2026-Q3",           // tax-items, forms, report. Default: that month's quarter
-  "after": "2026-10-17"          // deadlines after this date. Default: today
+  "tax_home": "US",          // "US" | "CN" | "BOTH"              default "US"
+  "currency": "USD",         // "USD" | "CNY" (display)          default "USD"
+  "set_aside_rate": 0.25,    // 0–0.6, the user's choice          default 0.25
+  "payout_methods": {"fiverr": "PayPal"},   // platform -> method; PayPal sets the duplicate-1099-K flag
+  "reference_rates": true,   // false = only uploaded rate files are used
+  "month": "2026-09",        // overview, ledger; default = latest month in the files
+  "period": "2026-Q3",       // tax-items, forms, report: YYYY-MM | YYYY-Qn | YYYY-MM~YYYY-MM; default = that month's quarter
+  "after": "2026-10-17"      // deadlines after this date; default = today
 }
 ```
 
-`content` is text. `content_base64` is the file's bytes, read as UTF-8 and then GB18030 (what
-Excel in China usually saves). Up to 40 files and 4 MB per request.
+- `content` is the file as text. `content_base64` is its bytes, read as UTF-8 and then GB18030.
+- Limits: 1 to 40 files, 4 MB body.
+- `/ask` also takes `"question"` (up to 2000 characters).
+
+## Every POST response adds
+
+- `import`: what was read (also the whole `/detect` response).
+- `settings`: the settings used, echoed back.
+
+```json
+"import": {
+  "files": [
+    {"file": "bilibili_income.csv", "kind": "statement", "platform": "bilibili", "label": "B站",
+     "accounts": ["acct-4821"], "rows": 42, "records": 42, "skipped_rows": 0,
+     "skipped": [{"line": 7, "reason": "a date or amount on this row isn't in the statement's usual format"}],
+     "first_date": "2026-07-01", "last_date": "2026-09-30", "months": ["2026-07", "2026-08", "2026-09"],
+     "currencies": ["CNY"]},
+    {"file": "rates.csv", "kind": "rates", "rows": 92, "skipped_rows": 0, "skipped": [],
+     "rates": {"CNY": {"days": 91, "first_date": "2026-07-01", "last_date": "2026-09-30", "direction": "CNY per 1 USD"}}},
+    {"file": "copy.csv", "kind": "duplicate", "duplicate_of": "bilibili_income.csv", "message": "Same content as another file; counted once.", "rows": 0, "skipped_rows": 0, "skipped": []},
+    {"file": "notes.csv", "kind": "unknown", "message": "These columns don't match a statement Side Atlas can read yet. …", "rows": 0, "skipped_rows": 0, "skipped": []}
+  ],
+  "platforms": [{"platform": "bilibili", "label": "B站", "accounts": ["acct-4821"]}],
+  "months": ["2026-07", "2026-08", "2026-09"], "records": 97,
+  "rate_sources": {"CNY": "your rate file", "EUR": "ECB reference rate"},
+  "rates_note": null,            // a sentence when ECB rates couldn't be loaded
+  "overlaps": [{"platform": "Twitch", "files": ["jul-aug.csv", "aug-sep.csv"], "first_shared_date": "2026-08-15",
+                "message": "Two files cover some of the same dates for one account. …"}]
+}
+```
+
+`kind` is one of `statement`, `rates`, `duplicate`, `unknown` or `empty`. If no file yields a
+record, every page endpoint returns 422 with
+`{"detail": {"message": "None of these files is a statement Side Atlas can read.", "import": {…}}}`.
+
+## Money, rates and issues
+
+- Keys carry the display currency where a response mixes amounts: `net_usd` or `net_cny`.
+  Totals blocks (`totals`, platform rows, `by_month`) are plain `gross`, `platform_fee`,
+  `payout_fee`, `withheld` and `net`, in the response's `currency`.
+- Every converted record carries its rate:
+  ```json
+  "fx":     {"currency": "EUR", "rate": 1.1643, "rate_date": "2026-08-28", "source": "ECB reference rate",
+             "rule": "USD per 1 EUR (USD = amount × rate)"},
+  "fx_cny": {"currency": "CNY", "rate": 6.7208, "rate_date": "2026-08-28", "source": "ECB reference rate",
+             "rule": "CNY per 1 USD (CNY = USD × rate)"}
+  ```
+  - `fx` takes a non-USD record to USD. It is `null` for USD records, and for CNY records when
+    the display is CNY.
+  - `fx_cny` only appears with `currency: "CNY"`. It is `null` for CNY records, which are shown
+    as they are.
+  - `source` is `"your rate file"` or `"ECB reference rate"`.
+  - When `rate_date` differs from the row's `date`, the ECB published nothing that day. The UI
+    shows something like "ECB rate of Fri 28 Aug".
+- A record with no rate keeps `"issue": "missing_fx"`, null amounts, and is left out of every
+  total. The response has `complete: false` and an entry in `issues`:
+  ```json
+  {"type": "missing_fx", "currency": "EUR", "date": "2026-08-21", "platform": "Freelancer.com",
+   "record": {"type": "Project Payment", "ref": "FL-49196", "currency": "EUR", "amount": 491.33},
+   "reason": "not_in_rate_file",
+   "message": "Your rate file has no EUR rate for 2026-08-21, so this record is left out of the totals until you add one."}
+  ```
+  `reason` is one of:
+  - `not_in_rate_file`;
+  - `reference_rates_unavailable` (the ECB fetch failed; nothing is used in its place);
+  - `reference_rates_off`;
+  - `no_reference_rate` (nothing published in the week up to that date).
 
 ## Endpoints
 
-| Endpoint | Returns |
+| Endpoint | Body uses | Response (plus `import`, `settings`) |
+|---|---|---|
+| `GET /formats` | | above |
+| `POST /detect` | `files` | `import`, `settings` only. No rates are fetched |
+| `POST /overview` | `month` | `creator, month, currency, complete, issues, totals, platforms[], best_keep_rate, month_over_month, set_aside` |
+| `POST /ledger` | `month` | `creator, month, currency, complete, issues, rows[], totals, waterfall[]` |
+| `POST /tax-items` | `period, after` | `creator, period, months, currency, complete, issues, tax_withheld_by_platform[], total_tax_withheld_<cur>, total_net_<cur>, set_aside, next_us_estimated_tax_due, items_for_accountant[], forms, note, tax_home, by_country[], assumptions[]` |
+| `POST /forms` | `period` | US in tax home: `creator, period, currency: "USD", months, platforms[], totals_for_platforms_with_forms, platforms_over_1099k_threshold, possible_duplicate_reports, complete, issues, notes, note`. China only: `creator, period, applies: false, note` |
+| `POST /report` | `period, after` | `title, creator, period, months, generated_on, currency, complete, issues, totals, waterfall, by_month[], by_platform[], best_keep_rate, fx_used[], tax, assumptions_note, disclaimer` (`tax` as in tax-items) |
+| `POST /ask` | `question` + all | Server-sent events, below |
+
+All paths start with `/api/personal`.
+
+Shapes in detail:
+- `platforms[]` and `by_platform[]`:
+  `{platform, label, gross, platform_fee, payout_fee, withheld, net, net_rate, share_of_net, records, currencies}`.
+  Some platforms add more: `native_cny` when there is CNY income, `tips` (Fiverr), and
+  `ios_pledges` with `ios_simulation` (Patreon).
+- `rows[]`: `{date, month, platform, platform_label, type, ref, original{currency, gross, platform_fee, payout_fee, withheld, net}, fx, [fx_cny], gross_<cur>, platform_fee_<cur>, payout_fee_<cur>, withheld_<cur>, net_<cur>, [issue]}`.
+- `month_over_month`: `{previous_month, previous_net, change, change_pct, previous_complete}`.
+- `set_aside`: `{rate, amount, base: "net income in USD|CNY", rate_source: "chosen by you"}`.
+- `tax_withheld_by_platform[]`: `{platform, country, tax, withheld_<cur>, [withheld_cny]}`.
+- `next_us_estimated_tax_due`: `{after, due_date, days_left, schedule[]}`, or `null` when the
+  tax home has no US.
+- `forms` inside tax-items: the forms response above, or `{applies: false, note}`.
+- `by_country[]`, one per country in the tax home (US first):
+  ```json
+  {"country": "CN", "label": "China", "forms_apply": false,
+   "deadlines": [{"id": "cn_annual_reconciliation", "label": "China annual individual income tax filing for 2026",
+                  "opens": "2027-03-01", "closes": "2027-06-30", "basis": "real", "source": "…"}],
+   "items": [{"text": "Bilibili withheld ¥235.75 of individual income tax. …", "basis": "real", "source": "…"}]}
+  ```
+  A US deadline is `{id: "us_estimated_tax", label, date, schedule[], basis, source}`.
+- `assumptions[]`: `{topic, basis: "real" | "simulated" | "your choice", text}`.
+- `fx_used[]`: `{currency, date (the rate's date), rate, source}`.
+
+## `POST /api/personal/ask` (SSE)
+
+| Status | When |
 |---|---|
-| `POST /api/personal/detect` | `import` only (no rates fetched) |
-| `POST /api/personal/overview` | same shape as `GET /api/overview` |
-| `POST /api/personal/ledger` | same shape as `GET /api/ledger` |
-| `POST /api/personal/tax-items` | `GET /api/tax-items` plus `tax_home`, `by_country`, `assumptions` |
-| `POST /api/personal/forms` | `GET /api/forms`, or `{"applies": false}` when the tax home has no US |
-| `POST /api/personal/report` | `GET /api/report`, with `tax` as in tax-items |
-| `POST /api/personal/ask` | server-sent events, like `POST /api/ask`, plus `question` in the body |
+| 503 `{"detail": "Ask Atlas isn't available on this server because it has no model key. …"}` | no model key, as on the public deployment |
+| 503 | the server has no PRISM tracing set up |
+| 422 | the question is empty or nothing was readable |
 
-Every response also carries `import` (what was read) and `settings` (what was used).
+Otherwise a `text/event-stream`, with each event's data as JSON:
 
-Money keys carry the display currency where a response mixes amounts: `net_usd` or `net_cny`,
-`total_net_cny`. In CNY, a CNY record is shown as it is; anything else goes to USD at its date's
-rate (`fx`) and then to CNY at the CNY per USD rate for that date (`fx_cny`). US form figures
-(`forms`) are always USD.
-
-### `import`
-
-```json
-{"files": [{"file": "bilibili_income.csv", "kind": "statement", "platform": "bilibili", "label": "B站",
-            "accounts": ["bili_330121"], "rows": 42, "records": 42, "skipped_rows": 0, "skipped": [],
-            "first_date": "2026-07-01", "last_date": "2026-09-30", "months": ["2026-07", "…"],
-            "currencies": ["CNY"]},
-           {"file": "notes.csv", "kind": "unknown", "message": "These columns don't match …"}],
- "platforms": [{"platform": "bilibili", "label": "B站", "accounts": ["bili_330121"]}],
- "months": ["2026-07", "2026-08", "2026-09"], "records": 97,
- "rate_sources": {"CNY": "your rate file"}, "rates_note": null,
- "overlaps": []}
+```
+event: step     data: {"i": 1, "type": "llm", "name": "anthropic/claude-opus-5-5", "status": "ok",
+                       "tool_calls": ["get_summary"], "text": "", "duration_ms": 2100}
+event: step     data: {"i": 2, "type": "tool", "name": "compute_breakdown", "args": {"month": "2026-09"},
+                       "status": "ok" | "error", "error": null | "ToolError: MissingFXRate: …",
+                       "result_summary": "<first 300 chars>", "result": {…} | null, "duration_ms": 3}
+event: answer   data: {"answer": 5341.79 | "Contra" | null, "unit": "USD", "explanation": "…", "text": "<the reply, markdown>"}
+event: done     data: {"trace_id": "…", "session_id": "personal-1a2b3c4d", "failed": false, "error": null,
+                       "tool_steps": 3, "content_free": true}
+event: error    data: {"message": "…"}      (then  event: done  data: {"failed": true})
 ```
 
-`kind` is `statement`, `rates`, `unknown`, `empty` or `duplicate` (same content as an earlier
-file, counted once). `skipped` lists up to 20 rows that couldn't be read, by line number.
-`overlaps` flags two different files that cover the same dates for one account.
-
-### `by_country` (tax-items)
-
-One section per country in the tax home:
-
-```json
-{"country": "CN", "label": "China", "forms_apply": false,
- "deadlines": [{"id": "cn_annual_reconciliation", "opens": "2027-03-01", "closes": "2027-06-30",
-                "basis": "real", "source": "PRC Individual Income Tax Law, Article 11 …"}],
- "items": [{"text": "Bilibili withheld ¥235.75 of individual income tax. …", "basis": "real",
-            "source": "PRC Individual Income Tax Law, Articles 10 and 11"}]}
-```
-
-US: next quarterly estimated tax date (weekends moved to Monday), foreign tax credit for tax
-withheld abroad, US tax withheld, income with nothing withheld, FBAR reminder when there is
-CNY income. China: the March 1 to June 30 annual filing window, prepaid tax withheld by Chinese
-platforms, credit for tax paid abroad, where income is sourced, how China converts foreign
-currency, and W-8BEN (China-only home). `assumptions` lists what the numbers rest on, each
-`real`, `simulated` or `your choice`.
-
-## Recognised files
-
-Recognised by the header row, which may sit under up to 9 title lines. Matching ignores case,
-spaces, a byte-order mark and full-width brackets.
-
-- Statements: the 8 formats in `daoshou/statements.py` (`STATEMENTS`). These follow the bundled
-  sample exports. Real platform exports still need checking against real files.
-- Rate files: `date,cny_per_usd` (CNY per 1 USD), or `date` plus currency-code columns such as
-  `date,EUR,GBP` (USD per 1 unit).
-
-## Exchange rates
-
-Per currency: the user's rate file if they uploaded one, used exactly as given (a date it lacks
-has no rate). Otherwise ECB reference rates from api.frankfurter.dev, crossed through EUR. A
-weekend or holiday record uses the last rate published on or before its date (up to a week
-back), and `rate_date` shows which. A record with no rate is left out of every total and
-listed under `issues` with `complete: false`. It is never estimated.
+The tools are `get_summary`, `compute_breakdown`, `compare_months`, `tax_items`, `form_check`
+and `submit_answer`, and they return totals only. `answer: null` means the agent stopped on
+missing data. `failed: true` with an answer still means a tool failed along the way. `get_summary` lists
+accounts as `acct-NNNN` codes made from a salt that is new on every request, so not even the
+browser's labels reach the model.
 
 ## Privacy: what the server does
 
 - Stores nothing. No database. Nothing is written to disk. Bodies are JSON, because multipart
   uploads can spool to a temp file.
-- `Cache-Control: no-store` and `Pragma: no-cache` on every `/api/personal/*` response,
-  errors included.
+- Sends `Cache-Control: no-store, max-age=0` and `Pragma: no-cache` on every `/api/personal/*`
+  response, errors included.
 - Logs nothing from the body. Inputs are never in the URL. Validation errors don't echo the
-  input. An unexpected error is logged by its class name only.
+  input. An unexpected error returns a generic 500 and is logged by its class name only.
 - Refuses bodies over 4 MB with 413.
-- Outbound calls:
-  - ECB rates: currency codes and a date range only;
-  - for `/ask`, the model gets totals only (per-platform and per-month sums, tax items, form
-    checks; never a record, payment date, order or contract id, account or client name; accounts
-    appear as "account 1");
-  - PRISM gets the run content-free: steps, tool names, timings, token counts, status and
-    error kind, but no question, answer, tool input or output.
-- `/ask` returns 503 with a plain message when the server has no model key (the public
-  deployment). Every other endpoint works without keys.
+- Makes only these outbound calls:
+  - ECB rates: currency codes and a date range;
+  - for `/ask`, the model: totals and the question as typed;
+  - for `/ask`, PRISM: content-free (steps, tool names, timings, tokens, status, error kind;
+    no question, answer, tool input or output).
 
 ## What the server can't promise
 
 - Vercel's platform logs record each request's path, time, status and IP.
-- The question typed into Ask Atlas goes to the model as written. If it contains a name, the
-  model provider sees it.
-- Files in the browser's IndexedDB are as safe as the device and browser profile. Clearing
-  site data removes them.
-- An ECB rate is a published reference rate, not the rate the user's bank or a tax authority
-  used. China, for example, uses the PBOC central parity rate (see `tax_home.py`).
+- The question goes to the model as typed. If it contains a name, the model provider sees it.
+- Files in IndexedDB are as safe as the device and browser profile.
+- The account label is the browser's job. A file uploaded without relabelling arrives with real
+  account names, which the server still keeps away from the model and PRISM.
+- An ECB rate is a published reference rate. It isn't the user's bank rate or a tax authority's
+  rate (China uses the PBOC central parity rate, see `tax_home.py`).
+- The 8 statement formats follow the bundled sample exports. Real platform exports still need
+  checking against real files.
 
 ## Tests
 
-`.venv/bin/python -m pytest -q`, offline. Checks that:
-- each creator's own exports, uploaded, give the demo's numbers on every endpoint;
-- C11's missing EUR rate for 2026-08-21 is reported, not estimated;
-- the ledger matches `ground_truth_breakdown.csv`;
-- `check_answers.py` still scores 89/89;
+`.venv/bin/python -m pytest -q`, offline. Covers:
+- uploads (with the demo rate files) give the demo's numbers for every creator and endpoint, and
+  relabelled or column-trimmed files give the same numbers;
+- C11's missing EUR rate for 2026-08-21 is still reported;
+- the ledger matches `ground_truth_breakdown.csv`, and `check_answers.py` is still 89/89;
+- every converted record has a rate, its date and its source;
+- an ECB failure becomes an issue, not a crash;
 - the privacy behaviour above holds;
-- the model never sees record-level data, and PRISM never sees content.
+- the model sees only totals and 4-digit codes, and PRISM sees no content.

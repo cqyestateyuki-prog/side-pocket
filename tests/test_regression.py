@@ -51,13 +51,20 @@ def test_breakdown_matches_ground_truth(source):
                 assert abs(ledger.cents(got[f]) - float(r[col])) < 0.0101, (cid, month, r["platform"], col)
 
 
+def _plain(items: list[dict], *keys: str) -> list[dict]:
+    """Drop what only uploads add: where a rate came from, why one is missing (and the sentence saying so)."""
+    return [{k: v for k, v in i.items() if k not in keys} for i in items]
+
+
 @pytest.mark.parametrize("cid", CREATORS)
 @pytest.mark.parametrize("month", MONTHS)
 def test_personal_overview_matches_demo(client, cid, month):
     demo = client.get("/api/overview", params={"creator": cid, "month": month}).json()
     mine = client.post("/api/personal/overview", json=request_for(cid, month=month)).json()
-    for key in ("totals", "platforms", "best_keep_rate", "month_over_month", "set_aside", "complete", "issues"):
+    for key in ("totals", "platforms", "best_keep_rate", "month_over_month", "set_aside", "complete"):
         assert mine[key] == demo[key], key
+    assert _plain(mine["issues"], "reason", "message") == _plain(demo["issues"], "message")
+    assert all(i["reason"] == "not_in_rate_file" for i in mine["issues"])
 
 
 def _strip_sources(rows: list[dict]) -> list[dict]:
@@ -94,16 +101,19 @@ def test_c01_q3_report(client):
     q = {"creator": "C01", "period": "2026-Q3", "after": "2026-09-01"}
     demo = client.get("/api/report", params=q).json()
     mine = client.post("/api/personal/report", json=request_for("C01", period="2026-Q3", after="2026-09-01")).json()
-    for key in ("totals", "waterfall", "by_month", "by_platform", "best_keep_rate", "fx_used", "complete", "issues"):
+    for key in ("totals", "waterfall", "by_month", "by_platform", "best_keep_rate", "complete", "issues"):
         assert mine[key] == demo[key], key
+    assert _plain(mine["fx_used"], "source") == demo["fx_used"]
+    assert {u["source"] for u in mine["fx_used"]} == {"your rate file"}
 
 
 def test_c11_august_missing_rate_is_reported_not_estimated(client):
     demo = client.get("/api/overview", params={"creator": "C11", "month": "2026-08"}).json()
     mine = client.post("/api/personal/overview", json=request_for("C11", month="2026-08")).json()
     assert mine["complete"] is False and demo["complete"] is False
-    assert mine["issues"] == demo["issues"]
-    assert [(i["currency"], i["date"]) for i in mine["issues"]] == [("EUR", "2026-08-21")]
+    assert _plain(mine["issues"], "reason", "message") == _plain(demo["issues"], "message")
+    assert [(i["currency"], i["date"], i["reason"]) for i in mine["issues"]] == [("EUR", "2026-08-21",
+                                                                                  "not_in_rate_file")]
     assert mine["totals"] == demo["totals"]
 
 

@@ -33,10 +33,12 @@ class Quote:
 
 class Rates:
     def __init__(self, uploaded: dict[str, dict[str, Decimal]] | None = None,
-                 reference: dict[str, dict[str, Decimal]] | None = None, reference_error: str | None = None):
+                 reference: dict[str, dict[str, Decimal]] | None = None, reference_error: str | None = None,
+                 reference_off: bool = False):
         self.uploaded = uploaded or {}      # currency -> date -> rate
         self.reference = reference or {}    # currency -> publication date -> rate
         self.reference_error = reference_error
+        self.reference_off = reference_off  # the request asked for uploaded rate files only
         self._published = {c: sorted(days) for c, days in self.reference.items()}
 
     def get(self, currency: str, day: str) -> Quote | None:
@@ -51,6 +53,21 @@ class Rates:
         if not earlier or date.fromisoformat(day) - date.fromisoformat(earlier[-1]) > timedelta(days=7):
             return None
         return Quote(self.reference[currency][earlier[-1]], earlier[-1], ECB)
+
+    def missing(self, currency: str, day: str) -> tuple[str, str]:
+        """(reason code, sentence) for a (currency, date) that has no rate. Nothing is ever filled in."""
+        if currency in self.uploaded:
+            return "not_in_rate_file", (f"Your rate file has no {currency} rate for {day}, so this record is left "
+                                        f"out of the totals until you add one.")
+        if self.reference_off:
+            return "reference_rates_off", (f"No rate file covers {currency} and reference rates are turned off, so "
+                                           f"this record is left out of the totals.")
+        if self.reference_error:
+            return "reference_rates_unavailable", (f"ECB reference rates couldn't be loaded, so this {currency} "
+                                                   f"record is left out of the totals for now. Try again later or "
+                                                   f"upload a rate file.")
+        return "no_reference_rate", (f"The ECB published no {currency} rate on {day} or in the week before, so this "
+                                     f"record is left out of the totals until you add a rate file.")
 
     def sources(self) -> dict[str, str]:
         out = {c: UPLOADED for c in self.uploaded}
@@ -92,10 +109,13 @@ def reference_rates(currencies: set[str], first: str, last: str) -> dict[str, di
 def resolve(uploaded: dict[str, dict[str, Decimal]], needed: dict[str, set[str]], *, fetch: bool = True) -> Rates:
     """Rates for every (currency, date) in `needed`; reference rates only for currencies with no rate file."""
     want = {c for c in needed if c not in uploaded and needed[c]}
-    if not want or not fetch:
+    if not want:
         return Rates(uploaded)
+    if not fetch:
+        return Rates(uploaded, reference_off=True)
     days = sorted(d for c in want for d in needed[c])
     try:
         return Rates(uploaded, reference_rates(want, days[0], days[-1]))
-    except (httpx.HTTPError, KeyError, ValueError):
-        return Rates(uploaded, reference_error="Reference exchange rates could not be loaded right now.")
+    except (httpx.HTTPError, KeyError, TypeError, ValueError, ArithmeticError):
+        # no fallback of any kind: those records are reported as missing, with this reason
+        return Rates(uploaded, reference_error="ECB reference rates couldn't be loaded right now.")

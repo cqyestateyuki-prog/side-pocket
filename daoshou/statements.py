@@ -26,19 +26,32 @@ from . import fx, ledger
 HEADER_SCAN = 10
 MAX_SKIPPED = 20  # skipped rows listed per file; the count is always complete
 
-# platform -> (account column, every column ledger._parse reads)
-STATEMENTS = {
-    "bilibili": ("账号ID", ["日期", "收入类型", "流水(元)", "平台分成(元)", "已代扣个税(元)", "实际到账(元)"]),
-    "youtube": ("Channel ID", ["Date", "Revenue Type", "Gross Revenue (USD)", "YouTube Share (USD)",
-                               "US Tax Withheld (USD)", "Estimated Revenue (USD)"]),
-    "twitch": ("Username", ["Date", "Revenue Type", "Gross (USD)", "Twitch Share (USD)", "Payout (USD)"]),
-    "patreon": ("Creator", ["Month", "Patrons", "Gross Pledges (USD)", "iOS Pledges (USD)", "Patreon Fee (USD)",
-                            "Payment Processing (USD)", "Payout (USD)"]),
-    "upwork": ("Freelancer", ["Date", "Type", "Contract ID", "Amount (USD)", "Service Fee Rate"]),
-    "fiverr": ("Seller", ["Completed At (UTC)", "Order ID", "Item", "Amount (USD)"]),
-    "freelancer": ("username", ["date", "project_id", "currency", "project_amount", "entry_type"]),
-    "contra": ("Profile", ["Paid On", "Project", "Amount"]),
+# What each statement looks like. `columns` are every column ledger._parse reads (all must be in the
+# header for a file to be recognised); `account` is optional and only groups rows, so its values can be
+# anything, such as the labels the browser puts there; every other column in a file is ignored.
+# `date` is (column, strptime format) and must agree with ledger._parse (tests/test_statements.py).
+FORMATS = {
+    "bilibili": {"account": "账号ID", "date": ("日期", "%Y/%m/%d"), "currency": "CNY",
+                 "columns": ["日期", "收入类型", "流水(元)", "平台分成(元)", "已代扣个税(元)", "实际到账(元)"],
+                 "ref": None},
+    "youtube": {"account": "Channel ID", "date": ("Date", "%Y-%m-%d"), "currency": "USD",
+                "columns": ["Date", "Revenue Type", "Gross Revenue (USD)", "YouTube Share (USD)",
+                            "US Tax Withheld (USD)", "Estimated Revenue (USD)"], "ref": None},
+    "twitch": {"account": "Username", "date": ("Date", "%m/%d/%Y"), "currency": "USD",
+               "columns": ["Date", "Revenue Type", "Gross (USD)", "Twitch Share (USD)", "Payout (USD)"], "ref": None},
+    "patreon": {"account": "Creator", "date": ("Month", "%b %Y"), "currency": "USD",
+                "columns": ["Month", "Patrons", "Gross Pledges (USD)", "iOS Pledges (USD)", "Patreon Fee (USD)",
+                            "Payment Processing (USD)", "Payout (USD)"], "ref": None},
+    "upwork": {"account": "Freelancer", "date": ("Date", "%b %d, %Y"), "currency": "USD",
+               "columns": ["Date", "Type", "Contract ID", "Amount (USD)", "Service Fee Rate"], "ref": "Contract ID"},
+    "fiverr": {"account": "Seller", "date": ("Completed At (UTC)", "%Y-%m-%dT%H:%M:%SZ"), "currency": "USD",
+               "columns": ["Completed At (UTC)", "Order ID", "Item", "Amount (USD)"], "ref": "Order ID"},
+    "freelancer": {"account": "username", "date": ("date", "%Y%m%d"), "currency_column": "currency",
+                   "columns": ["date", "project_id", "currency", "project_amount", "entry_type"], "ref": "project_id"},
+    "contra": {"account": "Profile", "date": ("Paid On", "%B %d, %Y"), "currency": "USD",
+               "columns": ["Paid On", "Project", "Amount"], "ref": "Project"},
 }
+STATEMENTS = {p: (f["account"], f["columns"]) for p, f in FORMATS.items()}
 CURRENCY = re.compile(r"^[A-Z]{3}$")
 
 
@@ -79,6 +92,25 @@ class ParsedFile:
         if self.message:
             out["message"] = self.message
         return out
+
+
+def formats() -> dict:
+    """GET /api/personal/formats: how files are recognised, so the browser can find the account column
+    and relabel it before anything is uploaded. Static; holds no user data."""
+    return {
+        "matching": {"header_scan_lines": HEADER_SCAN,
+                     "rule": "A file is a platform's statement when its header row (one of the first "
+                             f"{HEADER_SCAN} lines) contains every column in `columns`.",
+                     "normalise": ["drop a byte-order mark (U+FEFF)", "full-width brackets （） become ()",
+                                   "remove all whitespace", "lowercase"]},
+        "statements": [{"platform": p, "label": ledger.LABEL[p], "account_column": f["account"],
+                        "columns": f["columns"], "date_column": f["date"][0], "date_format": f["date"][1],
+                        "currency": f.get("currency"), "currency_column": f.get("currency_column"),
+                        "ref_column": f["ref"]} for p, f in FORMATS.items()],
+        "rate_files": [{"columns": ["date", "cny_per_usd"], "direction": "CNY per 1 USD", "date_format": "%Y-%m-%d"},
+                       {"columns": ["date", "<ISO currency code>, …"], "example": ["date", "EUR", "GBP"],
+                        "direction": "USD per 1 unit", "date_format": "%Y-%m-%d"}],
+    }
 
 
 def decode(content: str | None, content_base64: str | None) -> str:
@@ -293,5 +325,6 @@ def profile(upload: Upload, *, tax_home: str, set_aside_rate: float, payout_meth
     return {"creator_id": "you", "name": "You", "profile": None, "tax_country": tax_home,
             "set_aside_rate": set_aside_rate, "active_months": upload.months(),
             "accounts": {p: ", ".join(a for a in accts if a) or ledger.LABEL[p] for p, accts in accounts.items()},
+            "account_list": accounts,
             "payout_methods": {p: m for p, m in payout_methods.items() if p in accounts},
             "records": upload.records()}

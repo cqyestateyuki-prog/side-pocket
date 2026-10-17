@@ -30,8 +30,9 @@ CENT = Decimal("0.01")
 
 
 class MissingFXRate(Exception):
-    def __init__(self, currency: str, dates: list[str]):
+    def __init__(self, currency: str, dates: list[str], reason: str | None = None, detail: str | None = None):
         self.currency, self.dates = currency, dates
+        self.reason, self.detail = reason, detail  # uploaded statements: why there is no rate (fx.Rates.missing)
         super().__init__(f"no {currency}/USD rate for {', '.join(dates)}")
 
 
@@ -168,7 +169,8 @@ def quote(rec: Record, currency: str | None = None) -> Quote:
     currency = currency or rec.currency
     q = rec.rates.get(currency, rec.date) if rec.rates is not None else _demo_quote(currency, rec.date)
     if q is None:
-        raise MissingFXRate(currency, [rec.date])
+        reason, detail = rec.rates.missing(currency, rec.date) if rec.rates is not None else (None, None)
+        raise MissingFXRate(currency, [rec.date], reason, detail)
     return q
 
 
