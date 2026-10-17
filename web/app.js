@@ -76,7 +76,7 @@ export function whoPill(ctx) {
     <div class="av">${esc(p.display[0])}${warn ? `<i class="warn-dot" aria-label="Has data issues"></i>` : ""}</div>
     <div><b>${esc(p.display)}</b><span>${esc(warn ? issueText(me) : p.meta)}</span></div>
     ${icon("chevron", "sm chev")}
-    <select data-creator-switch aria-label="Creator">${ctx.creators.map(c => `<option value="${c.id}" ${c.id === me.id ? "selected" : ""}>${esc(persona(c).display)}${c.data_issues?.length ? ` — ${esc(issueText(c))}` : ""}</option>`).join("")}</select>
+    <select data-creator-switch aria-label="Creator">${ctx.creators.map(c => `<option value="${c.id}" ${c.id === me.id ? "selected" : ""}>${esc(persona(c).display)}${c.data_issues?.length ? ` · ${esc(issueText(c))}` : ""}</option>`).join("")}</select>
   </label>`;
 }
 
