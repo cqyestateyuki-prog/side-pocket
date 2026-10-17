@@ -1,7 +1,7 @@
 import { get } from "../lib/api.js";
-import { COPY } from "../lib/copy.js";
 import { cur, esc, icon, mmdd, pcol, periodLabel, usd } from "../lib/format.js";
 import { top, warnCard } from "../lib/parts.js";
+import { openPanel } from "../lib/importPanel.js";
 
 async function load(ctx) {
   if (ctx.period.includes("Q")) {
@@ -39,14 +39,15 @@ export async function render(ctx) {
   const f = ctx.query.get("f"), type = ctx.query.get("t");
   const types = [...new Set(L.rows.filter(r => !f || r.platform === f).map(r => r.type))].sort();
   const link = extra => ctx.href("ledger", { c: ctx.creator, p: ctx.period, f, t: type, ...extra });
-  const totalRow = !type && (f ? L.platforms.find(p => p.platform === f) : t);
-  const label = periodLabel(ctx.period).split(" · ")[0];
+  // One home for the totals: the KPI row follows the platform filter (no repeated total row).
+  const k = (f && L.platforms.find(p => p.platform === f)) || t;
 
-  return top(ctx, "Ledger", COPY.LEDGER_INTRO) + `
+  const importBtn = `<button class="sa-btn primary sm" data-import-open>${icon("upload", "sm")} Import statements</button>`;
+  return top(ctx, "Ledger", periodLabel(ctx.period), { actions: importBtn }) + `
   ${L.issues.length ? `<div class="sa-grid" style="margin-bottom:20px">${warnCard(ctx, L.issues)}</div>` : ""}
   <div class="sa-kpirow">
-    ${[["Gross", t.gross, ""], ["Platform fees", -t.platform_fee, "var(--sa-fee-text)"], ["Payout fees", -t.payout_fee, "var(--sa-payout-text)"],
-       ["Tax withheld", -t.withheld, "var(--sa-tax-text)"], ["Net", t.net, "var(--sa-forest)"]]
+    ${[["Gross", k.gross, ""], ["Platform fees", -k.platform_fee, "var(--sa-fee-text)"], ["Payout fees", -k.payout_fee, "var(--sa-payout-text)"],
+       ["Tax withheld", -k.withheld, "var(--sa-tax-text)"], ["Net", k.net, "var(--sa-net-text)"]]
       .map(([l, v, c]) => `<div class="sa-card sa-kpi"><div class="label">${l}</div><div class="sa-fig num" style="${c ? `color:${c}` : ""}">${usd(v)}</div></div>`).join("")}
   </div>
   <div class="sa-filters">
@@ -64,7 +65,6 @@ export async function render(ctx) {
       <td>${esc(r.type)}${r.ref ? `<span class="sub">${esc(r.ref)}</span>` : ""}</td>
       <td class="num">${original(r)}</td>
       ${r.gross_usd == null ? cell(null) : `<td class="money">${usd(r.gross_usd)}</td>`}${cell(r.platform_fee_usd, "fee")}${cell(r.payout_fee_usd, "payout")}${cell(r.withheld_usd, "tax")}${cell(r.net_usd, "net")}</tr>`).join("")}
-      ${totalRow ? `<tr class="total"><td colspan="4">${f ? `${totalRow.label} · ` : ""}${label} total</td><td class="money">${usd(totalRow.gross)}</td><td class="money">${usd(-totalRow.platform_fee)}</td><td class="money">${usd(-totalRow.payout_fee)}</td><td class="money">${usd(-totalRow.withheld)}</td><td class="money">${usd(totalRow.net)}</td></tr>` : ""}
     </tbody></table></div>`;
 }
 
@@ -73,6 +73,11 @@ export function mount(ctx, root) {
     location.hash = ctx.href("ledger", { c: ctx.creator, p: ctx.period, f: ctx.query.get("f"), t: ev.target.value || null });
   });
   root.querySelector("[data-csv]")?.addEventListener("click", () => downloadCsv(ctx));
+  const open = () => openPanel(ctx, root, () => {
+    if (ctx.query.get("import")) history.replaceState(null, "", ctx.href("ledger", { c: ctx.creator, p: ctx.period, f: ctx.query.get("f"), t: ctx.query.get("t") }));
+  });
+  root.querySelector("[data-import-open]")?.addEventListener("click", open);
+  if (ctx.query.get("import")) open();
 }
 
 // The ledger rows (as filtered on screen) as a CSV file the accountant can open.

@@ -3,6 +3,7 @@ import { COPY } from "../lib/copy.js";
 import { dateLong, esc, icon, monthName, periodLabel, usd } from "../lib/format.js";
 import { COUNTRY, top, warnCard } from "../lib/parts.js";
 import { downloadCsv } from "./ledger.js";
+import { setAside } from "../lib/prefs.js";
 
 export async function render(ctx) {
   const R = await get("report", { creator: ctx.creator, period: ctx.period });
@@ -12,8 +13,9 @@ export async function render(ctx) {
   const due = tax.next_us_estimated_tax_due;
   const T4 = F?.totals_for_platforms_with_forms;
   const dups = F?.possible_duplicate_reports ?? [];
+  const sa = setAside(ctx.creator, { totalNet: t.net, byPlatform: R.by_platform, api: tax.set_aside });
 
-  return top(ctx, "Report", "Hand this to your accountant. Every figure links back to the ledger.") + `
+  return top(ctx, "Report", periodLabel(ctx.period)) + `
   <div class="sa-grid">
     ${warnCard(ctx, R.issues)}
     <div class="c8 sa-sheet" id="sheet">
@@ -27,7 +29,7 @@ export async function render(ctx) {
         <h3>Tax items</h3>
         <ul class="sa-lines">
           ${tax.tax_withheld_by_platform.map(w => `<li><span>Tax withheld by ${esc(w.platform)} (${COUNTRY[w.country] ?? w.country})</span><span class="amt">${usd(w.withheld_usd)}</span></li>`).join("") || `<li><span>Tax withheld by platforms</span><span class="amt">none</span></li>`}
-          <li><span>Set aside at the creator’s own ${Math.round(tax.set_aside.rate * 100)}%</span><span class="amt">${usd(tax.set_aside.amount)}</span></li>
+          <li><span>Set aside at ${Math.round(sa.rate * 100)}%${sa.excluded.size ? ` of ${usd(sa.base)} (some platforms left out)` : ""}</span><span class="amt">${usd(sa.amount)}</span></li>
           ${due?.due_date ? `<li><span>Next US estimated-tax payment</span><span class="amt">${dateLong(due.due_date)}</span></li>` : ""}
           ${T4 ? `<li><span>Forms would show (platforms with forms)</span><span class="amt">${usd(T4.form_view_gross_usd)}</span></li>
           <li><span>Landed from those platforms · gap</span><span class="amt">${usd(T4.bank_view_landed_usd)} · ${usd(-T4.gap_usd)}</span></li>` : ""}
@@ -37,11 +39,10 @@ export async function render(ctx) {
       </div>
     </div>
     <div class="c4 stack no-print">
+      <a class="sa-btn secondary sm back" href="${ctx.href("tax", { c: ctx.creator, p: ctx.period })}">${icon("chevron", "sm flip")} Back to Tax</a>
       <section class="sa-card"><div class="head"><h2>Export</h2></div>
         <div class="stack" style="gap:10px"><button class="sa-btn primary" data-print>${icon("download", "sm")} PDF for my accountant</button>
           <button class="sa-btn secondary" data-csv>${icon("ledger", "sm")} Ledger as CSV</button></div></section>
-      <section class="sa-card sage"><div class="label">Included</div>
-        <ul class="sa-check" style="margin-top:8px">${["Totals and gross → net", "By month and by platform", "Tax withheld, set-aside, next due date", "Every exchange rate used", "Form view vs bank view"].map(x => `<li><span class="box done"></span><span>${x}</span></li>`).join("")}</ul></section>
     </div>
   </div>`;
 }

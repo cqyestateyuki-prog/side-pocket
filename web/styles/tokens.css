@@ -49,7 +49,14 @@
   --sa-on-forest-ghost-line: rgba(255, 255, 255, .5);
   --sa-on-warn-mid: #F2D3D7;
   --sa-warn-line: #EBC3C8;      /* border of the light missing-data card */
-  --sa-flash: #EEF6D2;          /* step highlighted from an answer reference */
+  --sa-mascot-shadow: rgba(25, 26, 43, .14); /* soft shadow under Atlas */
+  /* Atlas sizes — tune every placement here (user: keep the bird small; the money is the hero) */
+  --sa-mascot-hero: 128px;   /* Overview hero */
+  --sa-mascot-card: 84px;    /* Ask answer card */
+  --sa-mascot-inline: 56px;  /* warn card, celebrate, drop zone, empty states */
+  --sa-mascot-avatar: 40px;  /* Ask thinking / timeline avatar */
+  --sa-scrim: rgba(25, 26, 43, .32);     /* behind the import drawer */
+  --sa-flash: #ECE9F8;          /* step highlighted from an answer reference */
 
   /* ---- Type ---- */
   --sa-font: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;

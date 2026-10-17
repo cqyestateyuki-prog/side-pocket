@@ -2,7 +2,22 @@
 
 The single place where visual rulings live. Changing a ruling means a new kit version, not an edit to one component.
 
-## v1.1 · 17 October 2026 — current standard
+## v1.2 · 17 October 2026 — current standard
+
+| # | Decision | Why |
+|---|---|---|
+| 19 | **Palette = soft violet `#6B5BC2` + pink `#FF7AB6`**, replacing forest green (supersedes #14). Names kept (`--sa-forest` = primary, `--sa-lime` = accent) so nothing renames. Neutrals: page `#F8F7FC`, sage `#EFEDF8`, ink `#191A2B`. | User picked "C · 电光紫 + 粉" toned down ("not too purple") from a 5-palette comparison. |
+| 20 | **WCAG AA fixes:** on-primary secondary text `#F1EEFC` (4.71:1), pink figures on the hero `#FFC2DD` ≥24px only (3.59:1), meta `#696B83` (5.21:1), pink text on white `#C42F78` (5.22:1); bright pink `#FF7AB6` is decorative only. Twitch moved from violet to blue (`#3F9BD9`) so it doesn't read as the primary. | User asked whether contrast passes; measured, then fixed the four failures. |
+| 21 | **Mascot "Atlas"**: a carrier pigeon with crescent ^ ^ smiling eyes, coin satchel and map scarf; flat 2D sticker style. Crescent eyes chosen to avoid Duolingo's white-ringed round eyes. Sizes are tokens (`--sa-mascot-hero/card/inline/avatar` = 128/84/56/40px) and the bird never sits near a money figure. | User wanted a Duolingo-like character with a Gen-Z / Pop Mart feel, then asked for it smaller. |
+| 22 | **Logo = the pigeon-head app icon** (`02-logos/icon-256.png`, favicons in `app-icons-and-favicons/`); lockup text is just "Side Atlas" — 副业图谱 removed everywhere. The product references the mark from one place (`web/index.html`). Supersedes the v1 globe mark. | User decision. |
+| 23 | **Nav = exactly four screens**: Overview 总览 · Ledger 账本 · Tax 税务 · Ask Atlas 问 Atlas. | User decision: fewer places to look. |
+| 24 | **Merged, nothing unique removed:** Sources → "Import statements" drawer on Ledger; Set-aside settings → editable rate on the Tax hero (presets, slider, custom input, per-platform toggles under "Advanced"); Report → "Export for my accountant" on Tax (route kept, not in nav); "Other creators" sidebar → creator picker with a warn dot for creators with data issues. | User: keep every feature, give each one home. |
+| 25 | **Duplicates removed:** Overview set-aside card (duplicated the Tax hero → one-line link to Tax); "Keeps the most of each dollar" card (duplicated the by-platform kept % → highlighted row); Ledger table total row (duplicated the KPI row, which now follows the platform filter); import panel record counts and date ranges (the Ledger shows them); Report "Included" checklist (re-explained the sheet). | One home for each piece of information. |
+| 26 | **Clutter removed:** long Ledger and Report subtitles → the period label; Tax hero sub-sentence and forms sub-sentence (the title and table say it); Q3 "3 months" chip (the header says it); repeated agent steps collapse into range rows (`2–15 load_platform ×14`). | User: calmer, not poorer. |
+| 27 | **Kept and given a home:** Patreon iOS simulation → small insight card on Overview (simulated 30% in-app cut); import panel: many files at once with platform auto-detection, where each export lives (typical paths, "paths may change"), what the check found; "Connect automatically — coming soon" (official APIs for YouTube, Twitch, Patreon, Upwork, PayPal; email forwarding for the rest) as disabled buttons. | Gathering the data is the hardest step for users. |
+| 28 | Kit screens in `08-screens/` were not re-exported for v1.2; the product's own captures are in `web/_checks/v12-*.png`. | Time; the product is now the reference. |
+
+## v1.1 · 17 October 2026
 
 | # | Decision | Why |
 |---|---|---|

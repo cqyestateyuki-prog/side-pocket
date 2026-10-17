@@ -1,8 +1,15 @@
 # Side Atlas Design Kit
 
-Everything needed to build Side Atlas's look and feel: the spec, logos, icons, tokens, code, fonts, a clickable prototype and screen images. Version 1.1, 17 October 2026, desktop only.
+Everything needed to build Side Atlas's look and feel: the spec, logos, icons, tokens, code, fonts, a clickable prototype and screen images. Version 1.2, 17 October 2026, desktop only.
 
 Start with `01-spec/Side-Atlas-Look-and-Feel-Spec.pdf`. Then open `07-mockups/app.html` in a browser (works offline; switch screens in the left nav, or with `#overview`, `#ledger`, `#tax`, `#ask`, `#ask-zh`, `#report`, `#sources`, `#settings`, `#missing`, or `?screen=<name>`).
+
+## What's new in v1.2
+
+- Palette: soft violet #6B5BC2 + pink #FF7AB6 (replaces forest green), WCAG AA fixes for four pairs.
+- Mascot Atlas (pigeon, crescent ^ ^ eyes, flat sticker style) with size tokens; logo = the pigeon-head app icon; lockup text "Side Atlas" only.
+- Nav cut to four screens (Overview, Ledger, Tax, Ask Atlas). Sources → Import statements drawer on Ledger; set-aside settings → editable rate on the Tax hero; Report → Export button on Tax; other creators → creator picker with a warn dot.
+- Duplicates merged and clutter removed (see decisions #19–#28). Kit PNGs were not re-exported; the product captures in web/_checks/v12-*.png are the reference.
 
 ## What's new in v1.1
 
@@ -30,7 +37,7 @@ Start with `01-spec/Side-Atlas-Look-and-Feel-Spec.pdf`. Then open `07-mockups/ap
 - **Colour:** one bold field per screen, always forest. Everything else white, sage or a light tint. Lime is a shape, never small text. Pages use only `--sa-*` tokens, so a palette change is a token-file edit.
 - **Money:** ink or forest on light surfaces, tabular, right-aligned in tables. Fees (clay, stone) and tax withheld (tax blue) never share a colour.
 - **Buttons:** primary forest pill; pressed sinks 1px and darkens; secondary white with a strong line; selected forest-100.
-- **Logo:** lime globe on a forest rounded square + "Side Atlas" 800 + 副业图谱. Never on lime.
+- **Logo (v1.2):** the pigeon-head app icon (Atlas the mascot on a violet rounded square, `02-logos/icon-256.png`) + "Side Atlas" 800. No Chinese name in the lockup. The v1 globe SVGs in `02-logos/` are superseded.
 - **Icons:** the 25 in `03-icons`, currentColor, 2px stroke. No emoji.
 - **Stops:** missing data shows a light warning card beside the forest hero, names the record, leaves it out of totals (marked incomplete). Nothing is estimated.
 

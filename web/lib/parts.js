@@ -1,10 +1,11 @@
 // Pieces several screens share: the page header and the missing-data warning card.
 import { COPY } from "./copy.js";
 import { cur, dateShort, esc, icon, mmdd } from "./format.js";
+import { mascot } from "./mascot.js";
 
-export function top(ctx, title, subtitle, { period = true } = {}) {
+export function top(ctx, title, subtitle, { period = true, actions = "" } = {}) {
   return `<div class="sa-top"><div><h1>${title}</h1><p>${subtitle}</p></div>
-    <div class="right">${period ? ctx.periodSeg(ctx) : ""}${ctx.whoPill(ctx)}</div></div>`;
+    <div class="right">${actions}${period ? ctx.periodSeg(ctx) : ""}${ctx.whoPill(ctx)}</div></div>`;
 }
 
 // Missing data never gets estimated: the forest hero stays, and this light card says what stopped.
@@ -14,7 +15,7 @@ export function warnCard(ctx, issues) {
   const r = i.record ?? {};
   const more = issues.length > 1 ? ` · ${issues.length} records waiting for a rate` : " · 1 record waiting for a rate";
   return `<section class="sa-warncard c12">
-    <div class="wc-icon">${icon("alert")}</div>
+    <div class="wc-icon">${icon("alert")}${mascot("worried")}</div>
     <div class="wc-body">
       <div class="label">Stopped${more}</div>
       <h2>${COPY.MISSING_HEADLINE}</h2>
@@ -38,5 +39,5 @@ export const platformKey = label => KEYS[label] ?? String(label).toLowerCase();
 export const COUNTRY = { CN: "China", US: "United States", DE: "Germany", JP: "Japan", CA: "Canada", GB: "United Kingdom" };
 
 export function empty(title, body) {
-  return `<section class="sa-card sa-empty c12">${icon("info")}<div><b>${title}</b><div class="meta">${body}</div></div></section>`;
+  return `<section class="sa-card sa-empty c12">${icon("info")}${mascot("think", "empty-mascot")}<div><b>${title}</b><div class="meta">${body}</div></div></section>`;
 }

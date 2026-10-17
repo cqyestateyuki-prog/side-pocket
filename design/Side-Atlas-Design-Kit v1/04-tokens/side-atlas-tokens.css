@@ -1,43 +1,62 @@
-/* Side Atlas design tokens · v1 · 2026-10-17
-   Reference: Linktree for FORM (big rounded cards, pill buttons, heavy rounded headlines,
-   one bold colour field per screen) — not for colour. Palette is Side Atlas's own.
-   Source of truth: side-atlas-tokens.json. */
+/* Side Atlas design tokens · v1.2 · 2026-10-17
+   Reference: Linktree for FORM only. Palette v1.2 = soft violet #6B5BC2 + pink #FF7AB6 (user choice; replaces forest green).
+   Variable names kept from v1 (--sa-forest is the primary, --sa-lime the accent) so nothing downstream renames.
+   Kept identical to web/styles/tokens.css, which the product imports. WCAG AA checked; see the decision log. */
 :root {
   /* ---- Core ---- */
-  --sa-forest: #1F4B2C;        /* brand primary (user choice: deep forest green) */
-  --sa-forest-700: #163A21;    /* pressed / hover on primary */
-  --sa-forest-100: #DCE8DD;    /* selected fill, net tint */
-  --sa-lime: #C5E35A;          /* the one bright accent — large shapes only, never small text */
-  --sa-lime-100: #EEF6D2;
-  --sa-page: #F6F4EC;          /* warm off-white page */
-  --sa-sage: #E7EDDF;          /* pale sage: secondary surfaces, table header */
+  --sa-forest: #6B5BC2;        /* brand primary: soft violet (user choice, 2026-10-17; name kept for compatibility) */
+  --sa-forest-700: #5446A1;    /* pressed / hover on primary */
+  --sa-forest-100: #ECE9F8;    /* selected fill, net tint */
+  --sa-lime: #FF7AB6;          /* pink accent — decorative shapes only; text uses --sa-accent-text / --sa-accent-on-primary */
+  --sa-accent-on-primary: #FFC2DD; /* pink figures on the violet hero, ≥24px (3.59:1) */
+  --sa-accent-text: #C42F78;       /* pink text on white (5.22:1) */
+  --sa-lime-100: #FFE3F0;
+  --sa-page: #F8F7FC;          /* warm off-white page */
+  --sa-sage: #EFEDF8;          /* pale sage: secondary surfaces, table header */
   --sa-surface: #FFFFFF;       /* cards */
-  --sa-line: #E1E3D6;          /* hairlines */
-  --sa-line-strong: #C9CDBD;   /* control borders */
-  --sa-ink: #18211B;           /* primary text, money figures */
-  --sa-text-mid: #4A574D;      /* secondary text */
-  --sa-meta: #7B867D;          /* captions, meta */
+  --sa-line: #E4E1F0;          /* hairlines */
+  --sa-line-strong: #CDC8E2;   /* control borders */
+  --sa-ink: #191A2B;           /* primary text, money figures */
+  --sa-text-mid: #4B4D66;      /* secondary text */
+  --sa-meta: #696B83;          /* captions, meta */
   --sa-on-forest: #FFFFFF;
-  --sa-on-forest-mid: #C9D8CC;
+  --sa-on-forest-mid: #F1EEFC;
 
   /* ---- Semantic: where the money went (withholding never shares a colour with fees) ---- */
-  --sa-net: #1F4B2C;            --sa-net-tint: #DCE8DD;            --sa-net-text: #1F4B2C;
+  --sa-net: #6B5BC2;            --sa-net-tint: #ECE9F8;            --sa-net-text: #5848AA;
   --sa-fee: #B65A34;            --sa-fee-tint: #F6E3D9;            --sa-fee-text: #9A4826;   /* platform fee */
   --sa-payout: #9A8E78;         --sa-payout-tint: #EEEBE4;         --sa-payout-text: #6F6553; /* payout & payment fees */
   --sa-fx: #5D7685;             --sa-fx-tint: #E3E9ED;             --sa-fx-text: #4A5F6C;    /* currency conversion */
   --sa-tax: #2F59C9;            --sa-tax-tint: #E2E8FA;            --sa-tax-text: #2A4FB3;   /* tax withheld (royal blue earns this job) */
   --sa-warn: #8C1D2C;           --sa-warn-tint: #F6E1E3;           --sa-warn-text: #8C1D2C;  /* missing data / stop (maroon earns this job) */
-  --sa-ok: #1F4B2C;             --sa-ok-tint: #E3F1C9;             --sa-ok-text: #1F4B2C;    /* success */
+  --sa-ok: #6B5BC2;             --sa-ok-tint: #ECE9F8;             --sa-ok-text: #5848AA;    /* success */
 
   /* ---- Platform palette: fill / tint / text-on-white (ours, not the platforms' brand colours) ---- */
   --sa-p-bilibili: #1F8A84;   --sa-p-bilibili-tint: #DDF1EF;   --sa-p-bilibili-text: #17706B;
   --sa-p-youtube: #D2465A;    --sa-p-youtube-tint: #FADFE3;    --sa-p-youtube-text: #B23345;
-  --sa-p-twitch: #6F5FD3;     --sa-p-twitch-tint: #E8E5FA;     --sa-p-twitch-text: #5B4BC0;
+  --sa-p-twitch: #3F9BD9;     --sa-p-twitch-tint: #DEEEFA;     --sa-p-twitch-text: #22689B;
   --sa-p-patreon: #B4549A;    --sa-p-patreon-tint: #F4E0EE;    --sa-p-patreon-text: #974282;
   --sa-p-upwork: #5D8E2E;     --sa-p-upwork-tint: #E6F0DA;     --sa-p-upwork-text: #4A7522;
   --sa-p-fiverr: #D9A514;     --sa-p-fiverr-tint: #FBF0CF;     --sa-p-fiverr-text: #8A6700;
   --sa-p-freelancer: #4D5A66; --sa-p-freelancer-tint: #E5E8EB; --sa-p-freelancer-text: #3F4A55;
   --sa-p-contra: #8B5A3C;     --sa-p-contra-tint: #F1E6DE;     --sa-p-contra-text: #74482D;
+
+
+  /* ---- On dark fields (hero, report band): translucent whites. Part of the palette, keep here ---- */
+  --sa-on-forest-glass: rgba(255, 255, 255, .12);
+  --sa-on-forest-glass-line: rgba(255, 255, 255, .18);
+  --sa-on-forest-ref: rgba(255, 255, 255, .16);
+  --sa-on-forest-ghost-line: rgba(255, 255, 255, .5);
+  --sa-on-warn-mid: #F2D3D7;
+  --sa-warn-line: #EBC3C8;      /* border of the light missing-data card */
+  --sa-mascot-shadow: rgba(25, 26, 43, .14); /* soft shadow under Atlas */
+  /* Atlas sizes — tune every placement here (user: keep the bird small; the money is the hero) */
+  --sa-mascot-hero: 128px;   /* Overview hero */
+  --sa-mascot-card: 84px;    /* Ask answer card */
+  --sa-mascot-inline: 56px;  /* warn card, celebrate, drop zone, empty states */
+  --sa-mascot-avatar: 40px;  /* Ask thinking / timeline avatar */
+  --sa-scrim: rgba(25, 26, 43, .32);     /* behind the import drawer */
+  --sa-flash: #ECE9F8;          /* step highlighted from an answer reference */
 
   /* ---- Type ---- */
   --sa-font: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;

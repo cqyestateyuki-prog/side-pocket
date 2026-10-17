@@ -1,40 +1,40 @@
 {
   "side-atlas": {
-    "$description": "Side Atlas design tokens v1, 2026-10-17. Reference: Linktree for form, not colour; primary = forest green (user choice).",
+    "$description": "Side Atlas design tokens v1.2, 2026-10-17. Reference: Linktree for form, not colour; palette = soft violet #6B5BC2 + pink #FF7AB6 (user choice, replaces forest green).",
     "core": {
       "forest": {
         "$type": "color",
-        "$value": "#1F4B2C",
+        "$value": "#6B5BC2",
         "$description": "Brand primary: primary buttons, active nav, net/landed, hero field"
       },
       "forest-700": {
         "$type": "color",
-        "$value": "#163A21",
+        "$value": "#5446A1",
         "$description": "Pressed/hover on primary"
       },
       "forest-100": {
         "$type": "color",
-        "$value": "#DCE8DD",
+        "$value": "#ECE9F8",
         "$description": "Selected fill, net tint"
       },
       "lime": {
         "$type": "color",
-        "$value": "#C5E35A",
+        "$value": "#FF7AB6",
         "$description": "The one bright accent: large shapes, chart highlight; never small text"
       },
       "lime-100": {
         "$type": "color",
-        "$value": "#EEF6D2",
+        "$value": "#FFE3F0",
         "$description": "Accent tint"
       },
       "page": {
         "$type": "color",
-        "$value": "#F6F4EC",
+        "$value": "#F8F7FC",
         "$description": "Page background (warm off-white)"
       },
       "sage": {
         "$type": "color",
-        "$value": "#E7EDDF",
+        "$value": "#EFEDF8",
         "$description": "Secondary surface, table header"
       },
       "surface": {
@@ -44,27 +44,27 @@
       },
       "line": {
         "$type": "color",
-        "$value": "#E1E3D6",
+        "$value": "#E4E1F0",
         "$description": "Hairlines"
       },
       "line-strong": {
         "$type": "color",
-        "$value": "#C9CDBD",
+        "$value": "#CDC8E2",
         "$description": "Control borders"
       },
       "ink": {
         "$type": "color",
-        "$value": "#18211B",
+        "$value": "#191A2B",
         "$description": "Primary text and money figures"
       },
       "text-mid": {
         "$type": "color",
-        "$value": "#4A574D",
+        "$value": "#4B4D66",
         "$description": "Secondary text"
       },
       "meta": {
         "$type": "color",
-        "$value": "#7B867D",
+        "$value": "#696B83",
         "$description": "Captions, meta"
       },
       "on-forest": {
@@ -74,25 +74,35 @@
       },
       "on-forest-mid": {
         "$type": "color",
-        "$value": "#C9D8CC",
+        "$value": "#F1EEFC",
         "$description": "Secondary text on forest"
+      },
+      "accent-on-primary": {
+        "$type": "color",
+        "$value": "#FFC2DD",
+        "$description": "Pink figures on the violet hero, ≥24px only (3.59:1)"
+      },
+      "accent-text": {
+        "$type": "color",
+        "$value": "#C42F78",
+        "$description": "Pink text on white (5.22:1)"
       }
     },
     "semantic": {
       "net": {
         "fill": {
           "$type": "color",
-          "$value": "#1F4B2C",
+          "$value": "#6B5BC2",
           "$description": "Net / landed"
         },
         "tint": {
           "$type": "color",
-          "$value": "#DCE8DD",
+          "$value": "#ECE9F8",
           "$description": "Net / landed tint"
         },
         "text-on-white": {
           "$type": "color",
-          "$value": "#1F4B2C",
+          "$value": "#5848AA",
           "$description": "Net / landed text on white"
         }
       },
@@ -184,17 +194,17 @@
       "ok": {
         "fill": {
           "$type": "color",
-          "$value": "#1F4B2C",
+          "$value": "#6B5BC2",
           "$description": "Success"
         },
         "tint": {
           "$type": "color",
-          "$value": "#E3F1C9",
+          "$value": "#ECE9F8",
           "$description": "Success tint"
         },
         "text-on-white": {
           "$type": "color",
-          "$value": "#1F4B2C",
+          "$value": "#5848AA",
           "$description": "Success text on white"
         }
       }
@@ -237,17 +247,17 @@
       "twitch": {
         "fill": {
           "$type": "color",
-          "$value": "#6F5FD3",
+          "$value": "#3F9BD9",
           "$description": "twitch"
         },
         "tint": {
           "$type": "color",
-          "$value": "#E8E5FA",
+          "$value": "#DEEEFA",
           "$description": "twitch tint"
         },
         "text-on-white": {
           "$type": "color",
-          "$value": "#5B4BC0",
+          "$value": "#22689B",
           "$description": "twitch text on white"
         }
       },
@@ -481,6 +491,24 @@
         "$value": "32px"
       },
       "s10": {
+        "$type": "dimension",
+        "$value": "40px"
+      }
+    },
+    "mascot": {
+      "hero": {
+        "$type": "dimension",
+        "$value": "128px"
+      },
+      "card": {
+        "$type": "dimension",
+        "$value": "84px"
+      },
+      "inline": {
+        "$type": "dimension",
+        "$value": "56px"
+      },
+      "avatar": {
         "$type": "dimension",
         "$value": "40px"
       }

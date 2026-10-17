@@ -17,6 +17,8 @@ from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
+from functools import lru_cache
+
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -168,6 +170,10 @@ def _platform_rows(book: dict) -> list[dict]:
             row["tips"] = {"gross": ledger.cents(t["tips_gross"]), "fee": ledger.cents(t["tips_fee"])}
         if p == "patreon":
             row["ios_pledges"] = ledger.cents(t["ios_pledges"])
+            # Simulated: what Apple's in-app cut would take from the iOS share (assumptions.json).
+            rate = ledger.D(ledger.assumptions()["patreon_ios_apple_fee_simulated"])
+            row["ios_simulation"] = {"apple_fee_rate": float(rate), "apple_fee": ledger.cents(t["ios_pledges"] * rate),
+                                     "simulated": True}
         out.append(row)
     return sorted(out, key=lambda r: -r["net"])
 
@@ -238,7 +244,20 @@ def health() -> dict:
 
 @app.get("/api/creators")
 def creators() -> list[dict]:
-    return [_profile(c) for c in data.creators().values()]
+    return [{**_profile(c), "data_issues": _data_issues(c["creator_id"])} for c in data.creators().values()]
+
+
+@lru_cache
+def _data_issues(creator_id: str) -> tuple:
+    """Months with records that can't be converted yet (lets the UI flag the creator)."""
+    c = data.creators()[creator_id]
+    out = []
+    for m in c.get("active_months", []):
+        issues = _book(c, [m])["issues"]
+        if issues:
+            out.append({"month": m, "count": len(issues), "currency": issues[0]["currency"], "date": issues[0]["date"],
+                        "platform": issues[0]["platform"]})
+    return tuple(out)
 
 
 @app.get("/api/overview")
