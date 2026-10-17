@@ -1,86 +1,103 @@
-# ClearTake
-**See what you earned, what was deducted, and what actually landed.**
+# Side Atlas
+
+**One ledger for your global side income, with the tax items you’ll probably need in view.**
 
 ## The problem
 
-For creators and freelancers running a US single-member LLC, earning across US and Chinese platforms means reconciling different currencies, payout schedules, and fee rules.
+Side income crosses platforms, currencies and payout methods. Your records are scattered, and no single platform shows the whole picture.
 
-Gross income is not take-home income. Platform shares, payment fees, currency conversion, and tax withholding all affect what lands—but commission and tax withheld on your behalf can look like the same deduction.
+Each platform takes its cut differently:
 
-US platforms do not withhold income tax for US persons. A payout arrives without that deduction, leaving creators to set money aside before quarterly estimated-tax deadlines.
+- **Upwork:** 0–15%, set per contract.
+- **Fiverr:** 20%, including tips and extras.
+- **Freelancer.com:** 10% of a fixed-price project or $5, whichever is greater.
+- **Contra:** 0% for the freelancer.
 
-Found and Keeper cover US tax; Payoneer and Wise cover payouts and FX. We found no product that reconciles Chinese and US platform income together.
+Withdrawal fees and currency conversion add more deductions. Platform commissions and tax withheld on your behalf can look alike, even though they belong in different categories.
 
-## What ClearTake does
+Tax preparation adds another layer: which country already withheld tax, what to set aside when nothing was withheld, when the next US estimated-tax payment is due, and what to discuss with an accountant.
 
-ClearTake（到手清）brings those records into one breakdown:
+## What Side Atlas does
 
-- **Imports five platform export formats:** Bilibili, YouTube, Twitch, Patreon, and Upwork.
-- **Makes currency conversion traceable:** each CNY record uses its own date’s exchange rate.
-- **Separates every deduction:** gross → platform share → payout/payment fees → tax withheld by the platform → net. Withholding stays separate from fees.
-- **Shows the monthly picture:** net income, share by platform, the platform with the best net-to-gross rate, and month-over-month change.
-- **Supports tax set-asides:** use a rate you choose, with a reminder before quarterly deadlines. ClearTake does not suggest a rate.
-- **Answers questions in Chinese and English:** ask why take-home income changed or where the money went. Every number comes from calculation steps, not the model.
-- **Produces a monthly report** to hand to your accountant.
+### One ledger for every side gig
 
-The demo uses fictional data only, with simulated fee assumptions and no live bank or platform connections.
+Side Atlas brings global gig and creator income into one ledger. It imports each platform’s own export format and separates every record into:
+
+**Gross → platform fee → payout/payment fees → tax withheld → net**
+
+Tax withheld stays on its own line, never mixed into fees. Every non-USD record is converted to USD using its transaction date’s exchange rate, with the date and rate traceable.
+
+See income by platform and month, month-over-month changes, and which platform keeps the most of each dollar.
+
+The fictional demo follows Moon Spirit, a New York–based designer earning through Upwork, Fiverr, Contra, YouTube, Twitch, Patreon and Bilibili. Bilibili pays her in CNY and withholds Chinese individual income tax; the other platforms pay USD.
+
+### Tax items, sorted
+
+The tax layer lists items you’ll probably need:
+
+- Tax already withheld, by platform and country.
+- A set-aside amount using a rate **you choose**.
+- The next US estimated-tax due date.
+- Items to raise with an accountant, including foreign tax withheld.
+
+Monthly and quarterly reports give you something to hand to an accountant. Ask questions in Chinese or English about income changes, deductions or quarterly tax items. Every number in an answer comes from calculation steps, never from the model.
 
 ## What we learned building it
 
-In v1, Claude Fable 5.1 received raw exports and did the math. It answered **61 of 64 test questions exactly right**, including per-record currency conversion.
+On our first 64-question test set, v1 let the model calculate directly from raw exports. It answered 61 exactly right. All three failures shared one cause: a missing exchange rate. The model silently borrowed a nearby day’s rate.
 
-All three failures had the same cause: one record lacked an exchange rate for its date. The model silently borrowed a nearby day’s rate and returned a confident number.
+In v2, code does every calculation; AI orchestrates and explains. It answered 64 of 64 exactly right. Missing data now stops the run with an explicit error and triggers a PRISM alert for a person to fix it. PRISM by Block Convey traces every model and tool call and groups failures by root cause.
 
-That changed v2: **code does every calculation; AI only orchestrates and explains.** Missing data stops the run with an explicit error instead of a guess.
+## What Side Atlas will not do
 
-PRISM by Block Convey traces every model and tool call, groups failed runs by root cause, and alerts on failures so a person can fix the data.
+Side Atlas does not judge tax residency, calculate tax owed, assess whether withholding was correct, suggest a set-aside rate, or provide tax or investment advice.
 
-## What ClearTake will not do
-
-ClearTake does not determine tax residency, calculate tax owed, judge whether withholding was correct, or provide tax or investment advice. Foreign tax already withheld is flagged for your accountant—not treated as final.
+This demo uses fictional data, some simulated fee assumptions, and no real bank or platform connections. Growth coaching is roadmap only.
 
 Estimate only — not tax, legal, or financial advice.
 
 ## 中文简介
 
-到手清 ClearTake 面向通过美国单成员 LLC 接活、同时在中美平台赚取收入的创作者和自由职业者，帮你看清流水与实际到手之间的差额。  
-它把平台分成、支付手续费和平台代扣税款分开列出，人民币收入按每笔记录当天的汇率换算，方便逐项核对。  
-你可以用中文或英文问“这个月为什么到手少了”，回答中的数字都来自计算步骤；遇到缺失数据，系统会明确报错，不会让 AI 猜一个数。  
-你也可以自行选择预留税款的比例、接收季度截止日前的提醒，并把月度报告交给会计，但工具不会替你计算应缴税额或判断代扣税款是否正确。  
-目前演示只使用虚构数据和模拟费率，不连接真实银行或平台，结果仅供估算，不构成税务、法律或财务建议。
+Side Atlas（副业图谱）把分散在接单、创作和内容平台上的副业收入放进同一本账，方便你看清每个平台、每个月的收入变化。  
+平台抽成、提现或支付手续费、平台代扣税会分开列出，非美元收入则按每笔记录当天的汇率换算成美元，日期和汇率都有据可查。  
+税务层帮你整理可能需要准备的事项：哪些国家已经代扣税、按你自己选定的比例预留多少，以及下一个美国预估税缴款截止日。  
+你可以用中文或英文询问收入和扣款，也可以把月度或季度报告交给会计师；回答里的数字来自计算步骤，不由模型编造。  
+目前演示使用虚构数据，不连接真实银行或平台，也不替你判断税务居民身份或计算应缴税额；所有估算都不构成税务、法律或财务建议。
 ---
 
 ## How it works
 
-ClearTake is a tool-calling agent. Every model call goes through the [Nicrron API](https://nicrron.ai) (OpenAI-compatible) to `anthropic/claude-fable-5-1` at temperature 0, and every run is traced into [PRISM by Block Convey](https://prism.blockconvey.com).
+Side Atlas is a tool-calling agent. Every model call goes through the [Nicrron API](https://nicrron.ai) (OpenAI-compatible) to `anthropic/claude-fable-5-1` at temperature 0, and every run is traced into [PRISM by Block Convey](https://prism.blockconvey.com).
 
 | | v1 — the model does the math | v2 — code does the math |
 |---|---|---|
-| Code | `daoshou/agent_v1.py` | `daoshou/agent_v2.py` (in progress) |
-| Tools | `find_creator`, `read_platform_export` (raw CSV), `read_fx_rates`, `submit_answer` | One step per stage: look up creator, load each platform, convert each CNY record at its own date's rate, break down deductions, set-aside, submit |
-| Math | Inside the model | `Decimal`, rounded half-up to cents only at the end |
-| Missing exchange rate | Borrows a nearby day's rate and answers anyway | Tool raises `MissingFXRate`; the agent refuses and PRISM alerts |
+| Code | `daoshou/agent_v1.py` | `daoshou/agent_v2.py` + `daoshou/ledger.py` |
+| Tools | `find_creator`, `read_platform_export` (raw CSV), `read_fx_rates`, `submit_answer` | `find_creator`, `load_platform`, `convert_currency`, `compute_breakdown`, `compute_set_aside`, `simulate_patreon_ios`, `compare_months`, `get_upwork_contract_fees`, `submit_answer` |
+| Math | Inside the model | `Decimal`, rounded half-up to cents only when reported |
+| Missing exchange rate | Borrows a nearby day's rate and answers anyway | `convert_currency` raises `MissingFXRate`; the agent refuses and PRISM alerts |
+
+A monthly-total question for the demo persona runs 9 tool steps in v2: look up the creator, load each platform, convert currencies, break down deductions, submit.
 
 `daoshou/prism_tracing.py` sends each run to PRISM three ways: a run-level trace (`/api/traces`), the span tree of every LLM and tool call (`/api/spans/ingest`, shown on the Sessions → Steps tab) and a trajectory (`/api/trajectories`). A run is marked failed when a tool raises or when its answer does not match the reference answer, which is what PRISM's Root Cause clusters and error-rate alerts work from.
 
 ## PRISM proofs (Money Operations track)
 
-| Requirement | How ClearTake shows it |
+| Requirement | How Side Atlas shows it |
 |---|---|
-| **Sessions** — one run with 6+ tool calls on the Steps tab | A v2 monthly-total question for 月之灵 walks every platform, conversion, breakdown and set-aside step |
+| **Sessions** — one run with 6+ tool calls on the Steps tab | A v2 monthly-total question walks every platform, conversion, breakdown and set-aside step |
 | **Alert** — fires on a real run | The v2 currency tool fails on a date with no rate; the run is marked failed and the error-rate alert fires |
 | **Root Cause** — cluster of 3+ failed runs, then v2 fixes them | v1's fabricated-rate answers cluster under one cause; v2 on the same inputs refuses instead of guessing |
 
 ## Evaluation
 
-The test set in [`daoshou_testdata/`](daoshou_testdata/README.md) has 9 fictional creators, 5 platforms with deliberately different export formats, July–September 2026, and 64 questions with reference answers (39 in Chinese, 25 in English). `daoshou_testdata/tools/check_answers.py` recomputes every answer independently: 64/64 match.
+The first test set in [`daoshou_testdata/`](daoshou_testdata/README.md) has 9 fictional creators, 5 platforms with deliberately different export formats, July–September 2026, and 64 questions with reference answers (39 in Chinese, 25 in English). `daoshou_testdata/tools/check_answers.py` recomputes every answer independently: 64/64 match. Fiverr, Freelancer.com and Contra are being added.
 
-| Version | Correct | Failures |
+| Version (dry run, Claude Fable 5.1) | Correct | Failures |
 |---|---|---|
-| v1 (dry run, Claude Fable 5.1) | 61 / 64 | 3 — all Kiki's September questions, where one record's date has no exchange rate and the model invented a rate |
-| v2 | pending | |
+| v1 | 61 / 64 | 3: Kiki's September questions, where one record's date has no exchange rate and the model invented a rate |
+| v2 | 64 / 64 | none; the 3 missing-rate questions are refused with a `MissingFXRate` error |
 
-Per-question results: `results/v1_all_dry.jsonl`.
+Per-question results: `results/v1_all_dry.jsonl`, `results/v2_all_dry.jsonl`.
 
 ## Run it
 
@@ -88,8 +105,8 @@ Per-question results: `results/v1_all_dry.jsonl`.
 python3.13 -m venv .venv && .venv/bin/pip install -r requirements.txt
 cp .env.example .env        # add your PRISM and Nicrron keys
 .venv/bin/python scripts/smoke_test.py                                  # one traced run, checks both connections
-.venv/bin/python scripts/run_batch.py --version v1 --pilot --no-trace   # 6 questions, not sent to PRISM
-.venv/bin/python scripts/run_batch.py --version v1 --all --workers 8    # all 64, traced into PRISM
+.venv/bin/python scripts/run_batch.py --version v2 --pilot --no-trace   # 6 questions, not sent to PRISM
+.venv/bin/python scripts/run_batch.py --version v1 --all --workers 8    # every question, traced into PRISM
 ```
 
 PRISM analyses up to 200 runs a day per workspace, so use `--no-trace` while iterating.
@@ -100,21 +117,23 @@ PRISM analyses up to 200 runs a day per workspace, so use `--no-trace` while ite
 daoshou/                 agent code (internal codename 到手 Daoshou)
   prism_tracing.py       Nicrron tool-calling loop + PRISM tracing
   agent_v1.py            v1: raw exports, the model does the math
+  agent_v2.py            v2: tools do the math, the model orchestrates
+  ledger.py              deterministic ledger: parsing, FX, fee breakdown
   data.py                reads the fictional test data
   grading.py             compares an answer with the reference answer
 scripts/
   run_batch.py           runs questions, grades them, traces each run
   smoke_test.py          end-to-end connection check
   astra.py               product copy via GPT-6 Astra on Nicrron
-daoshou_testdata/        fictional platform exports, FX rates, 64 questions + answers
+daoshou_testdata/        fictional platform exports, FX rates, questions + answers
 docs/                    product fact sheet, PRISM API notes
 results/                 batch results (JSONL)
 ```
 
 ## Built with
 
-- **Nicrron API** — Claude Fable 5.1 runs the agent; GPT-6 Astra wrote the product copy above.
-- **PRISM by Block Convey** — tracing, root-cause clustering and alerts.
+- **Nicrron API**: Claude Fable 5.1 runs the agent; GPT-6 Astra wrote the product copy above.
+- **PRISM by Block Convey**: tracing, root-cause clustering and alerts.
 - Built at **MONEY TALKS 2** (AI × Finance hackathon, New York, October 17 2026), Money Operations track.
 
-All data is fictional and fee rates are simulated. Estimate only — not tax, legal, or financial advice.
+All data is fictional and some fee rates are simulated. Estimate only — not tax, legal, or financial advice.
