@@ -1,0 +1,79 @@
+/* Side Atlas design tokens · v1 · 2026-10-17
+   Reference: Linktree for FORM (big rounded cards, pill buttons, heavy rounded headlines,
+   one bold colour field per screen) — not for colour. Palette is Side Atlas's own.
+   Source of truth: side-atlas-tokens.json. */
+:root {
+  /* ---- Core ---- */
+  --sa-forest: #1F4B2C;        /* brand primary (user choice: deep forest green) */
+  --sa-forest-700: #163A21;    /* pressed / hover on primary */
+  --sa-forest-100: #DCE8DD;    /* selected fill, net tint */
+  --sa-lime: #C5E35A;          /* the one bright accent — large shapes only, never small text */
+  --sa-lime-100: #EEF6D2;
+  --sa-page: #F6F4EC;          /* warm off-white page */
+  --sa-sage: #E7EDDF;          /* pale sage: secondary surfaces, table header */
+  --sa-surface: #FFFFFF;       /* cards */
+  --sa-line: #E1E3D6;          /* hairlines */
+  --sa-line-strong: #C9CDBD;   /* control borders */
+  --sa-ink: #18211B;           /* primary text, money figures */
+  --sa-text-mid: #4A574D;      /* secondary text */
+  --sa-meta: #7B867D;          /* captions, meta */
+  --sa-on-forest: #FFFFFF;
+  --sa-on-forest-mid: #C9D8CC;
+
+  /* ---- Semantic: where the money went (withholding never shares a colour with fees) ---- */
+  --sa-net: #1F4B2C;            --sa-net-tint: #DCE8DD;            --sa-net-text: #1F4B2C;
+  --sa-fee: #B65A34;            --sa-fee-tint: #F6E3D9;            --sa-fee-text: #9A4826;   /* platform fee */
+  --sa-payout: #9A8E78;         --sa-payout-tint: #EEEBE4;         --sa-payout-text: #6F6553; /* payout & payment fees */
+  --sa-fx: #5D7685;             --sa-fx-tint: #E3E9ED;             --sa-fx-text: #4A5F6C;    /* currency conversion */
+  --sa-tax: #2F59C9;            --sa-tax-tint: #E2E8FA;            --sa-tax-text: #2A4FB3;   /* tax withheld (royal blue earns this job) */
+  --sa-warn: #8C1D2C;           --sa-warn-tint: #F6E1E3;           --sa-warn-text: #8C1D2C;  /* missing data / stop (maroon earns this job) */
+  --sa-ok: #1F4B2C;             --sa-ok-tint: #E3F1C9;             --sa-ok-text: #1F4B2C;    /* success */
+
+  /* ---- Platform palette: fill / tint / text-on-white (ours, not the platforms' brand colours) ---- */
+  --sa-p-bilibili: #1F8A84;   --sa-p-bilibili-tint: #DDF1EF;   --sa-p-bilibili-text: #17706B;
+  --sa-p-youtube: #D2465A;    --sa-p-youtube-tint: #FADFE3;    --sa-p-youtube-text: #B23345;
+  --sa-p-twitch: #6F5FD3;     --sa-p-twitch-tint: #E8E5FA;     --sa-p-twitch-text: #5B4BC0;
+  --sa-p-patreon: #B4549A;    --sa-p-patreon-tint: #F4E0EE;    --sa-p-patreon-text: #974282;
+  --sa-p-upwork: #5D8E2E;     --sa-p-upwork-tint: #E6F0DA;     --sa-p-upwork-text: #4A7522;
+  --sa-p-fiverr: #D9A514;     --sa-p-fiverr-tint: #FBF0CF;     --sa-p-fiverr-text: #8A6700;
+  --sa-p-freelancer: #4D5A66; --sa-p-freelancer-tint: #E5E8EB; --sa-p-freelancer-text: #3F4A55;
+  --sa-p-contra: #8B5A3C;     --sa-p-contra-tint: #F1E6DE;     --sa-p-contra-text: #74482D;
+
+
+  /* ---- On dark fields (hero, report band): translucent whites. Part of the palette, keep here ---- */
+  --sa-on-forest-glass: rgba(255, 255, 255, .12);
+  --sa-on-forest-glass-line: rgba(255, 255, 255, .18);
+  --sa-on-forest-ref: rgba(255, 255, 255, .16);
+  --sa-on-forest-ghost-line: rgba(255, 255, 255, .5);
+  --sa-on-warn-mid: #F2D3D7;
+  --sa-warn-line: #EBC3C8;      /* border of the light missing-data card */
+  --sa-flash: #EEF6D2;          /* step highlighted from an answer reference */
+
+  /* ---- Type ---- */
+  --sa-font: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --sa-font-cjk: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif;
+  --sa-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sa-display: 800 56px/1.0 var(--sa-font);   /* hero figure */
+  --sa-h1: 800 32px/1.15 var(--sa-font);
+  --sa-h2: 800 22px/1.25 var(--sa-font);
+  --sa-h3: 700 17px/1.35 var(--sa-font);
+  --sa-body: 500 15px/1.5 var(--sa-font);
+  --sa-small: 500 13px/1.45 var(--sa-font);
+  --sa-label: 700 12px/1.3 var(--sa-font);     /* uppercase, +0.06em */
+  --sa-tracking-tight: -0.02em;
+  --sa-tracking-label: 0.06em;
+
+  /* ---- Shape ---- */
+  --sa-r-card: 24px;
+  --sa-r-inner: 16px;
+  --sa-r-input: 14px;
+  --sa-r-badge: 8px;
+  --sa-r-pill: 9999px;
+  --sa-shadow-card: 0 1px 2px rgba(24, 33, 27, .05);
+  --sa-shadow-float: 0 1px 2px rgba(24, 33, 27, .06), 0 12px 32px rgba(24, 33, 27, .10);
+  --sa-press-shift: 1px;                        /* pressed buttons sink 1px */
+
+  /* ---- Space (4px grid) ---- */
+  --sa-s1: 4px; --sa-s2: 8px; --sa-s3: 12px; --sa-s4: 16px; --sa-s5: 20px; --sa-s6: 24px; --sa-s8: 32px; --sa-s10: 40px;
+  --sa-sidebar-w: 248px;
+}

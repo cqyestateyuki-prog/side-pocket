@@ -1,0 +1,20 @@
+// Product copy written by GPT-6 Astra (scripts/astra.py) for the design kit — reuse verbatim.
+// New marketing sentences go through Astra too; plain UI labels live in the screens.
+export const COPY = {
+  TAGLINE: "One ledger for your global side income.",
+  OVERVIEW_HERO: "Your side income in {month}, after fees and withholding.",
+  LEDGER_INTRO: "Trace income from gross to net, with platform fees, payout fees and tax withheld shown separately.",
+  TAX_HERO: "Your tax items, together.",
+  TAX_SUB: "Review withholding, set-asides and the next US estimated-tax deadline. You choose the set-aside rate. This is not tax advice.",
+  FORMS_HEADLINE: "Your forms and bank deposits, side by side",
+  FORMS_SUB: "Compare each platform’s gross payments in form view with what landed in bank view, with platform fees, payout fees and refunds itemised.",
+  THRESHOLD_NOTE: "Federal 1099-K threshold: $20,000 AND 200 transactions per calendar year. Below it, you may get no form; income remains reportable.",
+  DUPLICATE_NOTE: "The same money may appear on both a platform’s form and PayPal’s. Raise possible duplicates with your accountant.",
+  GAP_LABEL: "What makes up the gap",
+  ASK_PLACEHOLDER: "Ask about your income, fees or tax items.",
+  ASK_PROMISE: "Every number in this answer comes from a calculation step.",
+  MISSING_HEADLINE: "Missing exchange rate. Calculation stopped.",
+  MISSING_BODY: "A record is missing the exchange rate for its date. We stopped instead of guessing. Add the missing rate, then run the calculation again.",
+  REPORT_COVER: "Your side income and tax items, ready for your accountant.",
+  DISCLAIMER: "Estimate only — not tax, legal, or financial advice.",
+};
