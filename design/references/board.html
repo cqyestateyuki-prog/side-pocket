@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Side Atlas · 参照物对比</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=Archivo+Narrow:wght@500;700&family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;600;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#16151a; --mute:#6b6a73; --line:#e4e2dc; --page:#fbfaf7; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--ink); font:15px/1.55 Inter, system-ui, sans-serif; }
+  header { max-width:1440px; margin:0 auto; padding:40px 32px 8px; }
+  header h1 { font:600 28px/1.2 Inter, sans-serif; margin:0 0 6px; letter-spacing:-.01em; }
+  header p { margin:0; color:var(--mute); max-width:900px; }
+  .grid { max-width:1440px; margin:0 auto; padding:24px 32px 56px; display:grid; grid-template-columns:repeat(3, 1fr); gap:28px; }
+  .col { display:flex; flex-direction:column; gap:14px; }
+  .tag { font:600 12px/1 Inter; letter-spacing:.08em; text-transform:uppercase; color:var(--mute); }
+  .col h2 { margin:0; font:600 22px/1.2 Inter; }
+  .vibe { margin:0; color:var(--mute); font-size:14px; }
+  .shot { width:100%; border-radius:10px; border:1px solid var(--line); display:block; }
+  .facts { background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 14px; font-size:13px; }
+  .facts dt { color:var(--mute); font-size:11px; letter-spacing:.06em; text-transform:uppercase; margin-top:8px; }
+  .facts dt:first-child { margin-top:0; }
+  .facts dd { margin:2px 0 0; }
+  .sw { display:inline-flex; align-items:center; gap:6px; margin:2px 10px 2px 0; font-family:ui-monospace, Menlo, monospace; font-size:12px; }
+  .sw i { width:14px; height:14px; border-radius:4px; display:inline-block; border:1px solid rgba(0,0,0,.15); }
+  .label { font:600 12px/1 Inter; letter-spacing:.08em; text-transform:uppercase; color:var(--mute); margin-top:6px; }
+  .pc { font-size:13px; }
+  .pc b { font-weight:600; }
+  .pc ul { margin:4px 0 0; padding-left:18px; }
+
+  /* ---------- Sample A · Gumroad ---------- */
+  .gum { background:#f4f4f0; padding:18px; border-radius:4px; font-family:"Space Grotesk", sans-serif; color:#000; }
+  .gum .card { background:#fff; border:1.5px solid #000; box-shadow:4px 4px 0 #000; padding:16px; margin-bottom:14px; }
+  .gum .eyebrow { font-size:13px; }
+  .gum .big { font-size:44px; line-height:1; letter-spacing:-.02em; margin:6px 0 4px; }
+  .gum .sub { font-size:13px; opacity:.6; }
+  .gum .bar { display:flex; height:14px; border:1.5px solid #000; margin:12px 0 6px; }
+  .gum .bar span { display:block; height:100%; border-right:1.5px solid #000; }
+  .gum .bar span:last-child { border-right:0; }
+  .gum .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .gum .chip { border:1.5px solid #000; padding:3px 8px; font-size:12px; background:#fff; }
+  .gum .chip.hot { background:#ff90e8; }
+  .gum .row { display:flex; justify-content:space-between; font-size:14px; padding:6px 0; border-top:1.5px solid #000; }
+  .gum .row:first-of-type { border-top:0; }
+  .gum .btn { background:#000; color:#fff; padding:10px 14px; font-size:14px; display:inline-block; margin-top:8px; }
+  .gum .pink { background:#ff90e8; }
+
+  /* ---------- Sample B · Linktree ---------- */
+  .lt { background:#d2e823; padding:18px; border-radius:24px; font-family:"Plus Jakarta Sans", sans-serif; color:#254f1a; }
+  .lt .card { background:#fff; border-radius:22px; padding:18px; margin-bottom:12px; color:#1e2330; }
+  .lt .eyebrow { font-weight:600; font-size:13px; color:#254f1a; }
+  .lt .big { font-weight:800; font-size:46px; line-height:1; letter-spacing:-.03em; margin:6px 0 4px; color:#254f1a; }
+  .lt .sub { font-size:13px; color:#5b6150; }
+  .lt .bar { display:flex; height:14px; border-radius:99px; overflow:hidden; margin:12px 0 6px; }
+  .lt .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .lt .chip { background:#e8efd6; color:#254f1a; border-radius:99px; padding:5px 10px; font-size:12px; font-weight:600; }
+  .lt .chip.hot { background:#254f1a; color:#d2e823; }
+  .lt .tax { background:#2665d6; color:#fff; }
+  .lt .tax .eyebrow { color:#cfe0ff; }
+  .lt .tax .big { color:#fff; font-size:34px; }
+  .lt .row { display:flex; justify-content:space-between; font-size:14px; padding:6px 0; }
+  .lt .btn { background:#1e2330; color:#fff; border-radius:99px; padding:10px 16px; font-weight:600; font-size:14px; display:inline-block; margin-top:6px; }
+
+  /* ---------- Sample C · Spotify Wrapped ---------- */
+  .wr { background:#f3f0e6; padding:18px; border-radius:6px; font-family:"Archivo", sans-serif; color:#111; position:relative; overflow:hidden; }
+  .wr::before { content:""; position:absolute; right:-60px; top:-60px; width:220px; height:220px; border-radius:50%;
+               background:repeating-radial-gradient(circle, #111 0 9px, #f3f0e6 9px 18px); opacity:.9; }
+  .wr .card { position:relative; background:#111; color:#f3f0e6; padding:18px; margin-bottom:12px; }
+  .wr .eyebrow { font-family:"Archivo Narrow"; font-weight:700; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:#9be22d; }
+  .wr .big { font-weight:900; font-size:52px; line-height:.95; letter-spacing:-.04em; margin:8px 0 4px; color:#9be22d; }
+  .wr .sub { font-size:13px; opacity:.75; }
+  .wr .rank { list-style:none; margin:10px 0 0; padding:0; }
+  .wr .rank li { display:flex; justify-content:space-between; font-weight:800; font-size:16px; padding:3px 0; }
+  .wr .rank li span:first-child::before { content:attr(data-n) "  "; color:#9be22d; }
+  .wr .light { background:#9be22d; color:#111; }
+  .wr .light .eyebrow { color:#111; }
+  .wr .light .big { color:#111; font-size:38px; }
+  .wr .btn { background:#111; color:#f3f0e6; padding:10px 14px; font-weight:800; font-size:14px; display:inline-block; margin-top:6px; border-radius:99px; }
+
+  footer { max-width:1440px; margin:0 auto; padding:0 32px 48px; color:var(--mute); font-size:13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Side Atlas · 视觉参照物对比</h1>
+  <p>每列：真实截图 → 从网页里实测出的字体和颜色 → <b>用这个风格做出来的 Side Atlas 卡片</b>（月之灵 2026 年 9 月的真实测试数据）。样例用的是免费近似字体，正式品牌字体都是商用的。Patreon 官网被浏览器安全策略拦了，没能截图，所以只比三个。</p>
+</header>
+
+<div class="grid">
+
+  <!-- ===== A · Gumroad ===== -->
+  <section class="col">
+    <span class="tag">A · 推荐</span>
+    <h2>Gumroad</h2>
+    <p class="vibe">创作者卖货平台。奶油底、纯黑线框、硬阴影、亮粉点缀：新粗野主义，有个性但数字很清楚。</p>
+    <img class="shot" src="gumroad.jpg" alt="Gumroad homepage">
+    <dl class="facts">
+      <dt>字体（实测）</dt><dd>ABC Favorit（商用）→ 样例用 Space Grotesk 近似</dd>
+      <dt>颜色</dt><dd><span class="sw"><i style="background:#f4f4f0"></i>#F4F4F0 底</span><span class="sw"><i style="background:#000"></i>#000 字/按钮</span><span class="sw"><i style="background:#ff90e8"></i>#FF90E8 粉</span></dd>
+      <dt>形状</dt><dd>直角，1.5px 黑描边，4px 硬阴影，黑色方按钮</dd>
+    </dl>
+    <div class="label">Side Atlas 用这个风格</div>
+    <div class="gum">
+      <div class="card">
+        <div class="eyebrow">Moon Spirit · September 2026</div>
+        <div class="big">$5,341.79</div>
+        <div class="sub">landed from $7,471.07 gross · 7 platforms</div>
+        <div class="bar"><span style="width:71.5%;background:#fff"></span><span style="width:28%;background:#ff90e8"></span><span style="width:.5%;background:#000"></span></div>
+        <div class="sub">net · platform fees $2,095.46 · payout $24.42 + tax withheld $9.40</div>
+      </div>
+      <div class="card">
+        <div class="chips">
+          <span class="chip hot">Contra $940.86 · keeps 100%</span><span class="chip">B站 $1,253.15</span><span class="chip">Upwork $907.91</span><span class="chip">YouTube $614.02</span><span class="chip">Patreon $576.22</span><span class="chip">Twitch $532.95</span><span class="chip">Fiverr $516.68</span>
+        </div>
+      </div>
+      <div class="card pink">
+        <div class="row"><span>Set aside (25%)</span><b>$1,335.45</b></div>
+        <div class="row"><span>Next US estimated tax</span><b>Jan 15 · 90 days</b></div>
+        <div class="row"><span>Withheld in China</span><b>¥67.42 → ask your CPA</b></div>
+        <span class="btn">Export for my accountant</span>
+      </div>
+    </div>
+    <div class="pc"><b>适合：</b>记账、表格、数字多的页面依然清楚，个性来自线框和粉色，不靠花哨。<ul><li>风险：做不好会像"复古模板"；粉色要克制，只用在重点上。</li></ul></div>
+  </section>
+
+  <!-- ===== B · Linktree ===== -->
+  <section class="col">
+    <span class="tag">B</span>
+    <h2>Linktree</h2>
+    <p class="vibe">最典型的 creator 品牌：大块荧光绿 / 森林绿 / 宝蓝色块，胶囊按钮，粗圆字体，活泼亲切。</p>
+    <img class="shot" src="linktree.jpg" alt="Linktree homepage">
+    <dl class="facts">
+      <dt>字体（实测）</dt><dd>Link Sans（自有字体）800 粗 → 样例用 Plus Jakarta Sans 近似</dd>
+      <dt>颜色</dt><dd><span class="sw"><i style="background:#d2e823"></i>#D2E823</span><span class="sw"><i style="background:#254f1a"></i>#254F1A</span><span class="sw"><i style="background:#2665d6"></i>#2665D6</span><span class="sw"><i style="background:#780016"></i>#780016</span><span class="sw"><i style="background:#1e2330"></i>#1E2330</span></dd>
+      <dt>形状</dt><dd>大圆角卡片（~22px），全胶囊按钮（9999px）</dd>
+    </dl>
+    <div class="label">Side Atlas 用这个风格</div>
+    <div class="lt">
+      <div class="card">
+        <div class="eyebrow">Moon Spirit · September 2026</div>
+        <div class="big">$5,341.79</div>
+        <div class="sub">landed from $7,471.07 gross · 7 platforms</div>
+        <div class="bar"><span style="width:71.5%;background:#254f1a"></span><span style="width:28%;background:#d2e823"></span><span style="width:.5%;background:#780016"></span></div>
+        <div class="chips">
+          <span class="chip hot">Contra keeps 100%</span><span class="chip">B站 $1,253</span><span class="chip">Upwork $908</span><span class="chip">YouTube $614</span><span class="chip">Patreon $576</span><span class="chip">Twitch $533</span><span class="chip">Fiverr $517</span>
+        </div>
+      </div>
+      <div class="card tax">
+        <div class="eyebrow">Tax items this quarter</div>
+        <div class="big">$1,335.45 to set aside</div>
+        <div class="row"><span>Next US estimated tax</span><b>Jan 15 · 90 days</b></div>
+        <div class="row"><span>Withheld in China</span><b>¥67.42</b></div>
+        <span class="btn">Export for my accountant</span>
+      </div>
+    </div>
+    <div class="pc"><b>适合：</b>最有"创作者"感，年轻、好玩。<ul><li>风险：大色块配财务数字容易显得像玩具；荧光绿上放小字可读性差。</li></ul></div>
+  </section>
+
+  <!-- ===== C · Spotify Wrapped ===== -->
+  <section class="col">
+    <span class="tag">C</span>
+    <h2>Spotify Wrapped 2025</h2>
+    <p class="vibe">年度回顾那套视觉：巨大的粗体数字、荧光绿 + 黑 + 米白、欧普艺术纹样，像在讲故事。</p>
+    <img class="shot" src="wrapped.jpg" alt="Spotify 2025 Wrapped newsroom">
+    <dl class="facts">
+      <dt>字体（实测）</dt><dd>Spotify Mix / Circular（自有字体）→ 样例用 Archivo Black 近似</dd>
+      <dt>颜色</dt><dd><span class="sw"><i style="background:#9be22d"></i>荧光绿（截图取色）</span><span class="sw"><i style="background:#111"></i>#111</span><span class="sw"><i style="background:#f3f0e6"></i>米白</span></dd>
+      <dt>形状</dt><dd>大标题字距收紧，黑白同心圆纹样，胶囊按钮</dd>
+    </dl>
+    <div class="label">Side Atlas 用这个风格</div>
+    <div class="wr">
+      <div class="card">
+        <div class="eyebrow">Your September, wrapped</div>
+        <div class="big">$5,341.79</div>
+        <div class="sub">landed out of $7,471.07 you earned</div>
+        <ul class="rank">
+          <li><span data-n="01">B站</span><span>$1,253</span></li>
+          <li><span data-n="02">Contra</span><span>$941</span></li>
+          <li><span data-n="03">Upwork</span><span>$908</span></li>
+        </ul>
+      </div>
+      <div class="card light">
+        <div class="eyebrow">Before January 15</div>
+        <div class="big">Set aside $1,335.45</div>
+        <div class="sub">China already withheld ¥67.42 — bring it to your CPA</div>
+        <span class="btn">Export for my accountant</span>
+      </div>
+    </div>
+    <div class="pc"><b>适合：</b>月报 / 季报页会非常惊艳，演示效果最强。<ul><li>风险：日常的账本表格页很难套这种风格，整站统一难度最大。</li></ul></div>
+  </section>
+
+</div>
+<footer>截图来源：gumroad.com、linktr.ee、newsroom.spotify.com/2025-wrapped-user-experience（2026-10-17 截取）。样例中的数字来自 daoshou_testdata（虚构数据）。</footer>
+</body>
+</html>
