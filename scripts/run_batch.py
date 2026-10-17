@@ -22,11 +22,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 load_dotenv(ROOT / ".env")
 
-from daoshou import agent_v1, data  # noqa: E402
+from daoshou import agent_v1, agent_v2, data  # noqa: E402
 from daoshou.grading import grade  # noqa: E402
 from daoshou.prism_tracing import TracedAgent, default_model, nicrron_client  # noqa: E402
 
-VERSIONS = {"v1": agent_v1}
+VERSIONS = {"v1": agent_v1, "v2": agent_v2}
 # One question per behaviour worth checking before spending a full batch.
 PILOT = ["Q001", "Q009", "Q015", "Q019", "Q062"]
 
