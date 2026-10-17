@@ -98,7 +98,8 @@ class TracedAgent:
 
     def run(self, user_input: str, *, session_id: str | None = None, max_iterations: int = 15,
             metadata: dict | None = None, tool_impls: dict[str, Callable[..., Any]] | None = None,
-            grade: Grader | None = None, on_step: Callable[[dict], None] | None = None) -> dict:
+            grade: Grader | None = None, on_step: Callable[[dict], None] | None = None,
+            no_answer: Callable[[], bool] | None = None) -> dict:
         """Run the tool loop once and trace it. `on_step`, if given, receives each LLM and
         tool step as it finishes (used to stream progress to the UI)."""
         impls = tool_impls or self.tool_impls
@@ -197,14 +198,22 @@ class TracedAgent:
             "start_time": run_start, "end_time": _now(), "duration_ms": total_ms,
             "status": "error" if failed else "ok", "error_message": error_message,
         })
+        # A tool failed and the run produced no answer (e.g. a refusal on missing data):
+        # PRISM's error rate counts runs with no output, so the run-level trace carries an
+        # empty output and the refusal text goes to metadata. Spans keep the full text.
+        unanswered = bool(tool_errors) and no_answer is not None and no_answer()
+        trace_meta = {**meta, "status": status, "error_message": error_message}
+        if unanswered:
+            trace_meta["agent_message"] = final_text[:10000]
         # The run-level trace goes first: it is what carries agent identity, and a
         # trace record created implicitly by the span batch would not have it.
         self._post("/api/traces", {
             "project_id": self.project_id, "trace_id": trace_id, "model": self.model,
-            "input_messages": [{"role": "user", "content": user_input}], "output_message": final_text,
+            "input_messages": [{"role": "user", "content": user_input}],
+            "output_message": "" if unanswered else final_text,
             "latency_ms": int(total_ms), "token_count_input": tokens_in, "token_count_output": tokens_out,
             "agent_id": self.agent_id, "agent_name": self.agent_name, "session_id": session,
-            "metadata": {**meta, "status": status, "error_message": error_message},
+            "metadata": trace_meta,
         })
         self._post("/api/spans/ingest", {
             "trace_id": trace_id, "project_id": self.project_id, "session_id": session, "spans": spans,

@@ -53,6 +53,7 @@ def run_one(q: dict, version: str, model: str, client, trace: bool) -> dict:
             metadata={"question_id": q["id"], "category": q["category"], "creator_id": q["creator_id"]},
             tool_impls=module.make_tools(state),
             grade=lambda _text, _errors: grade(q, state.get("submitted")),
+            no_answer=lambda: (state.get("submitted") or {}).get("answer") in (None, "", "null"),
         )
     finally:
         agent.close()

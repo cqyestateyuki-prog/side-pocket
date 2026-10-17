@@ -403,7 +403,8 @@ def ask(req: AskRequest) -> StreamingResponse:
             res = agent.run(question, session_id=f"ask-{uuid.uuid4().hex[:8]}",
                             metadata={"source": "api/ask", "creator_id": req.creator},
                             tool_impls=agent_v2.make_tools(state),
-                            on_step=lambda s: events.put(("step", {"i": next(counter), **_step_event(s)})))
+                            on_step=lambda s: events.put(("step", {"i": next(counter), **_step_event(s)})),
+                            no_answer=lambda: (state.get("submitted") or {}).get("answer") in (None, "", "null"))
             sub = state.get("submitted") or {}
             events.put(("answer", {"answer": sub.get("answer"), "unit": sub.get("unit"),
                                    "explanation": sub.get("explanation"), "text": res["output"]}))
