@@ -3,13 +3,15 @@
 // v1.3.1 rewrote every privacy line against the real data flow: labels made in the browser before upload, server
 // computes in memory and keeps no copy, Ask Atlas gets computed totals and labels, PRISM gets tool names, timings and
 // pass or fail, ECB rates fetched with currency codes and a date range only when there is no rate file.
+// v1.3.1 (rate rule): a fourth pass matched the rate lines to the rule (your rate file exactly, ECB only without one)
+// and the Ask Atlas and PRISM lines to docs/personal_api.md (question as typed, fresh account codes; token counts).
 window.SA_COPY_V13 = {
  "MYDATA_HEADLINE": "Bring your side income into one ledger",
  "MYDATA_SUB": "Upload your CSV statements from any of the 8 supported platforms to start your ledger.",
  "DROP_HINT": "Drop your platform CSV statements here, or choose files.",
  "PROMISE_BROWSER": "Your records and settings are stored in this browser",
  "PROMISE_SERVER": "Your statement rows are processed in memory",
- "PROMISE_AI": "Ask Atlas receives only your computed totals and labels",
+ "PROMISE_AI": "Ask Atlas sees your question and computed totals.",
  "EMPTY_MASCOT": "Your first statement gives us a place to start.",
  "IMPORTED_SUB": "Your {files} files added {records} records to your ledger in this browser.",
  "SETTINGS_SUB": "Choose your tax home and display currency. Your set-aside rate is up to you.",
@@ -20,16 +22,15 @@ window.SA_COPY_V13 = {
  "CN_WINDOW_LABEL": "Your 2026 tax year window: March 1 to June 30, 2027",
  "CN_WITHHELD_NOTE": "Bilibili withholds Chinese individual income tax when you withdraw.",
  "CN_FOREIGN_FLAG": "Your income from platforms outside China had no Chinese tax withheld. Raise this income with your accountant. This is not tax advice.",
- "CNY_NOTE": "Your USD records are shown in CNY using each record's own date's exchange rate.",
  "MAP_BROWSER": "Your records and settings are stored here.",
  "MAP_SERVER": "Your labeled statement rows reach the server for in-memory calculation. No copy is kept.",
- "MAP_AI": "Only your computed totals and labels, such as {label}.",
- "MAP_PRISM": "Only tool names, timings and pass or fail from your runs.",
+ "MAP_AI": "Your question goes to Ask Atlas as typed, with totals and fresh account codes. Statement rows stay out.",
+ "MAP_PRISM": "Your traces: step and tool names, timings, token counts and status. No question, answer, tool data or amounts.",
  "PROMISE_BROWSER_SMALL": "Delete them any time in Settings & privacy.",
  "PROMISE_SERVER_SMALL": "No copy is kept. There is no account or database of records.",
- "PROMISE_AI_SMALL": "Your statement rows are not sent to Ask Atlas.",
+ "PROMISE_AI_SMALL": "Your accounts get fresh codes each request. Even browser labels stay out.",
  "TAXHOME_HELP_CN": "Tax shows China's annual filing window and tax withheld by Bilibili. Pick Both if you also file in the US.",
- "CURRENCY_HELP": "The ledger keeps each record in its own currency.",
+ "CURRENCY_HELP": "Choose USD or CNY. Your records keep their own currencies. CNY display converts USD records using your rate file, or ECB rates if you have no file for that currency.",
  "FILES_NOTE": "Removing a file removes its records from this browser.",
  "BAD_FILE": "Upload the platform's CSV export instead.",
  "CHECK_PLATFORMS": "Platforms recognized from each file's columns",
@@ -42,7 +43,7 @@ window.SA_COPY_V13 = {
  "ACC_FX": "USD records converted to CNY at each record's dated rate ({n} daily rates).",
  "US_HIDDEN": "US estimated-tax dates and the forms check are hidden for a China tax home. Pick Both in Settings to see them.",
  "LEDGER_HERO": "Your Q3 2026 ledger, built from your statements",
- "MAP_FX": "Without your rate file, public ECB rates are fetched. Only currency codes and a date range are sent.",
+ "MAP_FX": "The server fetches ECB rates only for currencies you have no rate file for, sending only currency codes and a date range.",
  "EMPTY_TITLE": "Upload your first statement",
  "EMPTY_OVERVIEW": "Once you upload statements, your overview will show your side income totals.",
  "EMPTY_LEDGER": "Once you upload statements, your ledger will show your gross income, fees and net.",
@@ -52,7 +53,8 @@ window.SA_COPY_V13 = {
  "DIALOG_BODY": "This clears your records and settings from this browser. The server has no copy. Use Export backup first to download one JSON file.",
  "BOTH_HERO": "Your US and China tax overview",
  "BOTH_FLAG": "Bilibili withheld Chinese individual income tax. Talk to your accountant about foreign tax credits and double taxation. Side Atlas does not work out your tax owed.",
- "LEDGER_CNY_NOTE": "Under each USD record: rate, date and source. ECB uses the last working day for weekends or holidays.",
  "RATE_STOP_TITLE": "Your rate file is missing a rate",
- "RATE_STOP_BODY": "Your rate file has no rate for this record's date. Calculation has stopped. This record is left out of your totals until you add the rate."
+ "RATE_STOP_BODY": "Your rate file has no rate for this record's date. Calculation has stopped. This record is left out of your totals until you add the rate.",
+ "LEDGER_ECB_NOTE": "Your conversions show ECB rate, date and source. Weekends and holidays use the last rate on or before the date, up to 7 days back.",
+ "LEDGER_FILE_NOTE": "Your rate file is used exactly as given. Records with uncovered dates stop and stay out of totals until you add the rate."
 };

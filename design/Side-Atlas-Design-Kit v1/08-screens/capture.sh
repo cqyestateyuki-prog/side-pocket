@@ -32,5 +32,7 @@ shoot 14-overview-cny overview-cny 900
 shoot 12b-delete-dialog privacy-delete 900
 shoot 15-tax-both tax-both 900
 shoot 16-empty-overview overview-empty 900
-shoot 17-ledger-cny ledger-cny 900
-shoot 17b-ledger-cny-full ledger-cny "${LEDGER_CNY_FULL_HEIGHT:-2230}"
+shoot 17-ledger-cny-ecb ledger-cny 900
+shoot 17-ledger-cny-ecb-full ledger-cny "${LEDGER_ECB_FULL_HEIGHT:-2000}"
+shoot 17b-ledger-cny-ratefile ledger-cny-file 900
+shoot 17b-ledger-cny-ratefile-full ledger-cny-file "${LEDGER_FILE_FULL_HEIGHT:-2230}"

@@ -13,11 +13,12 @@ The single place where visual rulings live. Changing a ruling means a new kit ve
 | 42 | **Ledger in CNY** (screen 17): original amount and currency, CNY columns, and a rate line under every converted amount (rate · date · source: "Your rate file", or "ECB rate of Fri Aug 21" for a weekend or holiday). A working day missing from the rate file stops the record: warn row, "left out of totals", stop card above the table, KPI net marked incomplete. | Approved suggestion. |
 | 43 | **Delete confirmation** (screen 12b): dialog with the filled danger confirm "Delete all my data" (the only filled danger button), "Export backup first" and "Cancel". | Approved suggestion. |
 | 44 | **01 to 08 re-captured** with the v1.3 shell. Their copy lost its leftover dashes (punctuation only; wording unchanged). | Coordinator. |
+| 45 | **Rate rule** (supersedes the drawing in #42; coordinator decision, the backend rule wins): a rate file you upload for a currency is used exactly, and a date it doesn't cover is missing (stop card, left out of totals, "Your rate file has no rate for this date"). Only a currency with no rate file of yours uses ECB reference rates; a weekend or holiday uses the last ECB publication on or before its date, at most 7 days back, shown as "ECB rate of Fri Aug 21". One currency never mixes the two sources. Screen 17 now shows the common case (no rate file, all ECB) and 17b the rate-file case with one missing date, both from the real `POST /api/personal/ledger` response. | A source the user supplies is authoritative and gaps are never filled silently. |
+| 46 | **Privacy lines corrected to `docs/personal_api.md`** (amends #39): Ask Atlas gets the question as typed and computed totals, with accounts as fresh codes on every request (the browser's labels don't reach it); PRISM gets step and tool names, timings, token counts and status. The exchange-rate line and the display-currency help now state the rate rule. | The backend contract is the source of truth for what leaves the device. |
 
 ### Open for sign-off (v1.3.1)
 
-- **Rate rule:** the ledger drawing uses the ECB rate of the last working day for a weekend your rate file doesn't cover. `daoshou/fx.py` today uses an uploaded rate file exactly (any date it lacks is missing) and uses ECB rates only for a currency with no rate file. Pick one. If the drawing wins, the privacy line on exchange rates should also mention days your rate file doesn't cover.
-- **Display-currency help text** says "each record's own date's exchange rate"; with the weekend rule that is approximate. Reword once the rate rule is settled.
+- Resolved: the rate rule (#45) and the display-currency help text (#46).
 
 ## v1.3 · 17 October 2026
 

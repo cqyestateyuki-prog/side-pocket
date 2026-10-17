@@ -2,13 +2,14 @@
 
 Everything needed to build Side Atlas's look and feel: the spec, logos, icons, tokens, code, fonts, a clickable prototype and screen images. Version 1.3.1, 17 October 2026, desktop only.
 
-Start with `01-spec/Side-Atlas-Look-and-Feel-Spec.pdf`. Then open `07-mockups/app.html` in a browser (works offline; switch screens in the left nav and the Your data / Demo data switch, or with `#overview`, `#ledger`, `#tax`, `#ask`, `#report`, `#sources`, `#settings`, `#missing`, and for v1.3 `#mydata-empty`, `#mydata`, `#privacy`, `#privacy-delete`, `#tax-cn`, `#tax-both`, `#overview-cny`, `#overview-empty`, `#ledger-cny`; `?screen=<name>` works too).
+Start with `01-spec/Side-Atlas-Look-and-Feel-Spec.pdf`. Then open `07-mockups/app.html` in a browser (works offline; switch screens in the left nav and the Your data / Demo data switch, or with `#overview`, `#ledger`, `#tax`, `#ask`, `#report`, `#sources`, `#settings`, `#missing`, and for v1.3 `#mydata-empty`, `#mydata`, `#privacy`, `#privacy-delete`, `#tax-cn`, `#tax-both`, `#overview-cny`, `#overview-empty`, `#ledger-cny`, `#ledger-cny-file`; `?screen=<name>` works too).
 
 ## What's new in v1.3.1
 
-- Privacy lines rewritten to match the build: labels made in the browser before upload, a server that calculates in memory and keeps no copy, Ask Atlas with computed totals and labels only, PRISM with tool names, timings and pass or fail only, and a new privacy-center row for ECB exchange rates (currency codes and a date range only).
+- Privacy lines rewritten to match `docs/personal_api.md`: labels made in the browser before upload, a server that calculates in memory and keeps no copy, Ask Atlas with your question and computed totals (accounts as fresh codes), PRISM with step and tool names, timings, token counts and status, and a new privacy-center row: ECB rates only for a currency without your rate file (currency codes and a date range only).
 - Labels have four digits: `Upwork · acct ••7426`.
-- New drawings: 12b delete confirmation, 15 Tax with tax home Both, 16 empty state before any import, 17 Ledger in CNY with a rate line and the missing-rate stop. Six components added (decisions #38 to #44).
+- New drawings: 12b delete confirmation, 15 Tax with tax home Both, 16 empty state before any import, 17 Ledger in CNY without a rate file (ECB rates) and 17b with your rate file and one missing date, both from the real backend. Six components added (decisions #38 to #46).
+- Rate rule: your rate file is used exactly and a date it lacks stops the record; ECB rates only for a currency without your rate file; never both in one currency.
 - 01 to 08 re-captured with the new shell.
 
 ## What's new in v1.3
@@ -42,7 +43,7 @@ Start with `01-spec/Side-Atlas-Look-and-Feel-Spec.pdf`. Then open `07-mockups/ap
 | `04-tokens` | `side-atlas-tokens.json` (W3C design tokens; Tokens Studio → Figma), `.css` (`--sa-*` custom properties), `.js`. | Design, engineering |
 | `05-css` | `side-atlas-align.css`: drop-in base (fonts, tokens, type, pill buttons, tabular numbers). `side-atlas-ui-reference.css`: the component styles the prototype uses. | Engineering |
 | `06-fonts` | Plus Jakarta Sans variable woff2 (latin + latin-ext), `side-atlas-fonts.css`, OFL licence. | Engineering |
-| `07-mockups` | `app.html` (the desktop app, 17 screens), `data.js` (real numbers from the fictional test set via `daoshou/ledger.py`), `data-v13.js` + `gen_data_v13.py` (the v1.3 Your data numbers, CNY view and China split), `copy-v13.js` (GPT-6 Astra copy for v1.3). | Everyone |
+| `07-mockups` | `app.html` (the desktop app, 17 screens), `data.js` (real numbers from the fictional test set via `daoshou/ledger.py`), `data-v13.js` + `gen_data_v13.py` (the v1.3 Your data numbers, CNY view and China split), `data-v131-ledger.js` + `gen_ledger_v131.py` (screen 17 from the real `/api/personal/ledger`, ECB rates fetched), `copy-v13.js` (GPT-6 Astra copy for v1.3). | Everyone |
 | `08-screens` | `desktop/` PNGs at 1440×900 in flow order (+ full-length tax screens), and `capture.sh` to re-export them with headless Chrome (`capture.sh v13` for screens 10 to 17 only). 01 to 08 show the v1.1 drawings in the v1.3 shell. | Design, product |
 
 ## The rules in one place

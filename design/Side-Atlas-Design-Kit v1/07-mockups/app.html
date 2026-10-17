@@ -9,6 +9,7 @@
 <script src="../03-icons/side-atlas-icons.js"></script>
 <script src="data.js"></script>
 <script src="data-v13.js"></script>
+<script src="data-v131-ledger.js"></script>
 <script src="copy-v13.js"></script>
 <script>
 /* UI is single-language (English). Source data keeps "B站", Chinese record types and names; map them for display. */
@@ -24,6 +25,7 @@
   };
   window.SA_DATA = en(window.SA_DATA, "");
   if (window.SA_V13) window.SA_V13 = en(window.SA_V13, "");
+  if (window.SA_V131_LEDGER) window.SA_V131_LEDGER = en(window.SA_V131_LEDGER, "");
 })();
 </script>
 </head>
@@ -512,7 +514,7 @@ function privacy() {
         <div class="ctl"><div class="sa-seg">${["United States", "China", "Both"].map(x => `<button class="${x === "China" ? "on" : ""}">${x}</button>`).join("")}</div></div>
         <p>${X.TAXHOME_HELP_CN}</p></div>
       <div class="row"><h3>${icon("fx", "sm")} Display currency</h3><div class="ctl">${curSeg("CNY")}</div>
-        <p>${X.CNY_NOTE} ${X.CURRENCY_HELP}</p></div>
+        <p>${X.CURRENCY_HELP}</p></div>
       <div class="row"><h3>${icon("sliders", "sm")} Set-aside rate</h3>
         <div class="ctl"><div class="sa-seg">${[20, 25, 30].map(r => `<button class="${r === 25 ? "on" : ""}">${r}%</button>`).join("")}</div><label class="sa-rateinput"><input value="25" aria-label="Set-aside rate">%</label></div>
         <p>${C.SETTINGS_PROMISE}</p></div>
@@ -707,47 +709,58 @@ function overviewEmpty() {
   <div class="sa-grid"><div class="c8">${emptyCard(X.EMPTY_OVERVIEW)}</div></div>`;
 }
 
-/* ---------------- 17 · Ledger in CNY (August) with rate sources ---------------- */
-function ledgerCny() {
-  const LG = V.ledger_aug_cny, t = LG.totals, miss = LG.left_out[0];
+/* ---------------- 17 · Ledger in CNY (August): 17 no rate file (ECB), 17b your rate file with a gap ---------------- */
+// Rule (decision #45): a currency with your rate file uses it exactly, and a date it lacks stops the record;
+// only a currency without one uses ECB reference rates, a weekend or holiday taking the last publication before it.
+// Data: the real POST /api/personal/ledger response for both cases (data-v131-ledger.js).
+function ledgerCnyCase(kind) {
+  const LG = window.SA_V131_LEDGER[kind], t = LG.totals, iss = LG.issues[0];
   const wd = d => new Date(d + "T12:00:00").toLocaleString("en-US", { weekday: "short" });
-  const usdRows = LG.rows.filter(r => r.currency !== "CNY");
-  const n = k => usdRows.filter(r => r.source === k).length;
-  const rateLine = r => r.source === "native" ? "" : r.source === "missing"
-    ? `<span class="rate miss">no CNY rate for ${dateShort(r.date)} in your rate file</span>`
-    : `<span class="rate">× ${r.rate.toFixed(4)} · ${r.source === "ecb" ? `<span class="src">ECB rate of ${wd(r.rate_date)} ${dateShort(r.rate_date)}</span>` : `${dateShort(r.rate_date)} · <span class="src">Your rate file</span>`}</span>`;
+  const conv = LG.rows.filter(r => r.fx_cny || r.issue);
+  const earlier = conv.filter(r => r.fx_cny && r.fx_cny.rate_date !== r.date).length;
+  const rateLine = r => {
+    if (r.issue) return `<span class="rate miss">Your rate file has no rate for this date</span>`;
+    const f = r.fx_cny; if (!f) return "";
+    const ecb = f.source === "ECB reference rate";
+    const label = ecb && f.rate_date !== r.date ? `<span class="src">ECB rate of ${wd(f.rate_date)} ${dateShort(f.rate_date)}</span>`
+      : `${dateShort(f.rate_date)} · <span class="src">${ecb ? "ECB reference rate" : "Your rate file"}</span>`;
+    return `<span class="rate">× ${f.rate.toFixed(4)} · ${label}</span>`;
+  };
   const cell = (v, cls, neg) => !v ? `<td class="money zero">—</td>` : `<td class="money ${cls}">${yen(neg ? -v : v)}</td>`;
-  const orig = r => r.currency === "CNY" ? `${cny(r.gross)}<span class="sub">CNY</span>` : `$${r.gross.toLocaleString("en-US", { minimumFractionDigits: 2 })}<span class="sub">USD</span>`;
+  const orig = r => r.original.currency === "CNY" ? `${cny(r.original.gross)}<span class="sub">CNY</span>` : `$${r.original.gross.toLocaleString("en-US", { minimumFractionDigits: 2 })}<span class="sub">USD</span>`;
+  const head = r => `<td class="num">${r.date.slice(5).replace("-", "/")}</td><td><i class="sa-pdot" style="background:${PCOL(r.platform).fill}"></i>${r.platform_label}</td><td>${r.type}${r.ref ? `<span class="sub">${r.ref}</span>` : ""}</td><td class="num">${orig(r)}</td>`;
+  const sources = kind === "ecb"
+    ? `ECB reference rates <b class="num" style="color:var(--sa-ink)">${conv.length}</b> · ${earlier} from an earlier working day`
+    : `Your rate file <b class="num" style="color:var(--sa-ink)">${conv.length - LG.issues.length}</b> · missing <b class="num" style="color:var(--sa-warn-text)">${LG.issues.length}</b>`;
   return `
-  <div class="sa-top"><div><h1>Ledger</h1><p>August 2026 · shown in CNY</p></div><div class="right">${curSeg("CNY")}${periodSeg("Aug")}${you()}</div></div>
+  <div class="sa-top"><div><h1>Ledger</h1><p>August 2026 · shown in CNY · ${kind === "ecb" ? "no rate file uploaded" : "with your rate file"}</p></div><div class="right">${curSeg("CNY")}${periodSeg("Aug")}${you()}</div></div>
   <div class="sa-kpirow">
-    ${[["Gross", t.gross, ""], ["Fees", -t.fees, "var(--sa-fee-text)"], ["Tax withheld", -t.withheld, "var(--sa-tax-text)"], ["Net · incomplete", t.net, "var(--sa-forest)"]]
+    ${[["Gross", t.gross, ""], ["Fees", -(t.platform_fee + t.payout_fee), "var(--sa-fee-text)"], ["Tax withheld", -t.withheld, "var(--sa-tax-text)"], [LG.complete ? "Net" : "Net · incomplete", t.net, "var(--sa-forest)"]]
       .map(([l, v, c]) => `<div class="sa-card sa-kpi"><div class="label">${l}</div><div class="sa-fig num" style="${c ? `color:${c}` : ""}">${yen(v)}</div></div>`).join("")}
-    <div class="sa-card sa-kpi"><div class="label">${icon("fx", "sm")} Rates for USD records</div><div class="meta" style="margin-top:10px;line-height:1.7">Your rate file <b class="num" style="color:var(--sa-ink)">${n("file")}</b> · ECB <b class="num" style="color:var(--sa-ink)">${n("ecb")}</b> · missing <b class="num" style="color:var(--sa-warn-text)">${n("missing")}</b></div></div>
+    <div class="sa-card sa-kpi"><div class="label">${icon("fx", "sm")} Rates for USD records</div><div class="meta" style="margin-top:10px;line-height:1.6">${sources}</div></div>
   </div>
-  <section class="sa-warncard" style="display:grid;grid-template-columns:1fr 380px;gap:24px;margin-bottom:16px">
+  ${iss ? `<section class="sa-warncard" style="display:grid;grid-template-columns:1fr 380px;gap:24px;margin-bottom:16px">
     <div><div class="tag">${icon("alert", "sm")} Calculation stopped</div><div class="title">${X.RATE_STOP_TITLE}</div><p class="body" style="margin:0">${X.RATE_STOP_BODY}</p>
-      <div class="actions"><a class="sa-btn primary sm">Add the ${dateShort(miss.date)} rate</a><a class="sa-btn secondary sm">Open my rate file</a></div></div>
-    <dl class="sa-kv">${[["Platform", miss.label], ["Reference", miss.ref], ["Amount", "$" + miss.gross.toFixed(2)], ["Date", dateLong(miss.date)]].map(([k, v]) => `<dt>${k}</dt><dd class="num">${v}</dd>`).join("")}<dt>CNY rate</dt><dd class="miss">missing</dd></dl>
-  </section>
-  <div class="sa-note info" style="margin-bottom:14px">${icon("info", "sm")}<span>${X.LEDGER_CNY_NOTE}</span></div>
+      <div class="actions"><a class="sa-btn primary sm">Add the ${dateShort(iss.date)} rate</a><a class="sa-btn secondary sm">Open my rate file</a></div></div>
+    <dl class="sa-kv">${[["Platform", iss.platform], ["Reference", iss.record.ref], ["Amount", "$" + iss.record.amount.toFixed(2)], ["Date", dateLong(iss.date)]].map(([k, v]) => `<dt>${k}</dt><dd class="num">${v}</dd>`).join("")}<dt>CNY rate</dt><dd class="miss">missing</dd></dl>
+  </section>` : ""}
+  <div class="sa-note info" style="margin-bottom:14px">${icon("info", "sm")}<span>${kind === "ecb" ? X.LEDGER_ECB_NOTE : X.LEDGER_FILE_NOTE}</span></div>
   <div class="sa-tablewrap"><table class="sa-table dense">
     <thead><tr><th>Date</th><th>Platform</th><th>Type</th><th>Original</th><th class="money">Gross (CNY)</th><th class="money">Fees</th><th class="money">Withheld</th><th class="money">Net (CNY)</th></tr></thead>
-    <tbody>${LG.rows.map(r => r.source === "missing" ? `<tr class="missing">
-      <td class="num">${r.date.slice(5).replace("-", "/")}</td><td><i class="sa-pdot" style="background:${PCOL(r.platform).fill}"></i>${r.label}</td><td>${r.type}${r.ref ? `<span class="sub">${r.ref}</span>` : ""}</td>
-      <td class="num">${orig(r)}</td><td class="money"><span class="sa-badge warn">rate missing</span>${rateLine(r)}</td><td colspan="3" class="money meta">left out of totals</td></tr>` : `<tr>
-      <td class="num">${r.date.slice(5).replace("-", "/")}</td><td><i class="sa-pdot" style="background:${PCOL(r.platform).fill}"></i>${r.label}</td><td>${r.type}${r.ref ? `<span class="sub">${r.ref}</span>` : ""}</td>
-      <td class="num">${orig(r)}</td><td class="money">${r.gross_cny ? yen(r.gross_cny) : "—"}${rateLine(r)}</td>${cell(r.fees_cny, "fee", true)}${cell(r.withheld_cny, "tax", true)}<td class="money net">${yen(r.net_cny)}</td></tr>`).join("")}
-      <tr class="total"><td colspan="4">August total · 1 record left out</td><td class="money">${yen(t.gross)}</td><td class="money">${yen(-t.fees)}</td><td class="money">${yen(-t.withheld)}</td><td class="money">${yen(t.net)}</td></tr>
+    <tbody>${LG.rows.map(r => r.issue ? `<tr class="missing">${head(r)}
+      <td class="money"><span class="sa-badge warn">rate missing</span>${rateLine(r)}</td><td colspan="3" class="money meta">left out of totals</td></tr>` : `<tr>${head(r)}
+      <td class="money">${r.gross_cny ? yen(r.gross_cny) : "—"}${rateLine(r)}</td>${cell(r.platform_fee_cny + r.payout_fee_cny, "fee", true)}${cell(r.withheld_cny, "tax", true)}<td class="money net">${yen(r.net_cny)}</td></tr>`).join("")}
+      <tr class="total"><td colspan="4">August total${LG.complete ? "" : ` · ${LG.issues.length} record left out`}</td><td class="money">${yen(t.gross)}</td><td class="money">${yen(-(t.platform_fee + t.payout_fee))}</td><td class="money">${yen(-t.withheld)}</td><td class="money">${yen(t.net)}</td></tr>
     </tbody></table></div>`;
 }
+const ledgerCny = () => ledgerCnyCase("ecb"), ledgerCnyFile = () => ledgerCnyCase("file");
 
 const RENDER = { overview, ledger, tax, ask, report, sources, settings, missing,
   "mydata-empty": mydataEmpty, mydata, privacy, "tax-cn": taxCn, "overview-cny": overviewCny,
-  "privacy-delete": privacyDelete, "tax-both": taxBoth, "overview-empty": overviewEmpty, "ledger-cny": ledgerCny };
+  "privacy-delete": privacyDelete, "tax-both": taxBoth, "overview-empty": overviewEmpty, "ledger-cny": ledgerCny, "ledger-cny-file": ledgerCnyFile };
 const NAV_OF = { sources: "ledger", settings: "tax", report: "tax", missing: "overview", "mydata-empty": "mydata", "tax-cn": "tax", "overview-cny": "overview",
-  "privacy-delete": "privacy", "tax-both": "tax", "overview-empty": "overview", "ledger-cny": "ledger" };
-const YOURS = new Set(["mydata-empty", "mydata", "privacy", "tax-cn", "overview-cny", "privacy-delete", "tax-both", "overview-empty", "ledger-cny"]);
+  "privacy-delete": "privacy", "tax-both": "tax", "overview-empty": "overview", "ledger-cny": "ledger", "ledger-cny-file": "ledger" };
+const YOURS = new Set(["mydata-empty", "mydata", "privacy", "tax-cn", "overview-cny", "privacy-delete", "tax-both", "overview-empty", "ledger-cny", "ledger-cny-file"]);
 const NO_DATA = new Set(["mydata-empty", "overview-empty"]); // Your data mode before any import
 const YOURS_HREF = { overview: "overview-cny", ledger: "ledger-cny", tax: "tax-cn" }; // in Your data mode the nav opens the v1.3 drawings
 function go() {
