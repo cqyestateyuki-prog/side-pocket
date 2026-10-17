@@ -1,10 +1,15 @@
 """PRISM tracing for an OpenAI-compatible tool-calling loop (Nicrron API).
 
 prismtrace-sdk ships ClaudeAgentTracer for Anthropic-native clients but nothing
-for OpenAI-style `tool_calls`, so this mirrors its payloads: one run emits
-spans to /api/spans/ingest (Sessions -> Steps tab) and a trajectory to
-/api/trajectories (evaluation, Root Cause). A tool that raises is recorded as
-an error step, which is what PRISM alerts and failure clusters key on.
+for OpenAI-style `tool_calls`, so this mirrors its payloads: one run emits a
+run-level trace to /api/traces, spans to /api/spans/ingest (Sessions -> Steps
+tab) and a trajectory to /api/trajectories (evaluation, Root Cause).
+
+A run is recorded as failed when a tool raised or when the optional `grade`
+callback rejects the answer. PRISM counts a trace as failed when its root span
+is in error or its metadata.status is "error" (verified against
+GET /api/traces?status=failed), and that is what the error_rate alert and the
+Root Cause clusters work from.
 """
 from __future__ import annotations
 
@@ -28,6 +33,7 @@ def nicrron_client() -> OpenAI:
     return OpenAI(
         base_url=os.environ.get("NICRRON_BASE_URL", "https://api.nicrron.ai/v1"),
         api_key=os.environ["NICRRON_API_KEY"],
+        max_retries=5,
     )
 
 
@@ -37,6 +43,11 @@ def default_model() -> str:
 
 class ToolError(Exception):
     """Raised by a tool to mark its step as failed in PRISM."""
+
+
+# grade(final_text, tool_errors) -> (ok, reason). Lets an eval harness fail a run
+# whose answer is wrong even though every step succeeded.
+Grader = Callable[[str, list[str]], tuple[bool, str | None]]
 
 
 class TracedAgent:
@@ -49,9 +60,10 @@ class TracedAgent:
         model: str,
         system: str,
         tools: list[dict],
-        tool_impls: dict[str, Callable[..., Any]],
+        tool_impls: dict[str, Callable[..., Any]] | None = None,
         temperature: float = 0,
         client: OpenAI | None = None,
+        trace: bool = True,
     ):
         self.agent_id = agent_id
         self.agent_name = agent_name
@@ -59,8 +71,9 @@ class TracedAgent:
         self.model = model
         self.system = system
         self.tools = tools
-        self.tool_impls = tool_impls
+        self.tool_impls = tool_impls or {}
         self.temperature = temperature
+        self.trace = trace  # False = dry run: nothing is sent to PRISM
         self.client = client or nicrron_client()
         self.project_id = os.environ["PRISMTRACE_PROJECT_ID"]
         self._http = httpx.Client(
@@ -69,24 +82,31 @@ class TracedAgent:
             timeout=30,
         )
 
-    def _call_tool(self, name: str, args: dict) -> tuple[str, str | None]:
-        fn = self.tool_impls.get(name)
+    def close(self) -> None:
+        self._http.close()
+
+    @staticmethod
+    def _call_tool(impls: dict, name: str, args: dict) -> tuple[str, str | None]:
+        fn = impls.get(name)
         if fn is None:
-            return json.dumps({"error": f"unknown tool {name}"}), f"unknown tool {name}"
+            return json.dumps({"error": f"unknown tool {name}"}), f"UnknownTool: {name}"
         try:
             result = fn(**args)
             return (result if isinstance(result, str) else json.dumps(result, ensure_ascii=False)), None
         except Exception as e:  # surfaced to the model and recorded as a failed step
-            return json.dumps({"error": str(e)}, ensure_ascii=False), f"{type(e).__name__}: {e}"
+            return json.dumps({"error": f"{type(e).__name__}: {e}"}, ensure_ascii=False), f"{type(e).__name__}: {e}"
 
     def run(self, user_input: str, *, session_id: str | None = None, max_iterations: int = 15,
-            metadata: dict | None = None) -> dict:
+            metadata: dict | None = None, tool_impls: dict[str, Callable[..., Any]] | None = None,
+            grade: Grader | None = None) -> dict:
+        impls = tool_impls or self.tool_impls
         trace_id = str(uuid.uuid4())
         session = resolve_session(session_id, str(uuid.uuid4()))
         root_id = str(uuid.uuid4())
         meta = {"agent_version": self.version, **(metadata or {})}
         spans: list[dict] = []
         steps: list[dict] = []
+        tool_errors: list[str] = []
         messages: list[dict] = [{"role": "system", "content": self.system},
                                 {"role": "user", "content": user_input}]
         run_start, t_run = _now(), time.perf_counter()
@@ -108,7 +128,7 @@ class TracedAgent:
             spans.append({
                 "span_id": str(uuid.uuid4()), "parent_span_id": root_id,
                 "name": f"llm:{self.model}", "span_type": "llm",
-                "input_text": json.dumps(messages[-3:], ensure_ascii=False, default=str),
+                "input_text": json.dumps(messages[-3:], ensure_ascii=False, default=str)[:10000],
                 "output_text": msg.content or json.dumps([tc.function.name for tc in tool_calls]),
                 "metadata": {"iteration": iteration, **meta},
                 "start_time": llm_start, "end_time": _now(), "duration_ms": dur, "status": "ok",
@@ -134,8 +154,10 @@ class TracedAgent:
                 except json.JSONDecodeError:
                     args = {}
                 tool_start, t1 = _now(), time.perf_counter()
-                result, error = self._call_tool(tc.function.name, args)
+                result, error = self._call_tool(impls, tc.function.name, args)
                 tdur = (time.perf_counter() - t1) * 1000
+                if error:
+                    tool_errors.append(f"{tc.function.name}: {error}")
                 spans.append({
                     "span_id": str(uuid.uuid4()), "parent_span_id": root_id,
                     "name": tc.function.name, "span_type": "tool",
@@ -152,14 +174,21 @@ class TracedAgent:
                 })
                 messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
 
-        failed = any(s["status"] == "error" for s in steps)
+        graded_ok, grade_reason = grade(final_text, tool_errors) if grade else (True, None)
+        if not graded_ok:
+            steps[-1]["status"] = "error"
+            steps[-1]["output_summary"] = (grade_reason or "")[:200]
+        reasons = tool_errors + ([grade_reason] if not graded_ok and grade_reason else [])
+        failed = bool(tool_errors) or not graded_ok
+        error_message = "; ".join(reasons)[:2000] or None
+        status = "error" if failed else "success"
         total_ms = (time.perf_counter() - t_run) * 1000
         spans.insert(0, {
-            "span_id": root_id, "parent_span_id": None, "name": f"{self.agent_name}:{self.version}",
+            "span_id": root_id, "parent_span_id": None, "name": self.agent_name,
             "span_type": "chain", "input_text": user_input[:10000], "output_text": final_text[:10000],
             "metadata": {"iterations": iteration, "model": self.model, **meta},
             "start_time": run_start, "end_time": _now(), "duration_ms": total_ms,
-            "status": "error" if failed else "ok",
+            "status": "error" if failed else "ok", "error_message": error_message,
         })
         # The run-level trace goes first: it is what carries agent identity, and a
         # trace record created implicitly by the span batch would not have it.
@@ -168,7 +197,7 @@ class TracedAgent:
             "input_messages": [{"role": "user", "content": user_input}], "output_message": final_text,
             "latency_ms": int(total_ms), "token_count_input": tokens_in, "token_count_output": tokens_out,
             "agent_id": self.agent_id, "agent_name": self.agent_name, "session_id": session,
-            "metadata": {**meta, "final_status": "error" if failed else "success"},
+            "metadata": {**meta, "status": status, "error_message": error_message},
         })
         self._post("/api/spans/ingest", {
             "trace_id": trace_id, "project_id": self.project_id, "session_id": session, "spans": spans,
@@ -177,15 +206,17 @@ class TracedAgent:
         traj = self._post("/api/trajectories", {
             "project_id": self.project_id, "conversation_id": session, "request_id": trace_id,
             "agent_id": self.agent_id, "agent_name": self.agent_name, "steps": steps,
-            "total_duration_ms": int(total_ms), "final_status": "error" if failed else "success",
-            "model": self.model,
+            "total_duration_ms": int(total_ms), "final_status": status, "model": self.model,
         })
         return {"output": final_text, "trace_id": trace_id, "session_id": session,
-                "trajectory_id": (traj or {}).get("id"), "failed": failed,
+                "trajectory_id": (traj or {}).get("id"), "failed": failed, "error": error_message,
+                "graded_ok": graded_ok, "tool_errors": tool_errors,
                 "tool_steps": sum(s["step_type"] == "tool_call" for s in steps),
-                "tokens": tokens_in + tokens_out}
+                "tokens_in": tokens_in, "tokens_out": tokens_out, "latency_ms": int(total_ms)}
 
     def _post(self, path: str, payload: dict) -> dict | None:
+        if not self.trace:
+            return None
         try:
             r = self._http.post(path, json=payload)
             if r.status_code in (200, 201):
