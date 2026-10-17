@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>Side Atlas · 配色和吉祥物对比</title>
+<style>
+  :root { --ink:#1b1820; --mute:#6c6773; --line:#e6e2e8; --page:#faf8f9; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--ink); font:15px/1.6 "PingFang SC", -apple-system, system-ui, sans-serif; }
+  .wrap { max-width:1480px; margin:0 auto; padding:36px 32px 64px; }
+  h1 { font-size:28px; margin:0 0 6px; }
+  h2 { font-size:22px; margin:44px 0 6px; }
+  p.lead { color:var(--mute); margin:0 0 8px; max-width:980px; }
+  .mascots { display:grid; grid-template-columns:repeat(3, 1fr); gap:22px; margin-top:18px; }
+  .m { background:#fff; border:1px solid var(--line); border-radius:22px; padding:16px; }
+  .m img { width:100%; border-radius:14px; display:block; background:#f4f1ee; }
+  .m b { display:block; margin-top:10px; font-size:17px; }
+  .m span { color:var(--mute); font-size:14px; }
+  .uses { margin-top:14px; background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px 18px; color:var(--mute); font-size:14px; }
+  .pal { margin-top:22px; background:#fff; border:1px solid var(--line); border-radius:22px; padding:18px 20px; }
+  .pal header { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .pal header b { font-size:18px; }
+  .sw { display:inline-flex; align-items:center; gap:6px; font:12px/1 ui-monospace, Menlo, monospace; color:var(--mute); margin-right:8px; }
+  .sw i { width:16px; height:16px; border-radius:5px; border:1px solid rgba(0,0,0,.12); display:inline-block; }
+  .pal .note { color:var(--mute); font-size:14px; margin:4px 0 12px; }
+  .shots { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .shots img { width:100%; border-radius:12px; border:1px solid var(--line); display:block; }
+  .tag { display:inline-block; font-size:12px; padding:2px 10px; border-radius:99px; background:#efe9f5; color:#5b3d86; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Side Atlas · 配色和吉祥物对比</h1>
+  <p class="lead">同一个原型，只换颜色变量。每套都截了"总览"和"税务事项"两页。吉祥物用 Nicrron 上的 Google nano-banana 图片模型生成，泡泡玛特盲盒风。数字都是测试数据里的真实计算结果。</p>
+
+  <h2>吉祥物方案</h2>
+  <p class="lead">猫头鹰不做（太像多邻国）。"候鸟小燕子"连试三次都被平台删掉了输出，先不放。</p>
+  <div class="mascots">
+    <div class="m"><img src="../mascots/m1_pigeon.png" alt=""><b>① 信鸽 Atlas · 开心</b><span>背着装满各国硬币的小邮包、系地图围巾：全球的钱飞回来。淡紫 + 粉。</span></div>
+    <div class="m"><img src="../mascots/m1b_pigeon_worried.png" alt=""><b>① 信鸽 Atlas · 发愁</b><span>同一只鸽子的第二个表情：用在"缺汇率、计算停止"这类提醒里。</span></div>
+    <div class="m"><img src="../mascots/m2_globe_chick.png" alt=""><b>② 地球小鸡</b><span>身体是一颗毛绒小地球，戴粉色棒球帽、背小书包，在挥手。粉 + 薰衣草紫 + 薄荷绿。</span></div>
+  </div>
+  <div class="uses">吉祥物会出现在：首页打招呼、AI 问答的头像、空状态（还没导入数据）、"计算停止"提醒（发愁表情）、季度预留存够时的庆祝、月报封面。正式版会抠成透明背景，再出 3–4 个表情。</div>
+
+  <h2>配色方案</h2>
+
+  <div class="pal">
+    <header><b>A · 森林绿（当前）</b><span class="sw"><i style="background:#1F4B2C"></i>#1F4B2C</span><span class="sw"><i style="background:#C5E35A"></i>#C5E35A 点缀</span><span class="sw"><i style="background:#F6F4EC"></i>#F6F4EC 底</span></header>
+    <p class="note">稳重、可信，像一本账本；和粉紫色的吉祥物搭配会有点"错位"。</p>
+    <div class="shots"><img src="a_forest_overview.png" alt=""><img src="a_forest_tax.png" alt=""></div>
+  </div>
+
+  <div class="pal">
+    <header><b>B · Instagram 渐变</b> <span class="tag">最潮</span><span class="sw"><i style="background:linear-gradient(120deg,#515BD4,#8134AF,#DD2A7B,#F58529)"></i>蓝→紫→粉→橙</span><span class="sw"><i style="background:#8134AF"></i>#8134AF 主色</span><span class="sw"><i style="background:#FEDA77"></i>#FEDA77 点缀</span></header>
+    <p class="note">主色块用 Instagram 那种渐变，按钮、数字用紫色。最有创作者感；风险是太像 Instagram 本身。</p>
+    <div class="shots"><img src="b_instagram_overview.png" alt=""><img src="b_instagram_tax.png" alt=""></div>
+  </div>
+
+  <div class="pal">
+    <header><b>C · 电光紫 + 粉</b><span class="sw"><i style="background:#5B2BD6"></i>#5B2BD6 主色</span><span class="sw"><i style="background:#FF7AB6"></i>#FF7AB6 点缀</span><span class="sw"><i style="background:#F7F5FC"></i>#F7F5FC 底</span></header>
+    <p class="note">紫色当主色、粉色点缀，有创意又不失专业；和信鸽、地球小鸡的颜色最搭。</p>
+    <div class="shots"><img src="c_violet_overview.png" alt=""><img src="c_violet_tax.png" alt=""></div>
+  </div>
+
+  <div class="pal">
+    <header><b>D · 热粉 + 淡紫</b><span class="sw"><i style="background:#D6246E"></i>#D6246E 主色</span><span class="sw"><i style="background:#CBB6FF"></i>#CBB6FF 点缀</span><span class="sw"><i style="background:#FFF7FA"></i>#FFF7FA 底</span></header>
+    <p class="note">粉色当主色，最"泡泡玛特"；但粉色大块配财务数字，评委可能觉得不够严肃。</p>
+    <div class="shots"><img src="d_pink_overview.png" alt=""><img src="d_pink_tax.png" alt=""></div>
+  </div>
+
+  <div class="pal">
+    <header><b>E · 森林绿 + 粉色点缀</b><span class="sw"><i style="background:#1F4B2C"></i>#1F4B2C 主色</span><span class="sw"><i style="background:#FF8FC4"></i>#FF8FC4 点缀</span></header>
+    <p class="note">保留现在的绿色主块，只把亮绿点缀换成粉色：折中方案。</p>
+    <div class="shots"><img src="e_forest_pink_overview.png" alt=""><img src="e_forest_pink_tax.png" alt=""></div>
+  </div>
+</div>
+</body>
+</html>
