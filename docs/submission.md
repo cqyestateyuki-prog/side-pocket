@@ -1,5 +1,6 @@
 # Side Atlas
 
+- Landing page: https://side-atlas.vercel.app/landing.html
 - Live demo: https://side-atlas.vercel.app (Ask Atlas replays a recorded real traced run)
 - Code: https://github.com/cqyestateyuki-prog/hackson_global_income
 - Track: Money Operations · Built on PRISM by Block Convey · Models via Nicrron

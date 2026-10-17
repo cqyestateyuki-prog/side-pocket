@@ -59,7 +59,7 @@ The demo uses fictional data, some simulated fees, and no real bank or platform 
 Estimate only — not tax, legal, or financial advice.
 ---
 
-**Live demo:** https://side-atlas.vercel.app · **Pitch script:** [`docs/pitch_script.md`](docs/pitch_script.md) · **Submission:** [`docs/submission.md`](docs/submission.md)
+**Live demo:** https://side-atlas.vercel.app (landing page: https://side-atlas.vercel.app/landing.html) · **Pitch script:** [`docs/pitch_script.md`](docs/pitch_script.md) · **Submission:** [`docs/submission.md`](docs/submission.md)
 
 ## How it works
 
