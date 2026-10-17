@@ -40,7 +40,7 @@ Deck: 1 cover · 2 problem · 3 demo video (backup) · 4 ledger · 5 tax · 6 fa
 
 **中文：** 第一版让模型直接从原始账单里算。81 题对了 72 题。错的 9 题里，有 6 题原因相同：缺了某天的汇率，模型就悄悄借用了邻近日期的汇率。在金融里，一个自信的错数字比报错更糟。
 
-## 1:30–2:20 · Slide 7, then switch to PRISM
+## 1:30–2:15 · Slide 7, then switch to PRISM
 
 **EN:** We traced every run in PRISM by Block Convey. Root Cause grouped 11 failed v1 runs, and per-trace analysis rated them critical.
 
