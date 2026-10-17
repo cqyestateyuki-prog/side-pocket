@@ -1,9 +1,7 @@
 #!/bin/bash
-# Export prototype screens as 1440×900 PNGs with headless Chrome (v1.3).
+# Export prototype screens as 1440×900 PNGs with headless Chrome (v1.3.1).
 #   bash capture.sh          every screen
-#   bash capture.sh v13      only the v1.3 screens (10–14)
-# 01–08 were last exported in v1.1; the shell (logo, four-item nav, data switch) changed in v1.2/v1.3,
-# so re-running the full set re-draws them with the new sidebar.
+#   bash capture.sh v13      only the v1.3 and v1.3.1 screens (10 to 17)
 set -euo pipefail
 KIT="$(cd "$(dirname "$0")/.." && pwd)"
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -30,3 +28,9 @@ shoot 12-settings-privacy privacy 900
 shoot 13-tax-china tax-cn 900
 shoot 13b-tax-china-full tax-cn "${TAX_CN_FULL_HEIGHT:-1360}"
 shoot 14-overview-cny overview-cny 900
+# v1.3.1
+shoot 12b-delete-dialog privacy-delete 900
+shoot 15-tax-both tax-both 900
+shoot 16-empty-overview overview-empty 900
+shoot 17-ledger-cny ledger-cny 900
+shoot 17b-ledger-cny-full ledger-cny "${LEDGER_CNY_FULL_HEIGHT:-2230}"

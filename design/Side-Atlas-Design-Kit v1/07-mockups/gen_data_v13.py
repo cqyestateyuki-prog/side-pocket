@@ -14,7 +14,8 @@ plats = [p for p in L.PLATFORMS if p in c["accounts"]]
 LABEL = {**L.LABEL, "bilibili": "Bilibili"}
 
 def pseudo(acct):
-    return "acct ••" + str(int(hashlib.sha256(("side-atlas:" + acct).encode()).hexdigest(), 16) % 100).zfill(2)
+    # v1.3.1: four digits of a salted hash, made in the browser before upload (decision #38)
+    return "acct ••" + str(int(hashlib.sha256(("side-atlas:" + acct).encode()).hexdigest(), 16) % 10000).zfill(4)
 
 files = []
 for p in plats:
@@ -82,6 +83,53 @@ out = {
   "cn_window": {"opens": "2027-03-01", "closes": "2027-06-30", "days_to_open": (date(2027,3,1)-today).days,
                 "days_to_close": (date(2027,6,30)-today).days},
 }
+# ---- v1.3.1 · Ledger in CNY (August) with a rate source per record ----------------------------------
+# Drawn rule (open for sign-off, decision #40): your rate file first; a weekend the file doesn't cover uses
+# the ECB rate of the last working day, labelled; a working day missing from the file stops the record.
+# The rate file here is the test table without weekends; ECB values are stand-ins (the test table's rate
+# on that working day) because the kit draws the label, and one working day is removed to show the stop.
+from datetime import timedelta
+MISSING = ("upwork", "2026-08-26")
+def last_workday(d):
+    while d.weekday() >= 5: d -= timedelta(days=1)
+    return d
+aug, inc = [], {f: Decimal(0) for f in ("gross", "fees", "withheld", "net")}
+for p in plats:
+    for rec in L.records(c, p, "2026-08"):
+        d = date.fromisoformat(rec.date)
+        row = {"date": rec.date, "platform": p, "label": LABEL[p], "type": rec.kind, "ref": rec.ref or rec.contract_id,
+               "currency": rec.currency, "gross": float(rec.gross), "net": float(rec.net)}
+        if rec.currency == "CNY":
+            r, src, rd = None, "native", None
+        elif (p, rec.date) == MISSING:
+            r, src, rd = None, "missing", None
+        elif d.weekday() >= 5:
+            rd = last_workday(d).isoformat(); r, src = Decimal(str(fx[rd])), "ecb"
+        else:
+            rd = rec.date; r, src = Decimal(str(fx[rd])), "file"
+        row.update(source=src, rate=float(r) if r else None, rate_date=rd)
+        if src != "missing":
+            k = r or Decimal(1)
+            v = {"gross": rec.gross * k, "fees": (rec.platform_fee + rec.payment_fee) * k, "withheld": rec.withheld * k, "net": rec.net * k}
+            for f in inc: inc[f] += v[f]
+            row.update({f + "_cny": L.cents(v[f]) for f in v})
+        aug.append(row)
+aug.sort(key=lambda x: (x["date"], x["platform"]))
+ledger_aug_cny = {"rows": aug, "totals": {f: L.cents(v) for f, v in inc.items()},
+                  "left_out": [x for x in aug if x["source"] == "missing"]}
+
+# ---- v1.3.1 · Tax home Both (USD display): China items in USD -------------------------------------------
+q3u = {p: {f: Decimal(0) for f in L.FIELDS} for p in plats}
+for m in L.months_in("2026-Q3"):
+    for p, t in L.month_breakdown(c, m)["platforms"].items():
+        for f in L.FIELDS: q3u[p][f] += t["usd"][f]
+tot_u = {f: sum((q3u[p][f] for p in plats), Decimal(0)) for f in L.FIELDS}
+both = {"bilibili_usd": {f: L.cents(q3u["bilibili"][f]) for f in L.FIELDS},
+        "outside_usd": {f: L.cents(tot_u[f] - q3u["bilibili"][f]) for f in L.FIELDS},
+        "us_due": {"date": "2027-01-15", "days": (date(2027, 1, 15) - today).days}}
+out["ledger_aug_cny"] = ledger_aug_cny
+out["both"] = both
+
 if "--js" in sys.argv:
     print("// Kit v1.3 · real numbers from daoshou/ledger.py (read-only), fictional test data, generated 2026-10-17.")
     print("// 'Your data' screens re-use creator C01's exports as if the person uploaded them. CNY view: CNY records")

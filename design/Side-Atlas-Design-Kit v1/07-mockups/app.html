@@ -23,6 +23,7 @@
     return v;
   };
   window.SA_DATA = en(window.SA_DATA, "");
+  if (window.SA_V13) window.SA_V13 = en(window.SA_V13, "");
 })();
 </script>
 </head>
@@ -108,7 +109,7 @@ function overview() {
       <ul class="sa-legend">
         <li><span class="dot" style="background:var(--sa-line-strong)"></span><span>Gross income</span><span class="amt">${usd(t.gross)}</span><span class="pct">100%</span></li>
         ${wf.slice(1).map(([l, v, c]) => `<li><span class="dot" style="background:${c}"></span><span>${l}</span><span class="amt">${usd(-v)}</span><span class="pct">${pct(v / t.gross)}</span></li>`).join("")}
-        <li class="total"><span class="dot" style="background:var(--sa-net)"></span><span>Net — what landed</span><span class="amt">${usd(t.net)}</span><span class="pct">${pct(t.net / t.gross)}</span></li>
+        <li class="total"><span class="dot" style="background:var(--sa-net)"></span><span>Net (what landed)</span><span class="amt">${usd(t.net)}</span><span class="pct">${pct(t.net / t.gross)}</span></li>
       </ul>
     </section>
     <section class="sa-card c5">
@@ -160,12 +161,12 @@ function tax() {
   const w = T.tax_withheld_by_platform[0];
   const gapBar = f => {
     const g = f.gap || 0, it = f.gap_items;
-    if (!g) return `<span class="meta">${f.form_view === null ? "— no US form" : "no gap"}</span>`;
+    if (!g) return `<span class="meta">${f.form_view === null ? "no US form" : "no gap"}</span>`;
     return `<div style="display:flex;align-items:center;gap:10px"><div class="sa-gap">${[[it.platform_fees, "var(--sa-fee)"], [it.payout_fees, "var(--sa-payout)"], [it.tax_withheld, "var(--sa-tax)"], [it.refunds, "var(--sa-line-strong)"]]
       .map(([v, c]) => v > 0 ? `<span style="width:${Math.max(4, v / g * 100)}%;background:${c}"></span>` : "").join("")}</div><span class="num">${usd(-g)}</span></div>`;
   };
   return `
-  <div class="sa-top"><div><h1>Tax items</h1><p>Q3 2026 · July–September</p></div><div class="right">${periodSeg("Q3 2026")}${moon()}</div></div>
+  <div class="sa-top"><div><h1>Tax items</h1><p>Q3 2026 · July to September</p></div><div class="right">${periodSeg("Q3 2026")}${moon()}</div></div>
   <div class="sa-grid">
     <section class="sa-hero c8" style="display:grid;grid-template-columns:1fr 210px;gap:24px;min-height:220px">
       <div>
@@ -317,7 +318,7 @@ function missing() {
 /* ---------------- Sources / Import (v1.1) ---------------- */
 function sources() {
   const S = D.sources_c01, chk = S.lena_check, iss = chk.issue;
-  const range = (a, b) => `${dateLong(a).replace(", 2026", "")} – ${dateLong(b).replace(", 2026", "")}`;
+  const range = (a, b) => `${dateLong(a).replace(", 2026", "")} to ${dateLong(b).replace(", 2026", "")}`;
   const conn = S.sources.filter(x => x.connected);
   return `
   <div class="sa-top"><div><h1>${C.SOURCES_HEADLINE}</h1><p>${C.SOURCES_SUB}</p></div><div class="right">${moon()}</div></div>
@@ -477,7 +478,7 @@ function mydata() {
       <ul class="sa-checklist">
         <li>${icon("check", "sm ok")}<span>${X.CHECK_PLATFORMS}</span><span class="r num">${F.length} of 8</span></li>
         <li>${icon("check", "sm ok")}<span>${X.CHECK_RATES}</span><span class="r num">${cnyRecs} of ${cnyRecs}</span></li>
-        <li>${icon("check", "sm ok")}<span>${X.CHECK_LABELS}</span><span class="r">in this browser</span></li>
+        <li>${icon("check", "sm ok")}<span>${X.CHECK_LABELS}</span><span class="r">in your browser</span></li>
         <li>${icon("alert", "sm bad")}<span>statement.pdf was not read</span><span class="r">1 file</span></li>
       </ul>
       <div class="sa-note info" style="margin-top:10px;padding:10px 12px">${icon("info", "sm")}<span>${X.CHECK_MISSING_PLATFORM}</span></div>
@@ -518,12 +519,13 @@ function privacy() {
     </section>
     <section class="sa-hero c6" style="min-height:0">
       <div class="lead" style="display:flex;gap:8px;align-items:center">${icon("shield", "sm")} Privacy center</div>
-      <div class="sub" style="margin-top:10px;font-size:15px;line-height:1.5;max-width:520px;color:var(--sa-on-forest)">${X.PRIVACY_INTRO}</div>
+      <div class="sub" style="margin-top:10px;font-size:15px;line-height:1.5;max-width:520px;color:var(--sa-on-forest)">${X.PRIVACY_INTRO.replace(/Upwork · acct ••\d{4}/, `<span style="white-space:nowrap">Upwork · ${label}</span>`)}</div>
       <ul class="sa-datamap">
         <li><span class="ic">${icon("monitor", "sm")}</span><div><b>This browser</b><span>${X.MAP_BROWSER}</span></div></li>
         <li><span class="ic">${icon("server", "sm")}</span><div><b>Side Atlas server</b><span>${X.MAP_SERVER}</span></div></li>
-        <li><span class="ic">${icon("ask", "sm")}</span><div><b>Ask Atlas</b><span>${X.MAP_AI.replace("{label}", "Upwork · " + label)}</span></div></li>
+        <li><span class="ic">${icon("ask", "sm")}</span><div><b>Ask Atlas</b><span>${X.MAP_AI.replace("{label}", `<span style="white-space:nowrap">Upwork · ${label}</span>`)}</span></div></li>
         <li><span class="ic">${icon("steps", "sm")}</span><div><b>PRISM traces</b><span>${X.MAP_PRISM}</span></div></li>
+        <li><span class="ic">${icon("fx", "sm")}</span><div><b>Exchange rates</b><span>${X.MAP_FX}</span></div></li>
       </ul>
     </section>
     <section class="sa-card c12" style="padding:20px 0">
@@ -643,11 +645,111 @@ function overviewCny() {
   </div>`;
 }
 
+/* ================= v1.3.1 ================= */
+const emptyCard = text => `<div class="sa-emptycard"><img class="sa-mascot" src="../02-logos/mascot/think.png" alt=""><div><b>${X.EMPTY_TITLE}</b><p>${text}</p></div><a class="sa-btn primary sm" href="#mydata-empty">${icon("upload", "sm")} Go to My data</a></div>`;
+
+/* ---------------- 12b · Delete all: confirmation dialog over Settings & privacy ---------------- */
+function privacyDelete() {
+  return privacy() + `<div class="sa-scrim"></div>
+  <div class="sa-dialog" role="alertdialog" aria-labelledby="dlg-title">
+    <div class="ic">${icon("trash")}</div>
+    <h2 id="dlg-title">${X.DIALOG_TITLE}</h2>
+    <p>${X.DIALOG_BODY}</p>
+    <ul><li><span>Statements</span><span>${V.files.length} files</span></li><li><span>Records</span><span>${V.records_total}</span></li><li><span>Settings</span><span>tax home, currency, set-aside rate</span></li></ul>
+    <div class="actions"><a class="sa-btn danger solid">${icon("trash", "sm")} Delete all my data</a><a class="sa-btn secondary">${icon("download", "sm")} Export backup first</a><a class="sa-btn ghost cancel">Cancel</a></div>
+  </div>`;
+}
+
+/* ---------------- 15 · Tax, tax home Both (USD) ---------------- */
+function taxBoth() {
+  const B = V.both, F = D.forms_c01_q3.totals, T = D.tax_c01_q3, Q = V.cny_q3, W = V.cn_window;
+  const dup = D.forms_c01_q3.rows.find(r => r.duplicate);
+  return `
+  <div class="sa-top"><div><h1>Tax</h1><p>Q3 2026 · tax home: United States and China · shown in USD</p></div><div class="right">${periodSeg("Q3 2026")}${you()}</div></div>
+  <div class="sa-grid">
+    <section class="sa-hero c12" style="display:grid;grid-template-columns:1fr auto;gap:32px;min-height:0;align-items:end">
+      <div>
+        <div class="lead" style="font:800 30px/1.15 var(--sa-font);color:var(--sa-on-forest);letter-spacing:-.02em">${X.BOTH_HERO}</div>
+        <div style="margin-top:22px;position:relative"><div class="sa-fig num" style="margin:0 0 6px;font-size:48px">${usd(T.set_aside.amount)}</div>
+          <div class="sub">to set aside: ${usd(T.total_net_usd)} Q3 net × the 25% you chose</div></div>
+      </div>
+      <div class="sa-counts">
+        <div class="sa-count"><div class="tag">United States</div><div class="days num">${B.us_due.days}</div><div class="of">days to the next<br>estimated-tax payment</div><div class="glass" style="margin-top:12px">${icon("calendar", "sm")} Jan 15, 2027 · Q4</div></div>
+        <div class="sa-count"><div class="tag">China</div><div class="days num">${W.days_to_open}</div><div class="of">days until the 2026<br>annual filing window opens</div><div class="glass" style="margin-top:12px">${icon("calendar", "sm")} Mar 1 to Jun 30, 2027</div></div>
+      </div>
+    </section>
+    <div class="c12 sa-note info">${icon("globe", "sm")}<span>${X.BOTH_FLAG}</span></div>
+    <section class="sa-card c12">
+      <div class="sa-section-head"><span class="sa-badge sim">${icon("bank", "sm")} United States</span><h2>Estimated tax and forms</h2><a class="sa-btn secondary sm">Open the forms check</a></div>
+      <div class="sa-facts">
+        <div><div class="label">Next payment</div><b>Jan 15, 2027</b><span class="s">for Q4 · ${B.us_due.days} days</span></div>
+        <div><div class="label">Set aside at your 25%</div><b class="num">${usd(T.set_aside.amount)}</b><span class="s">of ${usd(T.total_net_usd)} Q3 net</span></div>
+        <div><div class="label">Form view vs bank view</div><b class="num">${usd(F.form_view_gross_usd)}</b><span class="s">${usd(F.bank_view_landed_usd)} landed · gap ${usd(F.gap_usd)}</span></div>
+        <div><div class="label">Possible duplicate</div><b>${dup.label}</b><span class="s">paid out to ${dup.payout_method}: check both forms</span></div>
+      </div>
+    </section>
+    <section class="sa-card c12">
+      <div class="sa-section-head"><span class="sa-badge tax">${icon("globe", "sm")} China</span><h2>Withholding and the annual filing</h2><a class="sa-btn secondary sm" href="#tax-cn">Open China details</a></div>
+      <div class="sa-facts">
+        <div><div class="label">Withheld by Bilibili</div><b class="num" style="color:var(--sa-tax-text)">${yen(Q.bilibili.withheld)}</b><span class="s">${usd(B.bilibili_usd.withheld)} · individual income tax</span></div>
+        <div><div class="label">Bilibili income</div><b class="num">${yen(Q.bilibili.gross)}</b><span class="s">gross · ${usd(B.bilibili_usd.gross)}</span></div>
+        <div><div class="label">Income outside China</div><b class="num">${usd(B.outside_usd.gross)}</b><span class="s">gross from ${Q.outside.platforms} platforms · no Chinese tax withheld</span></div>
+        <div><div class="label">Annual filing window</div><b>Mar 1 to Jun 30</b><span class="s">2027 · for tax year 2026</span></div>
+      </div>
+    </section>
+  </div>`;
+}
+
+/* ---------------- 16 · Overview in Your data mode, before any import ---------------- */
+function overviewEmpty() {
+  return `
+  <div class="sa-top"><div><h1>Overview</h1><p>No statements yet</p></div><div class="right">${you()}</div></div>
+  <div class="sa-grid"><div class="c8">${emptyCard(X.EMPTY_OVERVIEW)}</div></div>`;
+}
+
+/* ---------------- 17 · Ledger in CNY (August) with rate sources ---------------- */
+function ledgerCny() {
+  const LG = V.ledger_aug_cny, t = LG.totals, miss = LG.left_out[0];
+  const wd = d => new Date(d + "T12:00:00").toLocaleString("en-US", { weekday: "short" });
+  const usdRows = LG.rows.filter(r => r.currency !== "CNY");
+  const n = k => usdRows.filter(r => r.source === k).length;
+  const rateLine = r => r.source === "native" ? "" : r.source === "missing"
+    ? `<span class="rate miss">no CNY rate for ${dateShort(r.date)} in your rate file</span>`
+    : `<span class="rate">× ${r.rate.toFixed(4)} · ${r.source === "ecb" ? `<span class="src">ECB rate of ${wd(r.rate_date)} ${dateShort(r.rate_date)}</span>` : `${dateShort(r.rate_date)} · <span class="src">Your rate file</span>`}</span>`;
+  const cell = (v, cls, neg) => !v ? `<td class="money zero">—</td>` : `<td class="money ${cls}">${yen(neg ? -v : v)}</td>`;
+  const orig = r => r.currency === "CNY" ? `${cny(r.gross)}<span class="sub">CNY</span>` : `$${r.gross.toLocaleString("en-US", { minimumFractionDigits: 2 })}<span class="sub">USD</span>`;
+  return `
+  <div class="sa-top"><div><h1>Ledger</h1><p>August 2026 · shown in CNY</p></div><div class="right">${curSeg("CNY")}${periodSeg("Aug")}${you()}</div></div>
+  <div class="sa-kpirow">
+    ${[["Gross", t.gross, ""], ["Fees", -t.fees, "var(--sa-fee-text)"], ["Tax withheld", -t.withheld, "var(--sa-tax-text)"], ["Net · incomplete", t.net, "var(--sa-forest)"]]
+      .map(([l, v, c]) => `<div class="sa-card sa-kpi"><div class="label">${l}</div><div class="sa-fig num" style="${c ? `color:${c}` : ""}">${yen(v)}</div></div>`).join("")}
+    <div class="sa-card sa-kpi"><div class="label">${icon("fx", "sm")} Rates for USD records</div><div class="meta" style="margin-top:10px;line-height:1.7">Your rate file <b class="num" style="color:var(--sa-ink)">${n("file")}</b> · ECB <b class="num" style="color:var(--sa-ink)">${n("ecb")}</b> · missing <b class="num" style="color:var(--sa-warn-text)">${n("missing")}</b></div></div>
+  </div>
+  <section class="sa-warncard" style="display:grid;grid-template-columns:1fr 380px;gap:24px;margin-bottom:16px">
+    <div><div class="tag">${icon("alert", "sm")} Calculation stopped</div><div class="title">${X.RATE_STOP_TITLE}</div><p class="body" style="margin:0">${X.RATE_STOP_BODY}</p>
+      <div class="actions"><a class="sa-btn primary sm">Add the ${dateShort(miss.date)} rate</a><a class="sa-btn secondary sm">Open my rate file</a></div></div>
+    <dl class="sa-kv">${[["Platform", miss.label], ["Reference", miss.ref], ["Amount", "$" + miss.gross.toFixed(2)], ["Date", dateLong(miss.date)]].map(([k, v]) => `<dt>${k}</dt><dd class="num">${v}</dd>`).join("")}<dt>CNY rate</dt><dd class="miss">missing</dd></dl>
+  </section>
+  <div class="sa-note info" style="margin-bottom:14px">${icon("info", "sm")}<span>${X.LEDGER_CNY_NOTE}</span></div>
+  <div class="sa-tablewrap"><table class="sa-table dense">
+    <thead><tr><th>Date</th><th>Platform</th><th>Type</th><th>Original</th><th class="money">Gross (CNY)</th><th class="money">Fees</th><th class="money">Withheld</th><th class="money">Net (CNY)</th></tr></thead>
+    <tbody>${LG.rows.map(r => r.source === "missing" ? `<tr class="missing">
+      <td class="num">${r.date.slice(5).replace("-", "/")}</td><td><i class="sa-pdot" style="background:${PCOL(r.platform).fill}"></i>${r.label}</td><td>${r.type}${r.ref ? `<span class="sub">${r.ref}</span>` : ""}</td>
+      <td class="num">${orig(r)}</td><td class="money"><span class="sa-badge warn">rate missing</span>${rateLine(r)}</td><td colspan="3" class="money meta">left out of totals</td></tr>` : `<tr>
+      <td class="num">${r.date.slice(5).replace("-", "/")}</td><td><i class="sa-pdot" style="background:${PCOL(r.platform).fill}"></i>${r.label}</td><td>${r.type}${r.ref ? `<span class="sub">${r.ref}</span>` : ""}</td>
+      <td class="num">${orig(r)}</td><td class="money">${r.gross_cny ? yen(r.gross_cny) : "—"}${rateLine(r)}</td>${cell(r.fees_cny, "fee", true)}${cell(r.withheld_cny, "tax", true)}<td class="money net">${yen(r.net_cny)}</td></tr>`).join("")}
+      <tr class="total"><td colspan="4">August total · 1 record left out</td><td class="money">${yen(t.gross)}</td><td class="money">${yen(-t.fees)}</td><td class="money">${yen(-t.withheld)}</td><td class="money">${yen(t.net)}</td></tr>
+    </tbody></table></div>`;
+}
+
 const RENDER = { overview, ledger, tax, ask, report, sources, settings, missing,
-  "mydata-empty": mydataEmpty, mydata, privacy, "tax-cn": taxCn, "overview-cny": overviewCny };
-const NAV_OF = { sources: "ledger", settings: "tax", report: "tax", missing: "overview", "mydata-empty": "mydata", "tax-cn": "tax", "overview-cny": "overview" };
-const YOURS = new Set(["mydata-empty", "mydata", "privacy", "tax-cn", "overview-cny"]);
-const YOURS_HREF = { overview: "overview-cny", tax: "tax-cn" }; // in Your data mode the nav opens the v1.3 drawings
+  "mydata-empty": mydataEmpty, mydata, privacy, "tax-cn": taxCn, "overview-cny": overviewCny,
+  "privacy-delete": privacyDelete, "tax-both": taxBoth, "overview-empty": overviewEmpty, "ledger-cny": ledgerCny };
+const NAV_OF = { sources: "ledger", settings: "tax", report: "tax", missing: "overview", "mydata-empty": "mydata", "tax-cn": "tax", "overview-cny": "overview",
+  "privacy-delete": "privacy", "tax-both": "tax", "overview-empty": "overview", "ledger-cny": "ledger" };
+const YOURS = new Set(["mydata-empty", "mydata", "privacy", "tax-cn", "overview-cny", "privacy-delete", "tax-both", "overview-empty", "ledger-cny"]);
+const NO_DATA = new Set(["mydata-empty", "overview-empty"]); // Your data mode before any import
+const YOURS_HREF = { overview: "overview-cny", ledger: "ledger-cny", tax: "tax-cn" }; // in Your data mode the nav opens the v1.3 drawings
 function go() {
   const q = new URLSearchParams(location.search).get("screen");
   const s = (q || location.hash.slice(1) || "overview");
@@ -656,9 +758,9 @@ function go() {
   const yours = YOURS.has(key);
   document.getElementById("mode").innerHTML = `<a href="#mydata" class="${yours ? "on" : ""}">${icon("lock", "sm")}Your data</a><a href="#overview" class="${yours ? "" : "on"}">Demo data</a>`;
   document.getElementById("nav").innerHTML = NAV.map(([k, label, ic]) =>
-    `<a href="#${(yours && YOURS_HREF[k]) || k}" class="${k === navKey ? "on" : ""}">${icon(ic)}${label}</a>`).join("");
+    `<a href="#${(yours && (NO_DATA.has(key) ? (k === "overview" ? "overview-empty" : "") : YOURS_HREF[k])) || k}" class="${k === navKey ? "on" : ""}">${icon(ic)}${label}</a>`).join("");
   document.getElementById("util").innerHTML = UTIL.map(([k, label, ic]) =>
-    `<a href="#${k}" class="${k === navKey ? "on" : ""}">${icon(ic)}${label}${k === "mydata" && yours && key !== "mydata-empty" ? `<span class="r">${V.files.length} files</span>` : ""}</a>`).join("");
+    `<a href="#${k}" class="${k === navKey ? "on" : ""}">${icon(ic)}${label}${k === "mydata" && yours && !NO_DATA.has(key) ? `<span class="r">${V.files.length} files</span>` : ""}</a>`).join("");
   document.getElementById("prism").innerHTML = `<i></i>${yours ? "Content-free PRISM traces" : "Every run traced in PRISM"}`;
   document.getElementById("main").innerHTML = RENDER[key]();
   document.getElementById("main").scrollTop = 0;

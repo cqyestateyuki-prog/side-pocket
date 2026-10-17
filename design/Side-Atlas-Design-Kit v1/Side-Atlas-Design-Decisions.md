@@ -2,7 +2,24 @@
 
 The single place where visual rulings live. Changing a ruling means a new kit version, not an edit to one component.
 
-## v1.3 · 17 October 2026 · current standard (drawn; waiting for sign-off before build)
+## v1.3.1 · 17 October 2026 · current standard (signed off: "按建议")
+
+| # | Decision | Why |
+|---|---|---|
+| 38 | **Labels have four digits:** `<Platform> · acct ••NNNN` (four digits of a salted hash, made in the browser before upload). Supersedes the two digits in #32. | Approved suggestion; two digits collide. |
+| 39 | **Privacy copy matches the data flow** (GPT-6 Astra, third pass): the browser replaces account IDs before upload; the server receives the statement rows with labels, calculates in memory and keeps no copy; Ask Atlas gets only computed totals and labels; PRISM gets only tool names, timings and pass or fail. The privacy center gains an **Exchange rates** row: without a rate file the server fetches public ECB reference rates, sending only currency codes and a date range. | Coordinator: every privacy line must be true of the build. |
+| 40 | **Tax home Both** (screen 15): one hero with two countdowns (US estimated tax Jan 15, 2027 for Q4; China's filing window opens Mar 1, 2027), the US section above the China section, and an information flag that sends foreign tax credits and double taxation to the accountant. No screen states tax owed. | Approved suggestion. |
+| 41 | **Empty states** (screen 16 + component): one card per screen in Your data mode before any import, linking to My data. No skeletons, no hero. | Approved suggestion. |
+| 42 | **Ledger in CNY** (screen 17): original amount and currency, CNY columns, and a rate line under every converted amount (rate · date · source: "Your rate file", or "ECB rate of Fri Aug 21" for a weekend or holiday). A working day missing from the rate file stops the record: warn row, "left out of totals", stop card above the table, KPI net marked incomplete. | Approved suggestion. |
+| 43 | **Delete confirmation** (screen 12b): dialog with the filled danger confirm "Delete all my data" (the only filled danger button), "Export backup first" and "Cancel". | Approved suggestion. |
+| 44 | **01 to 08 re-captured** with the v1.3 shell. Their copy lost its leftover dashes (punctuation only; wording unchanged). | Coordinator. |
+
+### Open for sign-off (v1.3.1)
+
+- **Rate rule:** the ledger drawing uses the ECB rate of the last working day for a weekend your rate file doesn't cover. `daoshou/fx.py` today uses an uploaded rate file exactly (any date it lacks is missing) and uses ECB rates only for a currency with no rate file. Pick one. If the drawing wins, the privacy line on exchange rates should also mention days your rate file doesn't cover.
+- **Display-currency help text** says "each record's own date's exchange rate"; with the weekend rule that is approximate. Reword once the rate rule is settled.
+
+## v1.3 · 17 October 2026
 
 | # | Decision | Why |
 |---|---|---|
@@ -15,7 +32,7 @@ The single place where visual rulings live. Changing a ruling means a new kit ve
 | 36 | **Kit shell = product shell.** The prototype now uses the pigeon logo, the four-item nav and the mascot (copied to `02-logos/mascot/`); `05-css/side-atlas-ui-reference.css` is synced with the token-only product copy. PNGs 01–08 stay v1.1 captures; `bash 08-screens/capture.sh` re-draws them with the new shell, `capture.sh v13` exports only 10 to 14. The kit disclaimer now matches the product ("Estimate only. Not tax, legal, or financial advice."). | One shell to build from. |
 | 37 | **Copy** for the new screens is GPT-6 Astra's, in two passes (`07-mockups/copy-v13.js`), except one privacy line where the draft was clearer than Astra's fragments (noted in the file). Numbers come from `07-mockups/gen_data_v13.py` (read-only use of `daoshou/ledger.py`). | User rule: product copy by Astra; numbers by code. |
 
-### Open for sign-off (v1.3)
+### Open for sign-off (v1.3), all resolved in v1.3.1 (user: "按建议")
 
 - **Tax home "Both":** proposed one hero with two countdowns (US Jan 15, 2027 · China Mar 1, 2027) and both sections stacked. Not drawn.
 - **Pseudonym length:** `acct ••NN` (2 digits) can collide when someone has many accounts on one platform; 4 characters would avoid that.
