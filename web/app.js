@@ -9,6 +9,8 @@ import * as ledger from "./screens/ledger.js";
 import * as tax from "./screens/tax.js";
 import * as ask from "./screens/ask.js";
 import * as report from "./screens/report.js";
+import * as welcome from "./screens/welcome.js";
+import { entered, setEntered } from "./lib/prefs.js";
 
 // The nav has exactly four screens (user decision). `period` is "month" (Jul/Aug/Sep/Q3) or null.
 // The accountant report is reached from Tax ("Export for my accountant"), not from the nav.
@@ -18,6 +20,7 @@ const SCREENS = [
   { key: "tax", label: "Tax", icon: "tax", module: tax, period: "quarter" },
   { key: "ask", label: "Ask Atlas", icon: "ask", module: ask, period: null },
   { key: "report", label: "Report", icon: "report", module: report, period: "quarter", nav: false, navAs: "tax" },
+  { key: "welcome", label: "Welcome", module: welcome, period: null, nav: false, bare: true },
 ];
 
 const DEFAULTS = { c: "C01", month: "2026-09", quarter: "2026-Q3" };
@@ -86,6 +89,8 @@ async function go() {
   const creators = await get("creators");
   const ctx = { ...route, creators, me: creators.find(c => c.id === route.creator) ?? creators[0], href, periodSeg, whoPill, persona };
 
+  // The welcome screen stands alone: no sidebar.
+  document.querySelector(".sa-app").classList.toggle("bare", !!ctx.screen.bare);
   renderNav(ctx);
   main.classList.add("loading");
   try {
@@ -115,6 +120,12 @@ function renderNav(ctx) {
 }
 
 document.getElementById("tagline").textContent = COPY.TAGLINE;
+document.getElementById("signout").addEventListener("click", () => {
+  setEntered(false);
+  location.hash = "#welcome";
+});
+// First visit to the bare URL opens the welcome screen; any deep link goes straight to its screen.
+if (!location.hash && !entered()) history.replaceState(null, "", "#welcome");
 document.getElementById("disclaimer").textContent = COPY.DISCLAIMER;
 window.addEventListener("hashchange", go);
 go();

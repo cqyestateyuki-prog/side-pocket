@@ -37,3 +37,8 @@ export function setAside(creator, { totalNet, byPlatform, api }) {
   const custom = left.length > 0 || Math.abs(r - api.rate) > 1e-9;
   return { amount: custom ? round2(base * r) : api.amount, rate: r, base, custom, excluded: out, defaultRate: api.rate };
 }
+
+// Whether this viewer has gone past the welcome screen (demo entry, not a real sign-in).
+const ENTERED = "sa_entered";
+export const entered = () => read(ENTERED) === "1";
+export const setEntered = on => write(ENTERED, on ? "1" : null);
