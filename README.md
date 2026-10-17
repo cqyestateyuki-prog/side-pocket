@@ -56,7 +56,7 @@ No tax-residency judgments, tax-owed calculations, withholding-correctness judgm
 
 The demo uses fictional data, some simulated fees, and no real bank or platform connections.
 
-Estimate only — not tax, legal, or financial advice.
+Estimate only, not tax, legal, or financial advice.
 ---
 
 **Live demo:** https://side-atlas.vercel.app (landing page: https://side-atlas.vercel.app/landing.html) · **Pitch script:** [`docs/pitch_script.md`](docs/pitch_script.md) · **Submission:** [`docs/submission.md`](docs/submission.md)
@@ -153,4 +153,4 @@ results/                 batch results (JSONL)
 - **PRISM by Block Convey:** tracing, alerts, root-cause clustering and per-trace analysis.
 - Built at **MONEY TALKS 2** (AI × Finance hackathon, New York, October 17 2026), Money Operations track.
 
-All data is fictional and some fees are simulated. Estimate only — not tax, legal, or financial advice.
+All data is fictional and some fees are simulated. Estimate only, not tax, legal, or financial advice.

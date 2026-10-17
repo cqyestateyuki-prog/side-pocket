@@ -25,8 +25,8 @@ export async function render() {
         <h2>Welcome</h2>
         <div class="wl-account"><div class="av">M</div><div><b>Moon Spirit</b><span>fictional data</span></div></div>
         <button class="sa-btn primary wl-go" type="button" data-enter>Continue with the demo account</button>
-        <button class="sa-btn secondary wl-alt" type="button" disabled>Sign in with Google — coming soon</button>
-        <p class="wl-foot">Fictional demo data · Estimate only — not tax, legal, or financial advice.</p>
+        <button class="sa-btn secondary wl-alt" type="button" disabled>Sign in with Google (coming soon)</button>
+        <p class="wl-foot">Fictional demo data · Estimate only. Not tax, legal, or financial advice.</p>
         <span class="sa-prism wl-built"><i></i>Built on PRISM · Models via Nicrron</span>
         <a class="wl-about" href="landing.html">About Side Atlas</a>
       </div>

@@ -25,7 +25,7 @@ Ask Atlas shows tool steps live, with every answer’s numbers linked to their s
 
 The demo uses fictional data across eight platforms, with no live connections. Form types are simulated assumptions; Side Atlas does not calculate tax owed.
 
-*Estimate only — not tax, legal, or financial advice.*
+*Estimate only, not tax, legal, or financial advice.*
 
 ## How we used PRISM
 - **Sessions:** Every run is traced, with every model and tool call recorded as a step. One v2 run shows 17 steps.

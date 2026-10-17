@@ -23,5 +23,5 @@ export const COPY = {
   IMPORT_CHECK_OK: "Exchange rates available for these records.",
   SETTINGS_HEADLINE: "Your set-aside rate",
   SETTINGS_PROMISE: "You choose your set-aside rate; Side Atlas does not suggest one.",
-  DISCLAIMER: "Estimate only — not tax, legal, or financial advice.",
+  DISCLAIMER: "Estimate only. Not tax, legal, or financial advice.",
 };

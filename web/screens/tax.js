@@ -76,7 +76,7 @@ export async function render(ctx) {
   const accountant = [
     ...T.items_for_accountant.filter(x => x !== noneNote),
     ...dups.map(p => `${p.label} pays out through ${p.payout_method}: the same money may appear on two 1099-Ks.`),
-    ...issues.map(i => `${i.platform} ${i.record?.ref ?? ""}: no ${i.currency} rate for ${i.date} — left out until the rate is added.`),
+    ...issues.map(i => `${i.platform} ${i.record?.ref ?? ""}: no ${i.currency} rate for ${i.date}. It stays out until the rate is added.`),
   ];
   const T4 = F.totals_for_platforms_with_forms;
   const plats = [...R.by_platform].sort((a, b) => b.net - a.net);

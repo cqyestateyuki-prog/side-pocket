@@ -60,7 +60,7 @@ export async function render(ctx) {
       <ul class="sa-legend">
         <li><span class="dot" style="background:var(--sa-line-strong)"></span><span>Gross income</span><span class="amt">${usd(t.gross)}</span><span class="pct">100%</span></li>
         ${wf.map(([l, v, c]) => `<li><span class="dot" style="background:${c}"></span><span>${l}</span><span class="amt">${usd(-v)}</span><span class="pct">${pct(v / t.gross)}</span></li>`).join("")}
-        <li class="total"><span class="dot" style="background:var(--sa-net)"></span><span>Net — what landed</span><span class="amt">${usd(t.net)}</span><span class="pct">${pct(t.net / t.gross)}</span></li>
+        <li class="total"><span class="dot" style="background:var(--sa-net)"></span><span>Net (what landed)</span><span class="amt">${usd(t.net)}</span><span class="pct">${pct(t.net / t.gross)}</span></li>
       </ul>
     </section>
     <div class="c5 stack">

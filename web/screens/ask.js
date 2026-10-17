@@ -11,12 +11,12 @@ const LABEL = { bilibili: "Bilibili", youtube: "YouTube", twitch: "Twitch", patr
 // UI labels. The UI is English-only (user decision); a language switch is deferred.
 const T = {
   en: {
-    examples: ["How much did I actually make in September, across every platform?", "Who took my money in Q3 — platform fees or tax?", "What tax items do I have this quarter?"],
+    examples: ["How much did I actually make in September, across every platform?", "Who took my money in Q3: platform fees or tax?", "What tax items do I have this quarter?"],
     placeholder: COPY.ASK_PLACEHOLDER, promise: COPY.ASK_PROMISE, button: "Ask", tryAsking: "Try asking", answer: "Answer",
     steps: "Agent steps", calls: n => `${n} tool calls`, running: "running", choosing: "The agent is choosing its next step…",
     stepsEmpty: "Each lookup and calculation shows up here as the agent works, and is traced in PRISM.",
     thinking: "Atlas is working through the steps…", replay: "Replay of a real traced run",
-    lines: ["Gross income", "Platform fees", "Payout & payment fees", "Tax withheld by platforms", "Net — what landed"],
+    lines: ["Gross income", "Platform fees", "Payout & payment fees", "Tax withheld by platforms", "Net (what landed)"],
     setAside: r => `Set aside at your ${r}%`, nextDue: "Next US estimated tax", where: m => `Where ${monthName(m)}’s gross went`,
     fees: "Platform fees by platform",
   },
