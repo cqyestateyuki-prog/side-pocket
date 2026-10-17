@@ -18,6 +18,9 @@
       "upwork": "moonspirit_design",
       "fiverr": "moonspirit_studio",
       "contra": "moonspirit"
+    },
+    "payout_methods": {
+      "fiverr": "PayPal"
     }
   },
   {
@@ -50,6 +53,9 @@
       "youtube": "UC-mayachen-plays",
       "twitch": "mayachenplays",
       "patreon": "mayachen"
+    },
+    "payout_methods": {
+      "patreon": "PayPal"
     }
   },
   {
@@ -174,6 +180,25 @@
     "accounts": {
       "freelancer": "lenakoch_ui",
       "contra": "lenakoch"
+    }
+  },
+  {
+    "creator_id": "C12",
+    "name": "Priya Nair",
+    "profile": "纽约的 logo 设计师，Fiverr 单量很大（7–9 月已超过 1099-K 门槛），Fiverr 的钱提现到 PayPal；也用 Contra（税表对账测试）",
+    "tax_country": "US",
+    "set_aside_rate": 0.27,
+    "active_months": [
+      "2026-07",
+      "2026-08",
+      "2026-09"
+    ],
+    "accounts": {
+      "fiverr": "priyanair_studio",
+      "contra": "priyanair"
+    },
+    "payout_methods": {
+      "fiverr": "PayPal"
     }
   }
 ]

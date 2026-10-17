@@ -158,6 +158,56 @@ def total(cid, month, key):
     return sum(v[key] for v in all_platforms(cid, month).values())
 
 
+# ---- 税表对账：税表口径毛额 = 扣费前每笔收款（正数）之和；退款单独列；交易：每行收款一笔，Patreon 按赞助人数
+def months_of(period):
+    if "~" in period:
+        a, b = period.split("~")
+        return [m for m in Q3 if a <= m <= b]
+    return [period]
+
+
+def form_rows(cid, p, months):
+    acct = creators[cid]["accounts"].get(p)
+    if acct is None:
+        return None
+    if p == "youtube":
+        rows = yt[(yt["Channel ID"] == acct) & (yt["month"].isin(months))]
+        g = rows["Gross Revenue (USD)"]
+        return dict(gross=g[g > 0].sum(), refunds=-g[g < 0].sum(), txns=int((g > 0).sum()))
+    if p == "twitch":
+        rows = tw[(tw["Username"] == acct) & (tw["month"].isin(months))]
+        return dict(gross=rows["Gross (USD)"].sum(), refunds=0.0, txns=len(rows))
+    if p == "patreon":
+        rows = pt[(pt["Creator"] == acct) & (pt["month"].isin(months))]
+        return dict(gross=rows["Gross Pledges (USD)"].sum(), refunds=0.0, txns=int(rows["Patrons"].sum()))
+    if p == "upwork":
+        rows = uw[(uw["Freelancer"] == acct) & (uw["month"].isin(months)) & (uw["Type"] != "Withdrawal Fee")]
+        return dict(gross=rows["Amount (USD)"].sum(), refunds=0.0, txns=len(rows))
+    if p == "fiverr":
+        rows = fv[(fv["Seller"] == acct) & (fv["month"].isin(months)) & (fv["Item"] != "Withdrawal Fee")]
+        return dict(gross=rows["Amount (USD)"].sum(), refunds=0.0, txns=len(rows))
+    if p == "freelancer":
+        rows = fl[(fl["username"] == acct) & (fl["month"].isin(months)) & (fl["entry_type"] != "Withdrawal Fee")]
+        gross = sum(a * (1.0 if c == "USD" else fx2[d.strftime("%Y-%m-%d")][c])
+                    for a, c, d in zip(rows["project_amount"], rows["currency"], rows["date"]))
+        return dict(gross=gross, refunds=0.0, txns=len(rows))
+    if p == "contra":
+        rows = ct[(ct["Profile"] == acct) & (ct["month"].isin(months))]
+        return dict(gross=rows["amount"].sum(), refunds=0.0, txns=len(rows))
+    raise ValueError(p)
+
+
+def landed(cid, p, months):
+    return sum(v["net"] for m in months if (v := platform(cid, m, p)) is not None)
+
+
+def projected_over_1099k(cid, p):
+    k = assume["form_1099k_threshold"]
+    pace = 12 / len(assume["data_coverage_months"])
+    f = form_rows(cid, p, assume["data_coverage_months"])
+    return f["gross"] * pace > k["gross_usd"] and f["txns"] * pace > k["transactions"]
+
+
 def answer(q):
     cid, m, cat = q["creator_id"], q["month"], q["category"]
     p = q.get("platform")
@@ -209,6 +259,21 @@ def answer(q):
         return LABEL[ps[0]]
     if cat == "next_estimated_tax_due":
         return next(d for d in assume["us_estimated_tax_due_dates"] if d > q["after_date"])
+    if cat == "form_view_gross_usd":
+        return r2(form_rows(cid, p, months_of(m))["gross"])
+    if cat == "form_gap_usd":
+        return r2(form_rows(cid, p, months_of(m))["gross"] - landed(cid, p, months_of(m)))
+    if cat == "transaction_count":
+        return form_rows(cid, p, months_of(m))["txns"]
+    if cat == "threshold_platform_count":
+        return sum(projected_over_1099k(cid, k) for k in creators[cid]["accounts"]
+                   if assume["tax_forms"][k]["form"] == "1099-K")
+    if cat == "duplicate_report_platform":
+        methods = creators[cid].get("payout_methods", {})
+        ps = [k for k in creators[cid]["accounts"] if methods.get(k) in assume["payout_apps_issuing_1099k"]
+              and assume["tax_forms"][k]["form"] != "none"]
+        assert len(ps) == 1, ps
+        return LABEL[ps[0]]
     raise ValueError(cat)
 
 

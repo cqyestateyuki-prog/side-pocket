@@ -33,12 +33,17 @@ contract: get_fee_details or get_upwork_contract_fees.
 Tax questions over a month or a period (tax already withheld and by whom, a quarter's set-aside, \
 the next US estimated-tax due date, items to raise with an accountant): tax_items. It loads, \
 converts and breaks down every month itself, so call it right after find_creator.
+Tax-form questions over a month or a period (what a 1099-K or other form would show versus what \
+actually landed and the gap between them, payment transaction counts, whether a platform crosses the \
+1099-K threshold, income that might be reported twice): form_check. It also loads and converts \
+everything itself, so call it right after find_creator.
 
 If any tool reports missing data (for example MissingFXRate), do not work around it: call \
 submit_answer with answer null and say exactly what is missing.
 
 Call submit_answer exactly once with the figure exactly as a tool reported it (USD unless the \
-question asks for CNY; a platform name for "which platform" questions; YYYY-MM-DD for dates). \
+question asks for CNY; a platform name for "which platform" questions; YYYY-MM-DD for dates; \
+a whole number for counts). \
 Then reply with a short explanation in the user's language. Tax figures are estimates, not tax advice."""
 
 _creator = {"creator_id": {"type": "string"}}
@@ -110,11 +115,22 @@ TOOLS = [
             "after_date": {"type": "string", "description": "YYYY-MM-DD (optional)"}},
             "required": ["creator_id", "period"]}}},
     {"type": "function", "function": {
+        "name": "form_check",
+        "description": "Tax forms vs what landed, for a month or period ('2026-09', '2026-Q3' or "
+                       "'2026-07~2026-09'): per platform the form a US person would typically get (simulated), "
+                       "the form-view gross (payments before fees; refunds not netted), what actually landed, the "
+                       "gap itemised (platform fees, payout fees, tax withheld, refunds), payment transaction "
+                       "count, payout method, a possible-duplicate-report flag, and calendar-year 1099-K "
+                       "threshold status (so far and a labelled projection at the July–September pace). "
+                       "Informational only.",
+        "parameters": {"type": "object", "properties": {**_creator, "period": {"type": "string"}},
+                       "required": ["creator_id", "period"]}}},
+    {"type": "function", "function": {
         "name": "submit_answer",
         "description": "Record the final answer. Call exactly once.",
         "parameters": {"type": "object", "properties": {
             "answer": {"type": ["number", "string", "null"]},
-            "unit": {"type": "string", "description": "USD, CNY, platform or date"},
+            "unit": {"type": "string", "description": "USD, CNY, platform, date or count"},
             "explanation": {"type": "string"}}, "required": ["answer", "unit"]}}},
 ]
 
@@ -158,7 +174,8 @@ def make_tools(state: dict) -> dict:
         c = data.find_creator(name)
         if c is None:
             raise ToolError(f"no creator named {name!r}")
-        return {k: c[k] for k in ("creator_id", "name", "tax_country", "set_aside_rate", "accounts")}
+        return {**{k: c[k] for k in ("creator_id", "name", "tax_country", "set_aside_rate", "accounts")},
+                "payout_methods": {p: ledger.payout_method(c, p) for p in c["accounts"]}}
 
     def load_platform(creator_id: str, platform_name: str, month: str) -> dict:
         key = platform(platform_name)
@@ -325,13 +342,21 @@ def make_tools(state: dict) -> dict:
                                               "schedule": ledger.assumptions()["us_estimated_tax_due_dates"]},
                 "items_for_accountant": accountant, "note": DISCLAIMER}
 
+    def form_check(creator_id: str, period: str) -> dict:
+        c = creator(creator_id)
+        try:
+            out = ledger.form_check(c, ledger.months_in(period))
+        except ledger.MissingFXRate as e:
+            raise _missing_fx(e) from None
+        return {"creator_id": c["creator_id"], "period": period, **out, "note": DISCLAIMER}
+
     def submit_answer(answer=None, unit: str = "", explanation: str = "") -> dict:
         state["submitted"] = {"answer": answer, "unit": unit, "explanation": explanation}
         return {"status": "recorded"}
 
     tools = {f.__name__: f for f in (find_creator, convert_currency, compute_breakdown, compute_set_aside,
                                      simulate_patreon_ios, compare_months, get_upwork_contract_fees, tax_items,
-                                     submit_answer)}
+                                     form_check, submit_answer)}
     # The schema calls the argument "platform"; the Python names avoid shadowing the helper.
     tools["load_platform"] = lambda creator_id, platform, month: load_platform(creator_id, platform, month)
     tools["get_fee_details"] = lambda creator_id, platform, month=None, ref=None: get_fee_details(

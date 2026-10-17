@@ -69,6 +69,7 @@ class Record:
     ref: str = ""           # Fiverr order / Freelancer.com project
     ios: Decimal = Decimal(0)
     fee_in_usd: bool = False  # fee only known after conversion (non-USD Freelancer.com projects)
+    txns: int = 1             # payment transactions this row stands for (Patreon: patrons; fees: 0)
 
     @property
     def month(self) -> str:
@@ -80,7 +81,7 @@ def _iso(raw: str, fmt: str) -> str:
 
 
 def _payout_fee(platform: str, date: str, kind: str, amount: Decimal) -> Record:
-    return Record(platform, date, kind, "USD", Decimal(0), Decimal(0), amount, Decimal(0), -amount)
+    return Record(platform, date, kind, "USD", Decimal(0), Decimal(0), amount, Decimal(0), -amount, txns=0)
 
 
 def _parse(platform: str, r: dict) -> Record:
@@ -98,7 +99,7 @@ def _parse(platform: str, r: dict) -> Record:
     if platform == "patreon":
         return Record(platform, _iso(r["Month"], "%b %Y"), "Pledges", "USD", D(r["Gross Pledges (USD)"]),
                       D(r["Patreon Fee (USD)"]), D(r["Payment Processing (USD)"]), Decimal(0),
-                      D(r["Payout (USD)"]), ios=D(r["iOS Pledges (USD)"]))
+                      D(r["Payout (USD)"]), ios=D(r["iOS Pledges (USD)"]), txns=int(r["Patrons"]))
     if platform == "upwork":
         date, amount = _iso(r["Date"], "%b %d, %Y"), D(r["Amount (USD)"])
         if r["Type"] == "Withdrawal Fee":
@@ -245,3 +246,127 @@ def months_in(period: str) -> list[str]:
 
 def next_us_estimated_tax_due(after: str) -> str | None:
     return next((d for d in assumptions()["us_estimated_tax_due_dates"] if d > after), None)
+
+
+# ---------------------------------------------------------------- tax forms vs what landed
+
+def payout_method(creator: dict, platform: str) -> str:
+    return creator.get("payout_methods", {}).get(platform) or assumptions()["payout_method_default"]
+
+
+def _form_sums(pairs: list[tuple[Record, dict[str, Decimal]]]) -> dict:
+    """Form view = every positive payment before fees, in USD; refunds are listed, not netted."""
+    out = {"form_gross": Decimal(0), "refunds": Decimal(0), "transactions": 0,
+           **{f: Decimal(0) for f in ("platform_fee", "payment_fee", "withheld", "net")}}
+    for rec, usd in pairs:
+        if rec.gross > 0:
+            out["form_gross"] += usd["gross"]
+            out["transactions"] += rec.txns
+        elif rec.gross < 0:
+            out["refunds"] -= usd["gross"]
+        for f in ("platform_fee", "payment_fee", "withheld", "net"):
+            out[f] += usd[f]
+    return out
+
+
+def form_check(creator: dict, months: list[str], *, skip_missing: bool = False) -> dict:
+    """Per platform: the form a US person would typically get (simulated), what that form would show
+    (gross before fees) against what actually landed, the itemised gap, transactions, the calendar-year
+    1099-K threshold status, and a possible-duplicate flag when payouts go to an app that files its own
+    1099-K. Informational only.
+
+    Raises MissingFXRate unless skip_missing, in which case unconvertible records are left out and listed
+    under `issues`.
+    """
+    a = assumptions()
+    forms, k = a["tax_forms"], a["form_1099k_threshold"]
+    coverage = a["data_coverage_months"]
+    pace = Decimal(12) / Decimal(len(coverage))
+    apps = set(a["payout_apps_issuing_1099k"])
+    issues: dict[tuple, dict] = {}
+
+    def converted(recs: list[Record]) -> list[tuple[Record, dict[str, Decimal]]]:
+        pairs = []
+        for r in recs:
+            try:
+                pairs.append((r, to_usd(r)))
+            except MissingFXRate as e:
+                if not skip_missing:
+                    raise
+                issues[(r.platform, r.date, r.ref)] = {
+                    "type": "missing_fx", "currency": e.currency, "date": r.date, "platform": LABEL[r.platform],
+                    "ref": r.ref or None, "amount": float(r.gross)}
+        return pairs
+
+    rows = []
+    for p in PLATFORMS:
+        if p not in creator["accounts"]:
+            continue
+        recs = [r for m in months for r in records(creator, p, m)]
+        if not recs:
+            continue
+        s = _form_sums(converted(recs))
+        year = _form_sums(converted([r for m in coverage for r in records(creator, p, m)]))
+        profile = forms[p]
+        method = payout_method(creator, p)
+        proj_gross, proj_txns = year["form_gross"] * pace, int(year["transactions"] * pace)
+        if profile["form"] == "1099-K":
+            if year["form_gross"] > k["gross_usd"] and year["transactions"] > k["transactions"]:
+                status, meaning = "over_so_far", (f"Already over the 1099-K threshold this year: expect a 1099-K "
+                                                  f"from {profile['issuer']} showing the gross, before fees.")
+            elif proj_gross > k["gross_usd"] and proj_txns > k["transactions"]:
+                status, meaning = "projected_over", ("At the July–September pace (a projection) this passes the "
+                                                     "1099-K threshold by year end; a 1099-K is likely.")
+            else:
+                status, meaning = "below", ("Below the 1099-K threshold so far and at the current pace: you may "
+                                            "get no 1099-K, but this income is still reportable.")
+            threshold = {"rule": k["rule"], "gross_usd": k["gross_usd"], "transactions": k["transactions"],
+                         "simulated": False}
+        elif profile["form"] in ("1099-MISC", "1099-NEC"):
+            t = D(a["form_1099misc_threshold_usd"])
+            status = ("over_so_far" if year["form_gross"] >= t else "projected_over" if proj_gross >= t else "below")
+            meaning = {"over_so_far": f"Likely gets a {profile['form']} (simulated threshold already reached).",
+                       "projected_over": f"Likely gets a {profile['form']} by year end at the current pace "
+                                         f"(projection; simulated threshold).",
+                       "below": "Below the simulated form threshold: you may get no form, but this income is "
+                                "still reportable."}[status]
+            threshold = {"rule": a["form_1099misc_note"], "gross_usd": float(t), "simulated": True}
+        else:
+            status, meaning = "not_applicable", profile["note"]
+            threshold = None
+        duplicate = profile["form"] != "none" and method in apps
+        has_form = profile["form"] != "none"
+        rows.append({
+            "platform": p, "label": LABEL[p], "form": profile["form"], "issuer": profile["issuer"],
+            "form_note": profile["note"], "payout_method": method,
+            "form_view_gross_usd": cents(s["form_gross"]) if has_form else None,
+            "bank_view_landed_usd": cents(s["net"]),
+            "gap_usd": cents(s["form_gross"] - s["net"]) if has_form else None,
+            "gap_items_usd": {"platform_fees": cents(s["platform_fee"]), "payout_fees": cents(s["payment_fee"]),
+                              "tax_withheld": cents(s["withheld"]), "refunds": cents(s["refunds"])},
+            "transactions": s["transactions"],
+            "calendar_year": {"basis": f"records for {coverage[0]}–{coverage[-1]} (the months in Side Atlas)",
+                              "so_far_form_gross_usd": cents(year["form_gross"]),
+                              "so_far_transactions": year["transactions"],
+                              "projected_full_year_gross_usd": cents(proj_gross),
+                              "projected_full_year_transactions": proj_txns,
+                              "projection": f"July–September × {pace} — a projection, not actual",
+                              "threshold": threshold, "status": status, "meaning": meaning},
+            "possible_duplicate_report": duplicate,
+            **({"duplicate_note": a["duplicate_report_note"]} if duplicate else {}),
+        })
+    with_forms = [r for r in rows if r["form_view_gross_usd"] is not None]
+    notes = [a["income_reportable_note"], a["tax_forms_note"], a["form_gap_rule"]]
+    if any(r["possible_duplicate_report"] for r in rows):
+        notes.append(a["duplicate_report_note"])
+    return {
+        "months": months, "platforms": rows,
+        "totals_for_platforms_with_forms": {
+            "form_view_gross_usd": round(sum(r["form_view_gross_usd"] for r in with_forms), 2),
+            "bank_view_landed_usd": round(sum(r["bank_view_landed_usd"] for r in with_forms), 2),
+            "gap_usd": round(sum(r["gap_usd"] for r in with_forms), 2)},
+        "platforms_over_1099k_threshold": [r["label"] for r in rows if r["form"] == "1099-K"
+                                           and r["calendar_year"]["status"] in ("over_so_far", "projected_over")],
+        "possible_duplicate_reports": [r["label"] for r in rows if r["possible_duplicate_report"]],
+        "complete": not issues, "issues": list(issues.values()), "notes": notes,
+    }

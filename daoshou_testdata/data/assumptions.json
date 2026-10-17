@@ -38,5 +38,70 @@
     "2027-01-15"
   ],
   "us_estimated_tax_note": "IRS 2026 纳税年度季度预估税截止日（真实）",
-  "quarter_set_aside_rule": "季度应预留 = 季度内各月总到手（美元，不先四舍五入）之和 × 预留比例"
+  "quarter_set_aside_rule": "季度应预留 = 季度内各月总到手（美元，不先四舍五入）之和 × 预留比例",
+  "tax_forms_note": "模拟：各平台给美国税务居民开哪种税表、由谁开，都是示例，请以平台和 IRS 为准；只有 1099-K 门槛是真实规则",
+  "tax_forms": {
+    "bilibili": {
+      "form": "none",
+      "issuer": "—",
+      "note": "模拟：中国平台不开美国税表；已代扣的个税可在个人所得税 App 查纳税记录，交给会计"
+    },
+    "youtube": {
+      "form": "1099-MISC",
+      "issuer": "Google (AdSense)",
+      "note": "模拟，以平台为准"
+    },
+    "twitch": {
+      "form": "1099-MISC",
+      "issuer": "Twitch",
+      "note": "模拟，以平台为准"
+    },
+    "patreon": {
+      "form": "1099-K",
+      "issuer": "Patreon",
+      "note": "模拟，以平台为准"
+    },
+    "upwork": {
+      "form": "1099-K",
+      "issuer": "Upwork",
+      "note": "模拟，以平台为准"
+    },
+    "fiverr": {
+      "form": "1099-K",
+      "issuer": "Fiverr",
+      "note": "模拟，以平台为准"
+    },
+    "freelancer": {
+      "form": "1099-K",
+      "issuer": "Freelancer.com",
+      "note": "模拟，以平台为准"
+    },
+    "contra": {
+      "form": "1099-K",
+      "issuer": "Contra's payment processor",
+      "note": "模拟，以平台为准"
+    }
+  },
+  "form_1099k_threshold": {
+    "gross_usd": 20000,
+    "transactions": 200,
+    "rule": "真实规则：第三方结算机构（TPSO）一个日历年里付给同一收款人的总额超过 $20,000 且交易超过 200 笔，才必须开 1099-K（2025 年的法律把门槛恢复成这样）"
+  },
+  "form_1099misc_threshold_usd": 2000,
+  "form_1099misc_note": "模拟：示例用 $2,000 作为 1099-MISC/NEC 的开表门槛，以 IRS 为准",
+  "form_view_rule": "税表口径毛额 = 扣平台费、提现费、预扣税之前的每笔收款（正数）之和，换成美元；退款不从税表毛额里减，单独列出",
+  "form_gap_rule": "税表口径毛额 − 实际到手 = 平台抽成 + 提现/支付费 + 平台预扣税 + 退款",
+  "transaction_count_rule": "模拟口径：每一行收款记一笔交易（Fiverr 的订单、加购、小费各算一笔）；Patreon 按当月赞助人数计；退款和提现费不算交易",
+  "data_coverage_months": [
+    "2026-07",
+    "2026-08",
+    "2026-09"
+  ],
+  "form_projection_rule": "门槛按日历年看。数据只有 2026 年 7–9 月，所以'今年到目前'只算这三个月；'按目前速度推算全年' = 7–9 月 × 4，这是推算不是实际",
+  "payout_apps_issuing_1099k": [
+    "PayPal"
+  ],
+  "payout_method_default": "Bank transfer",
+  "duplicate_report_note": "模拟：如果平台把钱打到 PayPal 这类自己也会开 1099-K 的付款账户，同一笔收入可能被平台和 PayPal 各报一次；报税时不要重复计入，带上这份对账给会计",
+  "income_reportable_note": "即使没有收到任何税表，这些收入一样要报税"
 }

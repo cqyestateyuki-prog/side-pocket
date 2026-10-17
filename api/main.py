@@ -51,7 +51,8 @@ def _profile(c: dict) -> dict:
     return {"id": c["creator_id"], "name": c["name"], "profile": c.get("profile"),
             "tax_country": c["tax_country"], "set_aside_rate": c["set_aside_rate"],
             "active_months": c.get("active_months", []),
-            "platforms": [{"key": p, "label": ledger.LABEL.get(p, p), "account": acct}
+            "platforms": [{"key": p, "label": ledger.LABEL.get(p, p), "account": acct,
+                           "payout_method": ledger.payout_method(c, p)}
                           for p, acct in c["accounts"].items()]}
 
 
@@ -223,7 +224,8 @@ def _tax(c: dict, months: list[str], period: str, after: str) -> dict:
                 "after": after, "due_date": due,
                 "days_left": (date.fromisoformat(due) - date.fromisoformat(after)).days if due else None,
                 "schedule": ledger.assumptions()["us_estimated_tax_due_dates"]},
-            "items_for_accountant": accountant, "note": DISCLAIMER}
+            "items_for_accountant": accountant,
+            "forms": ledger.form_check(c, months, skip_missing=True), "note": DISCLAIMER}
 
 
 # ---------------------------------------------------------------- read endpoints
@@ -277,6 +279,14 @@ def ledger_view(creator: str, month: str) -> dict:
 def tax_items(creator: str, period: str, after: str | None = None) -> dict:
     c, months = _creator(creator), _months(period)
     return _tax(c, months, period, _day(after) if after else date.today().isoformat())
+
+
+@app.get("/api/forms")
+def forms(creator: str, period: str) -> dict:
+    """Tax forms vs what landed: what each platform's form would show, the gap, threshold and duplicates."""
+    c, months = _creator(creator), _months(period)
+    return {"creator": _profile(c), "period": period, "currency": "USD",
+            **ledger.form_check(c, months, skip_missing=True), "note": DISCLAIMER}
 
 
 @app.get("/api/report")

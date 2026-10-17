@@ -37,11 +37,17 @@ TOOLS = [
         "description": "Daily exchange rates for a month (YYYY-MM), as CSV: CNY per USD, and USD per EUR / GBP.",
         "parameters": {"type": "object", "properties": {"month": {"type": "string"}}, "required": ["month"]}}},
     {"type": "function", "function": {
+        "name": "read_tax_form_rules",
+        "description": "Reference rules for US tax forms: which form each platform issues (simulated), the 1099-K "
+                       "threshold, how form-view gross and transactions are counted, and which payout apps file "
+                       "their own 1099-K.",
+        "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {
         "name": "submit_answer",
         "description": "Record the final answer. Call exactly once.",
         "parameters": {"type": "object", "properties": {
             "answer": {"type": ["number", "string", "null"]},
-            "unit": {"type": "string", "description": "USD, CNY, platform or date"},
+            "unit": {"type": "string", "description": "USD, CNY, platform, date or count"},
             "explanation": {"type": "string"}}, "required": ["answer", "unit"]}}},
 ]
 
@@ -51,7 +57,8 @@ def make_tools(state: dict) -> dict:
         c = data.find_creator(name)
         if c is None:
             raise ToolError(f"no creator named {name!r}")
-        return {k: c[k] for k in ("creator_id", "name", "tax_country", "set_aside_rate", "accounts")}
+        return {**{k: c[k] for k in ("creator_id", "name", "tax_country", "set_aside_rate", "accounts")},
+                "payout_methods": c.get("payout_methods", {})}
 
     def read_platform_export(platform: str, account: str) -> str:
         if platform not in data.EXPORTS:
@@ -65,9 +72,18 @@ def make_tools(state: dict) -> dict:
         return ("date,cny_per_usd\n" + "\n".join(cny)
                 + "\n\ndate,usd_per_eur,usd_per_gbp\n" + "\n".join(other))
 
+    def read_tax_form_rules() -> dict:
+        a = data.assumptions()
+        keys = ("tax_forms_note", "tax_forms", "form_1099k_threshold", "form_1099misc_threshold_usd",
+                "form_1099misc_note", "form_view_rule", "form_gap_rule", "transaction_count_rule",
+                "data_coverage_months", "form_projection_rule", "payout_apps_issuing_1099k",
+                "payout_method_default", "duplicate_report_note", "income_reportable_note")
+        return {k: a[k] for k in keys}
+
     def submit_answer(answer=None, unit: str = "", explanation: str = "") -> dict:
         state["submitted"] = {"answer": answer, "unit": unit, "explanation": explanation}
         return {"status": "recorded"}
 
     return {"find_creator": find_creator, "read_platform_export": read_platform_export,
-            "read_fx_rates": read_fx_rates, "submit_answer": submit_answer}
+            "read_fx_rates": read_fx_rates, "read_tax_form_rules": read_tax_form_rules,
+            "submit_answer": submit_answer}

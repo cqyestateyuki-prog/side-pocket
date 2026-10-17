@@ -72,3 +72,8 @@ def fx_usd_per_unit() -> dict[str, dict[str, float]]:
     """USD per 1 EUR / 1 GBP, by date (the opposite direction to the CNY table)."""
     with open(DATA / "fx_rates_usd_per_unit.csv", encoding="utf-8", newline="") as f:
         return {r["date"]: {"EUR": float(r["EUR"]), "GBP": float(r["GBP"])} for r in csv.DictReader(f)}
+
+
+@lru_cache
+def assumptions() -> dict:
+    return json.loads((DATA / "assumptions.json").read_text(encoding="utf-8"))

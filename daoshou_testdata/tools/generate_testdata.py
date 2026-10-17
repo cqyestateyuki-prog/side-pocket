@@ -64,6 +64,34 @@ ASSUMPTIONS = {
     "us_estimated_tax_due_dates": US_ESTIMATED_TAX_DUE,
     "us_estimated_tax_note": "IRS 2026 纳税年度季度预估税截止日（真实）",
     "quarter_set_aside_rule": "季度应预留 = 季度内各月总到手（美元，不先四舍五入）之和 × 预留比例",
+    # ---- 税表对账（Q082 起）
+    "tax_forms_note": "模拟：各平台给美国税务居民开哪种税表、由谁开，都是示例，请以平台和 IRS 为准；只有 1099-K 门槛是真实规则",
+    "tax_forms": {
+        "bilibili": {"form": "none", "issuer": "—",
+                     "note": "模拟：中国平台不开美国税表；已代扣的个税可在个人所得税 App 查纳税记录，交给会计"},
+        "youtube": {"form": "1099-MISC", "issuer": "Google (AdSense)", "note": "模拟，以平台为准"},
+        "twitch": {"form": "1099-MISC", "issuer": "Twitch", "note": "模拟，以平台为准"},
+        "patreon": {"form": "1099-K", "issuer": "Patreon", "note": "模拟，以平台为准"},
+        "upwork": {"form": "1099-K", "issuer": "Upwork", "note": "模拟，以平台为准"},
+        "fiverr": {"form": "1099-K", "issuer": "Fiverr", "note": "模拟，以平台为准"},
+        "freelancer": {"form": "1099-K", "issuer": "Freelancer.com", "note": "模拟，以平台为准"},
+        "contra": {"form": "1099-K", "issuer": "Contra's payment processor", "note": "模拟，以平台为准"},
+    },
+    "form_1099k_threshold": {
+        "gross_usd": 20000, "transactions": 200,
+        "rule": "真实规则：第三方结算机构（TPSO）一个日历年里付给同一收款人的总额超过 $20,000 且交易超过 200 笔，才必须开 1099-K（2025 年的法律把门槛恢复成这样）",
+    },
+    "form_1099misc_threshold_usd": 2000,
+    "form_1099misc_note": "模拟：示例用 $2,000 作为 1099-MISC/NEC 的开表门槛，以 IRS 为准",
+    "form_view_rule": "税表口径毛额 = 扣平台费、提现费、预扣税之前的每笔收款（正数）之和，换成美元；退款不从税表毛额里减，单独列出",
+    "form_gap_rule": "税表口径毛额 − 实际到手 = 平台抽成 + 提现/支付费 + 平台预扣税 + 退款",
+    "transaction_count_rule": "模拟口径：每一行收款记一笔交易（Fiverr 的订单、加购、小费各算一笔）；Patreon 按当月赞助人数计；退款和提现费不算交易",
+    "data_coverage_months": MONTHS,
+    "form_projection_rule": "门槛按日历年看。数据只有 2026 年 7–9 月，所以'今年到目前'只算这三个月；'按目前速度推算全年' = 7–9 月 × 4，这是推算不是实际",
+    "payout_apps_issuing_1099k": ["PayPal"],
+    "payout_method_default": "Bank transfer",
+    "duplicate_report_note": "模拟：如果平台把钱打到 PayPal 这类自己也会开 1099-K 的付款账户，同一笔收入可能被平台和 PayPal 各报一次；报税时不要重复计入，带上这份对账给会计",
+    "income_reportable_note": "即使没有收到任何税表，这些收入一样要报税",
 }
 
 # ---------------------------------------------------------------- helpers
@@ -116,13 +144,15 @@ CREATORS = [
          tax_country="US", set_aside_rate=0.25, active_months=MONTHS,
          accounts=dict(bilibili="bili_330121", youtube="UC-yzl-moonspirit", twitch="yuezhiling_tv",
                        patreon="yuezhiling", upwork="moonspirit_design", fiverr="moonspirit_studio",
-                       contra="moonspirit")),
+                       contra="moonspirit"),
+         payout_methods=dict(fiverr="PayPal")),
     dict(creator_id="C02", name="小鹿", profile="只在 B 站直播的中文主播",
          tax_country="CN", set_aside_rate=0.0, active_months=MONTHS,
          accounts=dict(bilibili="bili_552047")),
     dict(creator_id="C03", name="Maya Chen", profile="只用美国平台的游戏主播",
          tax_country="US", set_aside_rate=0.30, active_months=MONTHS,
-         accounts=dict(youtube="UC-mayachen-plays", twitch="mayachenplays", patreon="mayachen")),
+         accounts=dict(youtube="UC-mayachen-plays", twitch="mayachenplays", patreon="mayachen"),
+         payout_methods=dict(patreon="PayPal")),
     dict(creator_id="C04", name="阿柚", profile="中英双平台 VTuber，YouTube 有美国预扣税",
          tax_country="CN", set_aside_rate=0.10, active_months=MONTHS,
          accounts=dict(bilibili="bili_771390", youtube="UC-ayou-vt")),
@@ -149,8 +179,14 @@ CREATORS = [
          profile="柏林的 UI 设计师，Freelancer.com 接欧元/英镑项目，也用 Contra；8 月有一个欧元项目落在缺汇率的日期（告警测试）",
          tax_country="DE", set_aside_rate=0.30, active_months=MONTHS,
          accounts=dict(freelancer="lenakoch_ui", contra="lenakoch")),
+    dict(creator_id="C12", name="Priya Nair",
+         profile="纽约的 logo 设计师，Fiverr 单量很大（7–9 月已超过 1099-K 门槛），Fiverr 的钱提现到 PayPal；也用 Contra（税表对账测试）",
+         tax_country="US", set_aside_rate=0.27, active_months=MONTHS,
+         accounts=dict(fiverr="priyanair_studio", contra="priyanair"),
+         payout_methods=dict(fiverr="PayPal")),
 ]
 BY_ID = {c["creator_id"]: c for c in CREATORS}
+RNG3_CREATORS = {"C12"}  # 用第三条随机数流生成，前面所有数据保持不变
 
 # 生成参数（不写进创作者档案）
 BILI_SCALE = {"C01": 4.0, "C02": 0.6, "C04": 0.8, "C07": 1.2, "C09": 0.5}
@@ -349,7 +385,7 @@ FIVERR_BUYERS = ["kaito_k", "jessmakes", "brightloop", "olive.design", "marco_r"
 fv_rows = []
 for c in CREATORS:
     cid = c["creator_id"]
-    if "fiverr" not in c["accounts"]:
+    if "fiverr" not in c["accounts"] or cid in RNG3_CREATORS:
         continue
     acct = c["accounts"]["fiverr"]
     (lo, hi), (nlo, nhi) = FIVERR[cid]
@@ -414,7 +450,7 @@ CONTRA_CLIENTS = ["Fable & Fern", "Northstar Labs", "Quiet Oak", "Helio Health",
 ct_rows = []
 for c in CREATORS:
     cid = c["creator_id"]
-    if "contra" not in c["accounts"]:
+    if "contra" not in c["accounts"] or cid in RNG3_CREATORS:
         continue
     acct = c["accounts"]["contra"]
     lo, hi = CONTRA[cid]
@@ -424,6 +460,43 @@ for c in CREATORS:
                 for _ in range(rng2.randint(1, 2))]
         recs.sort(key=lambda r: r["date"])
         ct_rows.extend(recs)
+
+# C12 Priya Nair：税表对账用例，第三条随机数流
+rng3 = random.Random(SEED + 202)
+
+
+def rand_date3(month):
+    _, last = month_bounds(month)
+    while True:
+        d = dt.date(last.year, last.month, rng3.randint(1, last.day - 1))
+        if d.isoformat() not in (MISSING_FX_DATE, MISSING_FX2_DATE):
+            return d
+
+
+taken_orders = {r["order"] for r in fv_rows}
+for cid in sorted(RNG3_CREATORS):
+    c = BY_ID[cid]
+    for month in c["active_months"]:
+        recs = []
+        for _ in range(rng3.randint(72, 84)):
+            order = f"FO{rng3.randint(100000, 999999)}"
+            while order in taken_orders:
+                order = f"FO{rng3.randint(100000, 999999)}"
+            taken_orders.add(order)
+            base = dict(acct=c["accounts"]["fiverr"], date=rand_date3(month), hour=rng3.randint(0, 23),
+                        minute=rng3.randint(0, 59), order=order, buyer=rng3.choice(FIVERR_BUYERS))
+            recs.append(dict(base, item="Order", amount=r2(rng3.uniform(70, 120))))
+            if rng3.random() < 0.4:
+                recs.append(dict(base, item="Extra", amount=r2(rng3.uniform(10, 60))))
+            if rng3.random() < 0.5:
+                recs.append(dict(base, item="Tip", amount=r2(rng3.uniform(5, 40))))
+        _, last = month_bounds(month)
+        recs.append(dict(acct=c["accounts"]["fiverr"], date=last, hour=9, minute=0, order="", buyer="",
+                         item="Withdrawal Fee", amount=ASSUMPTIONS["fiverr_withdrawal_fee_usd"]))
+        recs.sort(key=lambda r: (r["date"], r["hour"], r["minute"], r["item"]))
+        fv_rows.extend(recs)
+        ct_rows.append(dict(acct=c["accounts"]["contra"], date=rand_date3(month), client=rng3.choice(CONTRA_CLIENTS),
+                            project=rng3.choice(FL_TITLES), amount=r2(rng3.uniform(400, 900))))
 
 
 def fl_fee(amount):
@@ -631,7 +704,8 @@ def add(cid, month, category, text, answer, unit, traps, lang="zh", **extra):
     questions.append(dict(id=f"Q{len(questions) + 1:03d}", creator_id=cid, creator_name=BY_ID[cid]["name"],
                           month=month, category=category, lang=lang, **extra, question=text,
                           expected_answer=answer, unit=unit,
-                          tolerance=0.01 if unit in ("USD", "CNY") else None, v1_traps=traps))
+                          tolerance=0.01 if unit in ("USD", "CNY") else (0 if unit == "count" else None),
+                          v1_traps=traps))
 
 
 def T(cid, m):
@@ -874,6 +948,105 @@ add_alert("C11", A, "How much did Lena Koch earn on Freelancer.com in August 202
           platform="freelancer")
 add_alert("C11", A, "How much should Lena Koch set aside for taxes for August 2026, using her own rate (USD)?", LENA,
           lang="en")
+
+# ---------------------------------------------------------------- 税表对账（Q082 起）
+# 税表口径毛额 = 扣费前的每笔收款（正数）之和；退款单独列出；交易数：每行收款一笔，Patreon 按赞助人数
+
+
+def form_rows(cid, p, months):
+    acct = BY_ID[cid]["accounts"].get(p)
+    if acct is None:
+        return None
+    if p == "youtube":
+        rows = [r for r in yt_rows if r["acct"] == acct and ym(r["date"]) in months]
+        pos = [r["gross"] for r in rows if r["gross"] > 0]
+        return dict(gross=sum(pos), refunds=-sum(r["gross"] for r in rows if r["gross"] < 0), txns=len(pos))
+    if p == "twitch":
+        rows = [r for r in tw_rows if r["acct"] == acct and ym(r["date"]) in months]
+        return dict(gross=sum(r["gross"] for r in rows), refunds=0.0, txns=len(rows))
+    if p == "patreon":
+        rows = [r for r in pt_rows if r["acct"] == acct and r["month"] in months]
+        return dict(gross=sum(r["gross"] for r in rows), refunds=0.0, txns=sum(r["patrons"] for r in rows))
+    if p == "upwork":
+        rows = [r for r in uw_rows if r["acct"] == acct and ym(r["date"]) in months and r["type"] != "Withdrawal Fee"]
+        return dict(gross=sum(r["amount"] for r in rows), refunds=0.0, txns=len(rows))
+    if p == "fiverr":
+        rows = [r for r in fv_rows if r["acct"] == acct and ym(r["date"]) in months and r["item"] != "Withdrawal Fee"]
+        return dict(gross=sum(r["amount"] for r in rows), refunds=0.0, txns=len(rows))
+    if p == "freelancer":
+        rows = [r for r in fl_rows if r["acct"] == acct and ym(r["date"]) in months and r["type"] != "Withdrawal Fee"]
+        gross = sum(r["amount"] * (1.0 if r["currency"] == "USD" else fx2[r["date"].isoformat()][r["currency"]])
+                    for r in rows)
+        return dict(gross=gross, refunds=0.0, txns=len(rows))
+    if p == "contra":
+        rows = [r for r in ct_rows if r["acct"] == acct and ym(r["date"]) in months]
+        return dict(gross=sum(r["amount"] for r in rows), refunds=0.0, txns=len(rows))
+    raise ValueError(p)
+
+
+def form_view(cid, p, months):
+    f = form_rows(cid, p, months)
+    parts = [T(cid, m)["platforms"][p] for m in months if p in T(cid, m)["platforms"]]
+    landed = sum(x["net"] for x in parts)
+    items = {k: sum(x[k] for x in parts) for k in ("platform_fee", "payment_fee", "withheld")}
+    gap = f["gross"] - landed
+    assert abs(gap - (sum(items.values()) + f["refunds"])) < 1e-6, (cid, p, gap, items, f)
+    return dict(form_gross=f["gross"], landed=landed, gap=gap, txns=f["txns"], refunds=f["refunds"], **items)
+
+
+K = ASSUMPTIONS["form_1099k_threshold"]
+PACE = 12 / len(ASSUMPTIONS["data_coverage_months"])
+
+
+def projected_over_1099k(cid, p):
+    fv = form_rows(cid, p, ASSUMPTIONS["data_coverage_months"])
+    return fv["gross"] * PACE > K["gross_usd"] and fv["txns"] * PACE > K["transactions"]
+
+
+def k_platforms(cid):
+    return [p for p in BY_ID[cid]["accounts"] if ASSUMPTIONS["tax_forms"][p]["form"] == "1099-K"]
+
+
+def duplicate_platforms(cid):
+    methods = BY_ID[cid].get("payout_methods", {})
+    return [p for p in BY_ID[cid]["accounts"]
+            if methods.get(p) in ASSUMPTIONS["payout_apps_issuing_1099k"] and ASSUMPTIONS["tax_forms"][p]["form"] != "none"]
+
+
+assert [p for p in k_platforms("C12") if projected_over_1099k("C12", p)] == ["fiverr"]
+fv_c12 = form_rows("C12", "fiverr", Q3)
+assert fv_c12["gross"] > K["gross_usd"] and fv_c12["txns"] > K["transactions"], fv_c12  # 7–9 月本身就已超过
+dup_c01, dup_c03 = duplicate_platforms("C01"), duplicate_platforms("C03")
+assert dup_c01 == ["fiverr"] and dup_c03 == ["patreon"], (dup_c01, dup_c03)
+
+add("C01", Q3_LABEL, "form_view_gross_usd",
+    "月之灵 2026 年第三季度（7–9 月）Upwork 的税表口径毛收入是多少美元？（1099-K 这类税表报的是扣平台费之前的毛额）",
+    r2(form_view("C01", "upwork", Q3)["form_gross"]), "USD", ["form_gross"], platform="upwork")
+add("C01", Q3_LABEL, "form_gap_usd",
+    "月之灵 2026 年第三季度（7–9 月）Fiverr 税表口径的毛收入，比她在 Fiverr 实际到手的钱多出多少美元？",
+    r2(form_view("C01", "fiverr", Q3)["gap"]), "USD", ["form_gross", "fiverr_tip_fee"], platform="fiverr")
+add("C05", Q3_LABEL, "form_gap_usd",
+    "For Q3 2026 (July–September), how much higher is Leo Park's form-view gross on YouTube (payments before fees, "
+    "refunds not netted out) than what actually landed (USD)?",
+    r2(form_view("C05", "youtube", Q3)["gap"]), "USD", ["form_gross", "refund"], lang="en", platform="youtube")
+add("C01", Q3_LABEL, "threshold_platform_count",
+    "按 2026 年 7–9 月的速度推算全年（×4），月之灵有几个平台的收入会超过 1099-K 门槛（全年毛额超过 $20,000 且交易超过 200 笔）？",
+    sum(projected_over_1099k("C01", p) for p in k_platforms("C01")), "count", ["threshold", "form_gross"])
+add("C12", Q3_LABEL, "transaction_count",
+    "How many Fiverr payment transactions did Priya Nair have from July to September 2026? "
+    "(Each order, extra and tip counts as one; withdrawal fees don't count.)",
+    form_rows("C12", "fiverr", Q3)["txns"], "count", ["threshold"], lang="en", platform="fiverr")
+add("C12", Q3_LABEL, "form_view_gross_usd",
+    "What form-view gross (before Fiverr's fees and withdrawal fees) did Priya Nair's Fiverr income reach from "
+    "July to September 2026 (USD)?",
+    r2(fv_c12["gross"]), "USD", ["form_gross", "threshold"], lang="en", platform="fiverr")
+add("C01", Q3_LABEL, "duplicate_report_platform",
+    "月之灵哪个平台的收入可能被重复申报（平台开一次 1099-K，钱提现到的付款账户又开一次）？",
+    PLATFORM_LABEL[dup_c01[0]], "platform", ["duplicate_report"])
+add("C03", Q3_LABEL, "duplicate_report_platform",
+    "Which of Maya Chen's platforms could have the same income reported twice — once by the platform and once by "
+    "the payment app it pays out to?",
+    PLATFORM_LABEL[dup_c03[0]], "platform", ["duplicate_report"], lang="en")
 
 with open(DATA / "questions.jsonl", "w", encoding="utf-8") as f:
     for q in questions:

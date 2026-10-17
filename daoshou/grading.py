@@ -47,6 +47,6 @@ def grade(question: dict, submitted: dict | None) -> tuple[bool, str | None]:
     if value is None:
         return False, f"WrongAnswer: expected {expected} {question['unit']}, got non-number {got!r}"
     diff = round(value - expected, 2)
-    if abs(value - expected) <= question["tolerance"] + 1e-9:
+    if abs(value - expected) <= (question.get("tolerance") or 0) + 1e-9:
         return True, None
     return False, f"WrongAnswer: expected {expected} {question['unit']}, got {value} (diff {diff:+})"
