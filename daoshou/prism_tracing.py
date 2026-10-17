@@ -31,6 +31,10 @@ def nicrron_client() -> OpenAI:
     )
 
 
+def default_model() -> str:
+    return os.environ.get("NICRRON_MODEL", "anthropic/claude-fable-5-1")
+
+
 class ToolError(Exception):
     """Raised by a tool to mark its step as failed in PRISM."""
 

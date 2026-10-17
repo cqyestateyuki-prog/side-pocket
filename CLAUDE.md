@@ -5,9 +5,10 @@ Requirements doc (Claude Docs): https://claude.ai/code/artifact/7f3d6563-ec85-41
 ## Setup
 - Python venv: `.venv/` (Python 3.13). Run scripts with `.venv/bin/python`.
 - Secrets live in `.env` (git-ignored); key names in `.env.example`.
-- Model calls go through Nicrron (OpenAI-compatible, `NICRRON_BASE_URL`). Pin a model
-  (e.g. `anthropic/claude-sonnet-5`) and temperature 0 so v1/v2 runs are comparable;
-  `nicrron/auto` re-routes between calls.
+- Model calls go through Nicrron (OpenAI-compatible, `NICRRON_BASE_URL`). The model is
+  pinned in `.env` as `NICRRON_MODEL` (default `anthropic/claude-fable-5-1`), always at
+  temperature 0, so v1/v2 runs are comparable; `nicrron/auto` re-routes between calls.
+  `openai/gpt-6-astra` rejects tool calls on Nicrron.
 - PRISM API notes: `docs/prism_api.md`. Paid PRISM endpoints spend workspace credits —
   quote the cost and ask before calling them.
 - Use fictional data only.

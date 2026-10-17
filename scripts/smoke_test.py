@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 load_dotenv(ROOT / ".env")
 
-from daoshou.prism_tracing import TracedAgent  # noqa: E402
+from daoshou.prism_tracing import TracedAgent, default_model  # noqa: E402
 
 FX = {"USD": 1.0, "CNY": 0.1389}
 
@@ -38,7 +38,7 @@ TOOLS = [
 
 agent = TracedAgent(
     agent_id="daoshou-smoke", agent_name="daoshou-smoke", version="v0",
-    model="anthropic/claude-sonnet-5",
+    model=default_model(),
     system="You total a creator's income. Use the tools; never do currency math yourself.",
     tools=TOOLS, tool_impls={"get_payout": get_payout, "convert_to_usd": convert_to_usd},
 )
