@@ -25,8 +25,10 @@ function formsTable(F) {
       <td><span class="sa-badge sim" title="${esc(f.issuer)}">${esc(form)}</span></td>
       <td class="money">${f.form_view_gross_usd == null ? `<span class="meta">—</span>` : usd(f.form_view_gross_usd)}</td>
       <td class="money net">${usd(f.bank_view_landed_usd)}</td>
-      <td><div class="gapcell"><div class="sa-gap">${gap > 0 ? segs.map(([v, c]) => v > 0 ? `<span style="width:${Math.max(4, v / gap * 100)}%;background:${c}"></span>` : "").join("") : ""}</div>
-        <span class="num ${gap > 0 ? "" : "meta"}">${gap > 0 ? usd(-gap) : "no gap"}</span></div></td>
+      <td>${f.form_view_gross_usd == null
+        ? `<span class="meta">—</span>`  // no form to reconcile against, so there is no gap to show
+        : `<div class="gapcell"><div class="sa-gap">${gap > 0 ? segs.map(([v, c]) => v > 0 ? `<span style="width:${Math.max(4, v / gap * 100)}%;background:${c}"></span>` : "").join("") : ""}</div>
+        <span class="num ${gap > 0 ? "" : "meta"}">${gap > 0 ? usd(-gap) : "no gap"}</span></div>`}</td>
       <td class="money">${f.transactions}</td>
       <td><span class="sa-badge ${cls}" title="${esc(f.calendar_year.meaning ?? "")}">${cls === "warn" ? icon("duplicate", "sm") + " " : ""}${text}</span></td></tr>`;
   }).join("");
