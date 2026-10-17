@@ -10,11 +10,17 @@ callback rejects the answer. PRISM counts a trace as failed when its root span
 is in error or its metadata.status is "error" (verified against
 GET /api/traces?status=failed), and that is what the error_rate alert and the
 Root Cause clusters work from.
+
+With content_free=True nothing the user wrote or the tools returned leaves for PRISM: no
+question, no answer, no tool arguments or results, and errors only by their kind (for example
+"MissingFXRate"). PRISM still gets the run's shape: steps, tool names, timings, token counts and
+status, so Sessions, the error-rate alert and Root Cause keep working.
 """
 from __future__ import annotations
 
 import json
 import os
+import re
 import time
 import uuid
 from datetime import datetime, timezone
@@ -45,6 +51,16 @@ class ToolError(Exception):
     """Raised by a tool to mark its step as failed in PRISM."""
 
 
+def error_kind(error: str) -> str:
+    """'ToolError: MissingFXRate: no CNY/USD rate…' -> 'MissingFXRate'; otherwise the exception's class."""
+    head, _, rest = error.partition(": ")
+    inner = re.match(r"([A-Z]\w+):", rest)
+    return inner.group(1) if head == "ToolError" and inner else head
+
+
+ANSWERED = "[answered; content not recorded]"
+
+
 # grade(final_text, tool_errors) -> (ok, reason). Lets an eval harness fail a run
 # whose answer is wrong even though every step succeeded.
 Grader = Callable[[str, list[str]], tuple[bool, str | None]]
@@ -64,6 +80,7 @@ class TracedAgent:
         temperature: float = 0,
         client: OpenAI | None = None,
         trace: bool = True,
+        content_free: bool = False,
     ):
         self.agent_id = agent_id
         self.agent_name = agent_name
@@ -74,6 +91,7 @@ class TracedAgent:
         self.tool_impls = tool_impls or {}
         self.temperature = temperature
         self.trace = trace  # False = dry run: nothing is sent to PRISM
+        self.content_free = content_free  # True = PRISM gets the run's shape but no text (see module doc)
         self.client = client or nicrron_client()
         self.project_id = os.environ["PRISMTRACE_PROJECT_ID"]
         self._http = httpx.Client(
@@ -116,6 +134,13 @@ class TracedAgent:
         run_start, t_run = _now(), time.perf_counter()
         final_text = ""
         tokens_in = tokens_out = 0
+        cf = self.content_free
+
+        def text(value: str) -> str:
+            return "" if cf else value
+
+        def err(value: str | None) -> str | None:
+            return error_kind(value) if cf and value else value
 
         for iteration in range(1, max_iterations + 1):
             llm_start, t0 = _now(), time.perf_counter()
@@ -132,8 +157,9 @@ class TracedAgent:
             spans.append({
                 "span_id": str(uuid.uuid4()), "parent_span_id": root_id,
                 "name": f"llm:{self.model}", "span_type": "llm",
-                "input_text": json.dumps(messages[-3:], ensure_ascii=False, default=str)[:10000],
-                "output_text": msg.content or json.dumps([tc.function.name for tc in tool_calls]),
+                "input_text": text(json.dumps(messages[-3:], ensure_ascii=False, default=str)[:10000]),
+                "output_text": (json.dumps([tc.function.name for tc in tool_calls]) if cf
+                                else msg.content or json.dumps([tc.function.name for tc in tool_calls])),
                 "metadata": {"iteration": iteration, **meta},
                 "start_time": llm_start, "end_time": _now(), "duration_ms": dur, "status": "ok",
                 "token_count_input": ti, "token_count_output": to, "model": self.model,
@@ -141,7 +167,8 @@ class TracedAgent:
             steps.append({
                 "step_type": "reasoning" if tool_calls else "final_answer",
                 "label": f"LLM call (iteration {iteration})",
-                "output_summary": (msg.content or ", ".join(tc.function.name for tc in tool_calls))[:200],
+                "output_summary": (", ".join(tc.function.name for tc in tool_calls) if cf
+                                   else msg.content or ", ".join(tc.function.name for tc in tool_calls))[:200],
                 "duration_ms": int(dur), "token_count": ti + to, "status": "success",
             })
             emit({"type": "llm", "name": self.model, "status": "ok", "duration_ms": int(dur),
@@ -167,14 +194,15 @@ class TracedAgent:
                 spans.append({
                     "span_id": str(uuid.uuid4()), "parent_span_id": root_id,
                     "name": tc.function.name, "span_type": "tool",
-                    "input_text": tc.function.arguments, "output_text": result[:10000],
+                    "input_text": text(tc.function.arguments), "output_text": text(result[:10000]),
                     "metadata": {"tool_call_id": tc.id, **meta},
                     "start_time": tool_start, "end_time": _now(), "duration_ms": tdur,
-                    "status": "error" if error else "ok", "error_message": error,
+                    "status": "error" if error else "ok", "error_message": err(error),
                 })
                 steps.append({
                     "step_type": "tool_call", "label": tc.function.name, "tool_name": tc.function.name,
-                    "input_summary": (tc.function.arguments or "")[:200], "output_summary": result[:200],
+                    "input_summary": text((tc.function.arguments or "")[:200]),
+                    "output_summary": (err(error) or "") if cf else result[:200],
                     "duration_ms": int(tdur), "token_count": 0,
                     "status": "error" if error else "success",
                 })
@@ -185,39 +213,45 @@ class TracedAgent:
         graded_ok, grade_reason = grade(final_text, tool_errors) if grade else (True, None)
         if not graded_ok:
             steps[-1]["status"] = "error"
-            steps[-1]["output_summary"] = (grade_reason or "")[:200]
+            steps[-1]["output_summary"] = text((grade_reason or "")[:200])
         reasons = tool_errors + ([grade_reason] if not graded_ok and grade_reason else [])
         failed = bool(tool_errors) or not graded_ok
         error_message = "; ".join(reasons)[:2000] or None
+        traced_error = error_message
+        if cf:  # PRISM gets each failed tool and the kind of error only
+            kinds = [f"{tool}: {error_kind(e)}" for tool, e in (t.split(": ", 1) for t in tool_errors)]
+            traced_error = "; ".join(kinds + ([] if graded_ok else ["WrongAnswer"])) or None
         status = "error" if failed else "success"
         total_ms = (time.perf_counter() - t_run) * 1000
         spans.insert(0, {
             "span_id": root_id, "parent_span_id": None, "name": self.agent_name,
-            "span_type": "chain", "input_text": user_input[:10000], "output_text": final_text[:10000],
+            "span_type": "chain", "input_text": text(user_input[:10000]), "output_text": text(final_text[:10000]),
             "metadata": {"iterations": iteration, "model": self.model, **meta},
             "start_time": run_start, "end_time": _now(), "duration_ms": total_ms,
-            "status": "error" if failed else "ok", "error_message": error_message,
+            "status": "error" if failed else "ok", "error_message": traced_error,
         })
         # A tool failed and the run produced no answer (e.g. a refusal on missing data):
         # PRISM's error rate counts runs with no output, so the run-level trace carries an
         # empty output and the refusal text goes to metadata. Spans keep the full text.
         unanswered = bool(tool_errors) and no_answer is not None and no_answer()
-        trace_meta = {**meta, "status": status, "error_message": error_message}
-        if unanswered:
+        trace_meta = {**meta, "status": status, "error_message": traced_error}
+        if unanswered and not cf:
             trace_meta["agent_message"] = final_text[:10000]
+        output = "" if unanswered else (ANSWERED if cf and final_text else final_text)
         # The run-level trace goes first: it is what carries agent identity, and a
         # trace record created implicitly by the span batch would not have it.
         self._post("/api/traces", {
             "project_id": self.project_id, "trace_id": trace_id, "model": self.model,
-            "input_messages": [{"role": "user", "content": user_input}],
-            "output_message": "" if unanswered else final_text,
+            "input_messages": [{"role": "user", "content": text(user_input)}],
+            "output_message": output,
             "latency_ms": int(total_ms), "token_count_input": tokens_in, "token_count_output": tokens_out,
             "agent_id": self.agent_id, "agent_name": self.agent_name, "session_id": session,
-            "metadata": trace_meta,
+            "metadata": trace_meta, **({"content_free": True} if cf else {}),
         })
         self._post("/api/spans/ingest", {
             "trace_id": trace_id, "project_id": self.project_id, "session_id": session, "spans": spans,
             "metadata": {**meta, "agent_id": self.agent_id, "agent_name": self.agent_name},
+            **({"content_free": True} if cf else {}),
         })
         traj = self._post("/api/trajectories", {
             "project_id": self.project_id, "conversation_id": session, "request_id": trace_id,
@@ -237,7 +271,7 @@ class TracedAgent:
             r = self._http.post(path, json=payload)
             if r.status_code in (200, 201):
                 return r.json()
-            print(f"PRISM {path} -> {r.status_code}: {r.text[:300]}")
+            print(f"PRISM {path} -> {r.status_code}" + ("" if self.content_free else f": {r.text[:300]}"))
         except Exception as e:
             print(f"PRISM {path} failed: {e}")
         return None

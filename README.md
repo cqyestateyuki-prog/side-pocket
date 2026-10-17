@@ -100,6 +100,8 @@ A run is marked failed when a tool raises or when its answer does not match the 
 
 The web app (`web/`, plain HTML + ES modules, no build step) is served by FastAPI (`api/main.py`). Every money figure on screen comes from `daoshou/ledger.py` through the API. `POST /api/ask` streams the v2 agent's steps live as server-sent events.
 
+**Your own statements** (`api/personal.py`; the screens for it wait on the design kit). `POST /api/personal/{detect,overview,ledger,tax-items,forms,report,ask}` take the statement files in the request body and return the same pages as the demo. The browser keeps the files; the server parses them in memory and stores nothing (no database, no files written, `Cache-Control: no-store`, nothing from the body logged). Files are recognised by their columns (`daoshou/statements.py`). Rates come from the user's own rate file, or ECB reference rates (`daoshou/fx.py`, which sends only currency codes and dates). Amounts can be shown in USD or CNY. The tax home can be the US, China or both (`daoshou/tax_home.py`), and every rule is labelled real or simulated. Ask Atlas over uploads (`daoshou/agent_personal.py`) only gives the model totals, never records or account names, and traces to PRISM content-free. Details: [`docs/personal_api.md`](docs/personal_api.md).
+
 ## PRISM proofs (Money Operations track)
 
 | Requirement | What we show | Screenshot |
@@ -144,16 +146,27 @@ cp .env.example .env                    # add your PRISM and Nicrron keys
 
 PRISM analyses up to 200 runs a day per workspace, so use `--no-trace` while iterating.
 
+- **Tests** (no network, no keys):
+  ```bash
+  .venv/bin/pip install -r requirements-dev.txt && .venv/bin/python -m pytest -q
+  ```
+
 ## Repository layout
 
 ```
-api/main.py              FastAPI: ledger, tax items, forms, report, streamed Ask
+api/main.py              FastAPI: ledger, tax items, forms, report, streamed Ask (demo creators)
+api/personal.py          the same pages from uploaded statements, stateless
+api/views.py             response builders shared by both
 daoshou/                 agent code (internal codename)
-  prism_tracing.py       Nicrron tool-calling loop + PRISM tracing
+  prism_tracing.py       Nicrron tool-calling loop + PRISM tracing (optionally content-free)
   agent_v1.py            v1: raw exports, the model does the math
   agent_v2.py            v2: tools do the math, the model orchestrates
+  agent_personal.py      Ask Atlas over uploads: totals-only tools
   ledger.py              deterministic ledger: parsing, FX, fees, tax items, form check
+  statements.py, fx.py   reading uploads; exchange rates for them
+  tax_home.py            US / China deadlines and items, labelled real or simulated
   data.py, grading.py    test-data access, answer grading
+tests/                   pytest: uploads reproduce the demo numbers, privacy, tax homes
 web/                     the Side Atlas app (Overview, Ledger, Tax, Ask Atlas)
 scripts/                 run_batch.py, smoke_test.py, astra.py (copy), gen_image.py (mascot)
 daoshou_testdata/        fictional platform exports, FX rates, 89 questions + answers

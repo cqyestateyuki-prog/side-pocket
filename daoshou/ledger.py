@@ -15,6 +15,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from functools import lru_cache
 
 from . import data
+from .fx import Quote, Rates
 
 PLATFORMS = ["bilibili", "youtube", "twitch", "patreon", "upwork", "fiverr", "freelancer", "contra"]
 LABEL = {"bilibili": "B站", "youtube": "YouTube", "twitch": "Twitch", "patreon": "Patreon", "upwork": "Upwork",
@@ -70,6 +71,7 @@ class Record:
     ios: Decimal = Decimal(0)
     fee_in_usd: bool = False  # fee only known after conversion (non-USD Freelancer.com projects)
     txns: int = 1             # payment transactions this row stands for (Patreon: patrons; fees: 0)
+    rates: Rates | None = None  # uploaded statements: their own rates (None = the bundled demo tables)
 
     @property
     def month(self) -> str:
@@ -141,26 +143,40 @@ def freelancer_fee(amount_usd: Decimal) -> Decimal:
 
 
 def records(creator: dict, platform: str, month: str | None = None) -> list[Record]:
-    account = creator["accounts"].get(platform)
-    if account is None:
-        return []
-    _, rows = data.export_rows(platform)
-    col = data.EXPORTS[platform][1]
-    out = [_parse(platform, r) for r in rows if r[col] == account]
+    if "records" in creator:  # uploaded statements, parsed already (daoshou/statements.py)
+        out = creator["records"].get(platform, [])
+    else:
+        account = creator["accounts"].get(platform)
+        if account is None:
+            return []
+        _, rows = data.export_rows(platform)
+        col = data.EXPORTS[platform][1]
+        out = [_parse(platform, r) for r in rows if r[col] == account]
     return [r for r in out if month is None or r.month == month]
+
+
+def _demo_quote(currency: str, day: str) -> Quote | None:
+    if currency == "CNY":
+        rate = data.fx_rates().get(day)
+    else:
+        rate = data.fx_usd_per_unit().get(day, {}).get(currency)
+    return Quote(D(rate), day, "demo table") if rate is not None else None
+
+
+def quote(rec: Record, currency: str | None = None) -> Quote:
+    """The rate for `currency` (default: the record's own) on the record's date; raises MissingFXRate."""
+    currency = currency or rec.currency
+    q = rec.rates.get(currency, rec.date) if rec.rates is not None else _demo_quote(currency, rec.date)
+    if q is None:
+        raise MissingFXRate(currency, [rec.date])
+    return q
 
 
 def rate_for(rec: Record) -> Decimal | None:
     """The rate used to bring this record to USD (CNY per USD for CNY, USD per unit otherwise); None for USD."""
     if rec.currency == "USD":
         return None
-    if rec.currency == "CNY":
-        rate = data.fx_rates().get(rec.date)
-    else:
-        rate = data.fx_usd_per_unit().get(rec.date, {}).get(rec.currency)
-    if rate is None:
-        raise MissingFXRate(rec.currency, [rec.date])
-    return D(rate)
+    return quote(rec).rate
 
 
 def to_usd(rec: Record) -> dict[str, Decimal]:
@@ -175,6 +191,18 @@ def to_usd(rec: Record) -> dict[str, Decimal]:
     if rec.currency == "CNY":
         return {f: getattr(rec, f) / rate for f in FIELDS}
     return {f: getattr(rec, f) * rate for f in FIELDS}
+
+
+def to_cny(rec: Record) -> dict[str, Decimal]:
+    """CNY records as they are; anything else via USD at the CNY per USD rate on the record's date."""
+    if rec.currency == "CNY" and not rec.fee_in_usd:
+        return {f: getattr(rec, f) for f in FIELDS}
+    rate = quote(rec, "CNY").rate
+    return {f: v * rate for f, v in to_usd(rec).items()}
+
+
+def convert(rec: Record, currency: str = "USD") -> dict[str, Decimal]:
+    return to_cny(rec) if currency == "CNY" else to_usd(rec)
 
 
 def missing_rates(recs: list[Record]) -> dict[str, list[str]]:
@@ -250,6 +278,25 @@ def next_us_estimated_tax_due(after: str) -> str | None:
 
 # ---------------------------------------------------------------- tax forms vs what landed
 
+MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
+               "November", "December"]
+
+
+def coverage_months(creator: dict, months: list[str]) -> list[str]:
+    """The calendar-year months the data covers: the demo data has July–September 2026; uploaded
+    statements cover their first to last month in the year of the period asked about."""
+    if "records" not in creator:
+        return assumptions()["data_coverage_months"]
+    year = months[-1][:4]
+    seen = sorted({r.month for recs in creator["records"].values() for r in recs if r.month[:4] == year})
+    return months_in(f"{seen[0]}~{seen[-1]}") if seen else months
+
+
+def _span(months: list[str]) -> str:
+    first, last = (MONTH_NAMES[int(m[5:]) - 1] for m in (months[0], months[-1]))
+    return first if first == last else f"{first}–{last}"
+
+
 def payout_method(creator: dict, platform: str) -> str:
     return creator.get("payout_methods", {}).get(platform) or assumptions()["payout_method_default"]
 
@@ -280,8 +327,9 @@ def form_check(creator: dict, months: list[str], *, skip_missing: bool = False) 
     """
     a = assumptions()
     forms, k = a["tax_forms"], a["form_1099k_threshold"]
-    coverage = a["data_coverage_months"]
+    coverage = coverage_months(creator, months)
     pace = Decimal(12) / Decimal(len(coverage))
+    span = _span(coverage)
     apps = set(a["payout_apps_issuing_1099k"])
     issues: dict[tuple, dict] = {}
 
@@ -315,7 +363,7 @@ def form_check(creator: dict, months: list[str], *, skip_missing: bool = False) 
                 status, meaning = "over_so_far", (f"Already over the 1099-K threshold this year: expect a 1099-K "
                                                   f"from {profile['issuer']} showing the gross, before fees.")
             elif proj_gross > k["gross_usd"] and proj_txns > k["transactions"]:
-                status, meaning = "projected_over", ("At the July–September pace (a projection) this passes the "
+                status, meaning = "projected_over", (f"At the {span} pace (a projection) this passes the "
                                                      "1099-K threshold by year end; a 1099-K is likely.")
             else:
                 status, meaning = "below", ("Below the 1099-K threshold so far and at the current pace: you may "
@@ -350,7 +398,7 @@ def form_check(creator: dict, months: list[str], *, skip_missing: bool = False) 
                               "so_far_transactions": year["transactions"],
                               "projected_full_year_gross_usd": cents(proj_gross),
                               "projected_full_year_transactions": proj_txns,
-                              "projection": f"July–September × {pace} — a projection, not actual",
+                              "projection": f"{span} × {pace} — a projection, not actual",
                               "threshold": threshold, "status": status, "meaning": meaning},
             "possible_duplicate_report": duplicate,
             **({"duplicate_note": a["duplicate_report_note"]} if duplicate else {}),

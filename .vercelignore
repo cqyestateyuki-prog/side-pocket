@@ -11,3 +11,5 @@ docs
 web/_checks
 daoshou_testdata/tools
 scripts
+tests
+requirements-dev.txt

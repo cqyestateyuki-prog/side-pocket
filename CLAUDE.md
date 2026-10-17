@@ -18,7 +18,11 @@ Requirements doc (Claude Docs): https://claude.ai/code/artifact/7f3d6563-ec85-41
 This project sends traces to PRISM. Env vars: `PRISMTRACE_API_KEY`,
 `PRISMTRACE_PROJECT_ID`, `PRISMTRACE_HOST`.
 
-Tracing is currently wired at: `daoshou/prism_tracing.py` (`TracedAgent`, used by `scripts/smoke_test.py`)
+Tracing is currently wired at: `daoshou/prism_tracing.py` (`TracedAgent`, used by `scripts/smoke_test.py`),
+`api/main.py` (`POST /api/ask`, agent `daoshou-v2`) and `api/personal.py` (`POST /api/personal/ask`,
+agent `side-atlas-personal`, traced with `content_free=True`: run shape only, no user content).
+
+Tests: `.venv/bin/python -m pytest -q` (offline; ECB rates are stubbed).
 
 **Standing rule.** Whenever you add or change an agent, chain, graph, tool,
 retriever, or any entry point that calls a model, wire it to PRISM before you
