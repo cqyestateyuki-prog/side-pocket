@@ -1,0 +1,4 @@
+httpx==0.28.1
+openai==3.33.0
+prismtrace-sdk==0.5.3
+python-dotenv==1.2.4
