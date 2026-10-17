@@ -2,7 +2,30 @@
 
 The single place where visual rulings live. Changing a ruling means a new kit version, not an edit to one component.
 
-## v1.2 · 17 October 2026 — current standard
+## v1.3 · 17 October 2026 · current standard (drawn; waiting for sign-off before build)
+
+| # | Decision | Why |
+|---|---|---|
+| 30 | **Your data = upload statements only.** People bring their income as the CSV exports of the 8 platforms; no manual entry form. Screens 10 (empty) and 11 (after import). | User decision ("只做上传账单"). |
+| 31 | **Privacy model: browser storage, stateless server.** Statements, records and settings live in this browser; the server calculates on request and keeps no copy; no account. "Delete all my data" clears the browser (nothing to delete on the server); "Export backup" downloads one JSON file. | User decision ("浏览器存 + 服务器只算不存"). |
+| 32 | **What leaves the device.** Account IDs become `<Platform> · acct ••NN` in the browser (two digits of a salted hash) before any request. Ask Atlas gets monthly totals by platform with those labels, never names, account IDs, order numbers or files. PRISM traces in Your data mode are content-free (tool names, timings, pass or fail). Demo data keeps full traces for the PRISM story. | Privacy with the AI and tracing still useful. |
+| 33 | **Tax home US / China / Both; display currency USD / CNY.** CNY view: CNY records stay native, USD records × that day's CNY-per-USD rate, summed unrounded and rounded half-up once (platform rows can differ from a total by a cent). China tax home: Bilibili's withholding, countdown to the annual filing window (Mar 1 to Jun 30 of the next year), income from platforms outside China flagged for the accountant; no Chinese tax is calculated. A China-only tax home hides US estimated-tax dates and the forms check. | User decision ("美国 + 中国，美元/人民币可切"); not tax advice. |
+| 34 | **Nav stays at four.** A Your data / Demo data switch sits under the logo; My data and Settings & privacy are utility links in the sidebar foot, not nav items. In Your data mode the PRISM chip reads "Content-free PRISM traces"; the who-pill is "You", with a lock. | Coordinator directive; the mode must be visible on every screen. |
+| 35 | **Eleven components added** (spec §4): data switch, utility links, upload hero (dashed inner rule, still the one hero), privacy promise strip, where-to-download grid, upload list, settings sheet, currency switch, privacy center map, danger button (white, warn text, never filled), grouped table rows; plus Atlas's speech bubble for empty states. Icons 25 → 30: shield, lock, trash, server, monitor (Lucide, ISC). | Needed by screens 10 to 14. |
+| 36 | **Kit shell = product shell.** The prototype now uses the pigeon logo, the four-item nav and the mascot (copied to `02-logos/mascot/`); `05-css/side-atlas-ui-reference.css` is synced with the token-only product copy. PNGs 01–08 stay v1.1 captures; `bash 08-screens/capture.sh` re-draws them with the new shell, `capture.sh v13` exports only 10 to 14. The kit disclaimer now matches the product ("Estimate only. Not tax, legal, or financial advice."). | One shell to build from. |
+| 37 | **Copy** for the new screens is GPT-6 Astra's, in two passes (`07-mockups/copy-v13.js`), except one privacy line where the draft was clearer than Astra's fragments (noted in the file). Numbers come from `07-mockups/gen_data_v13.py` (read-only use of `daoshou/ledger.py`). | User rule: product copy by Astra; numbers by code. |
+
+### Open for sign-off (v1.3)
+
+- **Tax home "Both":** proposed one hero with two countdowns (US Jan 15, 2027 · China Mar 1, 2027) and both sections stacked. Not drawn.
+- **Pseudonym length:** `acct ••NN` (2 digits) can collide when someone has many accounts on one platform; 4 characters would avoid that.
+- **Empty states in Your data mode** before any import: proposed a small card on Overview, Ledger, Tax and Ask that links to My data. Not drawn.
+- **Ledger in CNY:** proposed a CNY column next to the original amount, with the rate and date under it, as for CNY → USD today. Not drawn.
+- **Delete confirmation:** proposed one dialog with "Export backup first" as the secondary action.
+- **Backend rounding:** the CNY view must round once at the total like the USD ledger (decision #33); the backend agent should match it.
+- **Rate source label:** the backend in progress can fill missing rates from ECB reference rates (`daoshou/fx.py`); the ledger then needs a small label saying where each rate came from (your file or the ECB reference). Not drawn.
+
+## v1.2 · 17 October 2026
 
 | # | Decision | Why |
 |---|---|---|

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Side Atlas Look and Feel · v1.2</title>
+<title>Side Atlas Look and Feel · v1.3</title>
 <link rel="stylesheet" href="../05-css/side-atlas-ui-reference.css">
 <script src="../03-icons/side-atlas-icons.js"></script>
 <style>
@@ -43,10 +43,18 @@
 </head>
 <body>
 <div class="doc">
-  <img src="../02-logos/side-atlas-lockup.svg" alt="Side Atlas" style="height:48px">
+  <div style="display:flex;align-items:center;gap:12px"><img src="../02-logos/icon-256.png" alt="" style="height:48px;border-radius:12px"><b style="font:800 24px/1 var(--sa-font);letter-spacing:-.02em">Side Atlas</b></div>
   <h1>Side Atlas Look and Feel</h1>
-  <p class="mid">Design spec · v1.2 · 17 October 2026 · desktop · MONEY TALKS 2 demo build</p>
+  <p class="mid">Design spec · v1.3 · 17 October 2026 · desktop · MONEY TALKS 2 demo build</p>
 
+  <h2>What's new in v1.3 · Your data, privacy, China tax home</h2>
+  <ul>
+    <li><b>Your data mode.</b> People bring their own income by uploading the CSV statements they download from each platform (upload only, no manual form). A <b>Your data / Demo data</b> switch sits under the logo; the nav stays at four screens. <b>My data</b> and <b>Settings &amp; privacy</b> are utility links in the sidebar foot.</li>
+    <li><b>Privacy model (drawn, to be built):</b> statements, records and settings are kept in this browser; the server calculates on request and keeps no copy; there is no account. Ask Atlas receives monthly totals by platform with pseudonymised labels (<code>Upwork · acct ••26</code>); PRISM traces in this mode are content-free (tool names, timings, pass or fail). <b>Delete all my data</b> clears the browser; <b>Export backup</b> downloads one JSON file.</li>
+    <li><b>Tax home US / China / Both and display currency USD / CNY.</b> The China tax home shows Bilibili's withholding, a countdown to the annual filing window (March 1 to June 30, 2027 for tax year 2026) and flags income from platforms outside China for the accountant. Side Atlas calculates no Chinese tax.</li>
+    <li><b>Five new screens</b> (10 to 14), all with real ledger numbers from <code>daoshou/ledger.py</code>; <b>eleven new components</b> (§4); <b>icons 25 → 30</b> (shield, lock, trash, server, monitor).</li>
+    <li>The prototype shell now matches the built product (pigeon logo, four-item nav). Screens 01–08 below are v1.1 captures; the product's own captures in <code>web/_checks/</code> are the reference for them.</li>
+  </ul>
   <h2>What's new in v1.2</h2><ul><li>Palette: soft violet #6B5BC2 + pink #FF7AB6 (replaces forest green), WCAG AA fixes for four pairs.</li><li>Mascot Atlas (pigeon, crescent ^ ^ eyes, flat sticker style) with size tokens; logo = the pigeon-head app icon; lockup text "Side Atlas" only.</li><li>Nav cut to four screens (Overview, Ledger, Tax, Ask Atlas). Sources → Import statements drawer on Ledger; set-aside settings → editable rate on the Tax hero; Report → Export button on Tax; other creators → creator picker with a warn dot.</li><li>Duplicates merged and clutter removed (see decisions #19–#28). Kit PNGs were not re-exported; the product captures in web/_checks/v12-*.png are the reference.</li></ul>
   <h2>What's new in v1.1</h2>
   <ul>
@@ -73,7 +81,7 @@
   <h2>1 · Logo and icons</h2>
   <div class="row"><img src="../02-logos/side-atlas-lockup.svg" style="height:56px"><span style="background:var(--sa-forest);border-radius:18px;padding:12px 18px"><img src="../02-logos/side-atlas-lockup-on-forest.svg" style="height:44px;display:block"></span><img src="../02-logos/side-atlas-mark.svg" style="height:40px"><img src="../02-logos/side-atlas-mark.svg" style="height:24px"></div>
   <p>The mark is a globe — one meridian, one parallel — in lime on a forest rounded square (radius 18/64). The lockup sets "Side Atlas" in Plus Jakarta Sans 800 (v1.2: no Chinese name; the mark is now the pigeon-head app icon, see the decision log). Don't recolour the mark, don't put the lockup on lime, don't use the wordmark without the mark under 120px wide.</p>
-  <h3>Icons · 25, adapted from Lucide (ISC), 24px grid, 2px stroke, currentColor, no emoji</h3>
+  <h3>Icons · 30, adapted from Lucide (ISC), 24px grid, 2px stroke, currentColor, no emoji (v1.3 added shield, lock, trash, server, monitor)</h3>
   <div class="icons" id="icons"></div>
 
   <h2>2 · Core tokens</h2>
@@ -129,6 +137,17 @@
     <tr><td><b>Upload zone</b> (v1.1)</td><td><code>.sa-drop</code>: sage fill, 2px dashed line-strong border, radius 24, white icon tile, h2, one sentence, primary "Choose CSV files".</td></tr>
     <tr><td><b>Rate control</b> (v1.1)</td><td>Number input (radius 14), preset segmented pills 15–35%, range slider (accent forest), sage note "you choose; Side Atlas doesn't suggest a rate". Preview updates the hero figure live. Platform include/exclude: <code>.sa-toggle</code> pill switch, forest when on.</td></tr>
     <tr><td><b>Agent step timeline</b></td><td>Numbered 32px nodes on a 2px rail; tool name mono 13.5/700 · args in meta; one-line result below; check icon at right. Final step filled forest. Answer figures carry step references (<code>.sa-ref</code>).</td></tr>
+    <tr><td><b>Data switch</b> (v1.3)</td><td><code>.sa-mode</code>: two-option pill switch under the logo, sage track, selected option white with forest text and a card shadow. "Your data" carries the lock icon. Switching changes every screen's data; the four nav items stay.</td></tr>
+    <tr><td><b>Utility links</b> (v1.3)</td><td><code>.sa-util</code> in the sidebar foot above the tagline: My data (with a file count once imported) and Settings &amp; privacy. 36px pills, 14/600, selected forest-100. They are not nav items.</td></tr>
+    <tr><td><b>Upload hero</b> (v1.3)</td><td><code>.sa-hero.drop</code>: the screen's one hero doubles as the drop zone, with a 2px dashed inner rule (on-forest ghost line) inset 12px. Title 34/800, one sentence, white "Choose CSV files" and an outline "Explore demo data", one hint line. Atlas waves bottom-right with one speech bubble (<code>.sa-speech</code>, empty states only).</td></tr>
+    <tr><td><b>Privacy promise strip</b> (v1.3)</td><td><code>.sa-promise</code>: one white card split in three (browser · server · AI), 40px forest-100 icon tile, a short sentence 14/700 and one meta line. Same words wherever it appears.</td></tr>
+    <tr><td><b>Where-to-download grid</b> (v1.3)</td><td><code>.sa-where</code>: 4 × 2 inner panels; platform dot + name 14/800, menu path 12.5 text-mid, file name in mono meta. "Paths may change" in the card head.</td></tr>
+    <tr><td><b>Upload list</b> (v1.3)</td><td><code>.sa-table.sa-files</code>: platform dot + name + pseudonymised account (<code>acct ••NN</code>, mono meta; the real ID is never shown) · file (mono) · rows · dates ("Jul 1 to Sep 30") · currency · issues (ok "None" / warn "N need a rate") · Remove (<code>.sa-linkbtn</code> with trash icon, warn tint on hover). A file that was not read is a warn-tint row with the reason.</td></tr>
+    <tr><td><b>Settings sheet</b> (v1.3)</td><td><code>.sa-settings</code>: rows of label (icon 16 + 16/800) and control on one line, help text 13 text-mid below, hairline between rows. Controls are segmented pills and the rate input.</td></tr>
+    <tr><td><b>Currency switch</b> (v1.3)</td><td><code>.sa-seg.cur</code>: segmented pill with a glyph per option ($ USD · ¥ CNY), sits left of the period switch on Overview. Changes display only; the ledger keeps each record in its own currency.</td></tr>
+    <tr><td><b>Privacy center map</b> (v1.3)</td><td><code>.sa-datamap</code> on the hero: one glass row per destination (This browser · Side Atlas server · Ask Atlas · PRISM traces), 36px icon tile, name 14/700, what it holds 13 on-forest-mid.</td></tr>
+    <tr><td><b>Danger button</b> (v1.3)</td><td><code>.sa-btn.danger</code>: white pill, warn text, warn line; hover warn tint. Delete actions only; never filled. Delete asks once, offers "Export backup" first, then clears this browser.</td></tr>
+    <tr><td><b>Grouped table rows</b> (v1.3)</td><td><code>tr.group</code>: page-colour band, uppercase label, one badge (tax "Withheld at withdrawal" / warn "No Chinese tax withheld"). Zero withholding shows ¥0.00 in line-strong.</td></tr>
     <tr><td><b>Sidebar / nav</b></td><td>248px white, hairline right. Lockup at top. Nav items 44px pills, icon 20 + 15/600; active forest fill white text; hover sage. Footer: tagline (forest 14/700), PRISM chip, disclaimer.</td></tr>
   </table>
 
@@ -141,7 +160,13 @@
   <img class="shot" src="../08-screens/desktop/06-missing.png"><p class="cap"><b>06 Missing data.</b> Lena Koch, August: the forest hero shows the partial net marked incomplete; a light warning card names the record (FL-49196, €491.33, no EUR rate for 2026-08-21) and asks for the rate. Nothing is estimated.</p>
   <img class="shot" src="../08-screens/desktop/07-sources.png"><p class="cap"><b>07 Sources.</b> Upload zone, import check per file (Bilibili: 42 CNY rates found), the 8 platforms as cards with file, detected format, records, date range and payout target; Freelancer.com not connected; Lena's file flagged for the missing EUR rate.</p>
   <img class="shot" src="../08-screens/desktop/08-settings.png"><p class="cap"><b>08 Set-aside.</b> She chooses the rate (presets, slider or number); the Q3 preview ($15,910.15 × 25% = $3,977.54) and next due date update live; platforms can be left out of the base.</p>
-  <p class="cap"><b>09 Ask in Chinese — deferred (v1.3).</b> The UI is single-language (English for the demo); a language switch is deferred, so the Chinese Ask screen is out of the prototype.</p>
+  <p class="cap"><b>v1.3 · Your data.</b> The person is "You": no name and no account. These screens reuse creator C01's exports as if uploaded, so every figure comes from <code>daoshou/ledger.py</code> (<code>07-mockups/gen_data_v13.py</code> → <code>data-v13.js</code>). The <code>statement.pdf</code> row on screen 11 is an illustrative state.</p>
+  <img class="shot" src="../08-screens/desktop/10-mydata-empty.png"><p class="cap"><b>10 My data, empty.</b> The hero is the drop zone: headline, one sentence, Choose CSV files or Explore demo data; Atlas waves with one line. Under it the privacy promise strip, then where each of the 8 platforms keeps its CSV export.</p>
+  <img class="shot" src="../08-screens/desktop/11-mydata.png"><p class="cap"><b>11 My data, after import.</b> 7 files, 102 records: the hero shows the Q3 ledger they built ($15,910.15 net from $22,330.44 gross, Jul 1 to Sep 30) with Open the ledger; the import check (7 of 8 platforms, 42 of 42 CNY records with a rate, account IDs replaced in the browser, one PDF not read); one row per statement with its pseudonymised account, rows, dates, currency, issues and Remove.</p>
+  <img class="shot" src="../08-screens/desktop/12-settings-privacy.png"><p class="cap"><b>12 Settings &amp; privacy.</b> Tax home (US / China / Both), display currency (USD / CNY), set-aside rate (the person's own). The privacy center hero says where each kind of data goes; Export backup and Delete all my data (danger button) sit below.</p>
+  <img class="shot" src="../08-screens/desktop/13b-tax-china-full.png"><p class="cap"><b>13 Tax, China tax home (full length).</b> In CNY: ¥28,510.42 to set aside (¥114,041.66 Q3 net × the 25% you chose), 135 days until the 2026 annual filing window opens (Mar 1 to Jun 30, 2027), ¥235.75 withheld by Bilibili ($32.83), income grouped inside / outside China with the flag for ¥102,915.40 gross that had no Chinese tax withheld, and the accountant checklist. US estimated-tax dates and the forms check are hidden for this tax home.</p>
+  <img class="shot" src="../08-screens/desktop/14-overview-cny.png"><p class="cap"><b>14 Overview in CNY.</b> The v1.2 Overview with the currency switch on CNY: ¥38,348.35 net from ¥53,630.56 gross, +¥3,628.52 (+10.5%) vs August, USD converted at each record's own date; by platform, where the gross went and the Patreon iOS card in CNY. Totals are summed unrounded and rounded once, so platform rows can differ from a total by a cent.</p>
+  <p class="cap"><b>09 Ask in Chinese, deferred.</b> The UI is single-language (English for the demo); a language switch is deferred, so the Chinese Ask screen is out of the prototype.</p>
 
   <h2>6 · Mobile</h2>
   <p>Out of scope for v1 (desktop demo). Layouts must not break below 1280px; a phone layout is a later version.</p>
@@ -163,6 +188,9 @@
     <tr><td>R3</td><td>No tax set aside, quarterly deadlines</td><td><span class="pill cov">Covered</span></td><td>—</td></tr>
     <tr><td>R4</td><td>Hidden withdrawal + FX cost</td><td><span class="pill par">Partial</span></td><td>Payout fees shown; FX spread vs mid-market needs source data.</td></tr>
     <tr><td>R5</td><td>Spreadsheets stitched by hand</td><td><span class="pill cov">Covered</span></td><td>—</td></tr>
+    <tr><td>F8</td><td>Your own data: upload statements only (v1.3)</td><td><span class="pill par">Designed</span></td><td>Screens 10 and 11; build browser parsing and storage.</td></tr>
+    <tr><td>F9</td><td>Privacy: browser storage, stateless server, aggregates to the AI, content-free traces (v1.3)</td><td><span class="pill par">Designed</span></td><td>Screen 12; build delete, export backup, pseudonymised labels, PRISM content-free mode.</td></tr>
+    <tr><td>F10</td><td>China tax home and CNY display (v1.3)</td><td><span class="pill par">Designed</span></td><td>Screens 13 and 14; no Chinese tax is calculated.</td></tr>
     <tr><td>R6</td><td>Cross-border reporting (DAC7, 1042-S, which FX rate)</td><td><span class="pill nee">Needs source</span></td><td>Only CN withholding and per-date rates shown.</td></tr>
   </table>
 
@@ -181,6 +209,9 @@
     <li>Set-aside copy says the rate was chosen by the person; the disclaimer is visible on every screen.</li>
     <li>All ten 08-screens match the built pages side by side (ui-diff compare) with no clipped column at 1440×900.</li>
     <li>Only Plus Jakarta Sans (local woff2) and the CJK system font load; no CDN fonts.</li>
+    <li>v1.3 · In Your data mode, no request to the server, Ask Atlas or PRISM carries a name, an account ID, an order number or a file (check the network log); accounts appear only as <code>acct ••NN</code>.</li>
+    <li>v1.3 · Delete all my data leaves this site's localStorage and IndexedDB empty and returns to screen 10.</li>
+    <li>v1.3 · The currency switch changes display only; switching back to USD shows the same figures as before.</li>
     <li>Icons render from the sprite with currentColor; no emoji in the UI.</li>
   </ul>
 </div>

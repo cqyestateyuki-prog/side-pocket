@@ -3,11 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=1440">
-<title>Side Atlas · prototype v1.1</title>
+<title>Side Atlas · prototype v1.3</title>
 <link rel="icon" href="../02-logos/app-icons-and-favicons/favicon.svg">
 <link rel="stylesheet" href="../05-css/side-atlas-ui-reference.css">
 <script src="../03-icons/side-atlas-icons.js"></script>
 <script src="data.js"></script>
+<script src="data-v13.js"></script>
+<script src="copy-v13.js"></script>
 <script>
 /* UI is single-language (English). Source data keeps "B站", Chinese record types and names; map them for display. */
 (() => {
@@ -28,13 +30,15 @@
 <div class="sa-app">
   <aside class="sa-side">
     <div class="sa-logo">
-      <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="18" style="fill:var(--sa-forest)"/><circle cx="32" cy="32" r="17" fill="none" style="stroke:var(--sa-lime)" stroke-width="5"/><path d="M32 15c-7 5-7 29 0 34" fill="none" style="stroke:var(--sa-lime)" stroke-width="5" stroke-linecap="round"/><path d="M15.5 27.5h33" fill="none" style="stroke:var(--sa-lime)" stroke-width="5" stroke-linecap="round"/></svg>
+      <img class="mark" src="../02-logos/icon-256.png" alt="">
       <div><b>Side Atlas</b></div>
     </div>
+    <div class="sa-mode" id="mode" aria-label="Data"></div>
     <nav class="sa-nav" id="nav"></nav>
     <div class="foot">
+      <nav class="sa-util" id="util"></nav>
       <div class="tag" id="tagline"></div>
-      <span class="sa-prism"><i></i>Every run traced in PRISM</span>
+      <span class="sa-prism" id="prism"><i></i>Every run traced in PRISM</span>
       <div class="meta" id="disclaimer"></div>
     </div>
   </aside>
@@ -52,11 +56,13 @@ const icon = (n, cls = "") => `<svg class="sa-icon ${cls}"><use href="#sa-i-${n}
 const monthName = m => new Date(m + "-01T12:00:00").toLocaleString("en-US", { month: "long" });
 const dateLong = d => new Date(d + "T12:00:00").toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
-const SCREENS = [
-  ["overview", "Overview", "overview"], ["ledger", "Ledger", "ledger"], ["tax", "Tax items", "tax"],
-  ["ask", "Ask", "ask"], ["report", "Report", "report"], ["sources", "Sources", "upload"],
-  ["settings", "Set-aside", "sliders"], ["missing", "Lena · Aug", "alert"],
-];
+/* v1.3 nav: exactly four screens (decision #23). My data and Settings & privacy are utility links in the
+   sidebar foot; every other screen is a route reached from inside the four. */
+const NAV = [["overview", "Overview", "overview"], ["ledger", "Ledger", "ledger"], ["tax", "Tax", "tax"], ["ask", "Ask Atlas", "ask"]];
+const UTIL = [["mydata", "My data", "upload"], ["privacy", "Settings & privacy", "shield"]];
+const V = window.SA_V13, X = window.SA_COPY_V13;
+const yen = v => (v < 0 ? "−" : "") + "¥" + Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const dateShort = d => new Date(d + "T12:00:00").toLocaleString("en-US", { month: "short", day: "numeric" });
 
 function who(name, cjk, meta) {
   return `<div class="sa-who"><div class="av">${cjk ? `<span class="cjk">${cjk}</span>` : name[0]}</div><div><b>${name}</b><span>${meta}</span></div></div>`;
@@ -405,15 +411,255 @@ function bindSettings() {
   document.querySelectorAll(".sa-toggle").forEach(t => t.addEventListener("click", () => { t.classList.toggle("on"); t.closest("li").classList.toggle("off"); update(input.value); }));
 }
 
-const RENDER = { overview, ledger, tax, ask, report, sources, settings, missing };
-const NAV_OF = {};
+
+/* ================= v1.3 · Your data ================= */
+// "Your data" screens re-use creator C01's exports as if the person uploaded them (data-v13.js, real ledger
+// numbers). The person is "You": no name, no account; account IDs appear only as pseudonymised labels.
+const you = () => `<div class="sa-who"><div class="av">${icon("lock", "sm")}</div><div><b>You</b><span>Your data · kept in this browser</span></div></div>`;
+const curSeg = on => `<div class="sa-seg cur" aria-label="Display currency">${[["USD", "$"], ["CNY", "¥"]].map(([c, g]) => `<button class="${c === on ? "on" : ""}"><span>${g}</span>${c}</button>`).join("")}</div>`;
+// Where each export lives (same list as the product's import drawer; paths may change).
+const WHERE = [
+  ["upwork", "Upwork", "upwork_transactions.csv", "Reports → Transaction history → Download CSV"],
+  ["fiverr", "Fiverr", "fiverr_earnings.csv", "Earnings → Download CSV"],
+  ["freelancer", "Freelancer.com", "freelancer_transactions.csv", "Payments → Transaction History → Export"],
+  ["contra", "Contra", "contra_payments.csv", "Payments → Export"],
+  ["youtube", "YouTube", "youtube_revenue.csv", "Studio → Analytics → Revenue → Export"],
+  ["twitch", "Twitch", "twitch_payouts.csv", "Creator Dashboard → Insights → Revenue → Export"],
+  ["patreon", "Patreon", "patreon_earnings.csv", "Creator Settings → Earnings → Export"],
+  ["bilibili", "Bilibili", "bilibili_income.csv", "Creator Center → Earnings → Export"],
+];
+const promise = () => [["monitor", X.PROMISE_BROWSER, X.PROMISE_BROWSER_SMALL], ["server", X.PROMISE_SERVER, X.PROMISE_SERVER_SMALL], ["ask", X.PROMISE_AI, X.PROMISE_AI_SMALL]]
+  .map(([ic, t, sm]) => `<li><span class="ic">${icon(ic)}</span><span>${t}<small>${sm}</small></span></li>`).join("");
+
+/* ---------------- 10 · My data, empty ---------------- */
+function mydataEmpty() {
+  return `
+  <div class="sa-top"><div><h1>My data</h1><p>Nothing imported yet</p></div><div class="right">${you()}</div></div>
+  <div class="sa-grid">
+    <section class="sa-hero drop c12">
+      <div class="orb"></div>
+      <img class="sa-mascot hero-mascot" src="../02-logos/mascot/wave.png" alt="">
+      <div class="sa-speech" style="right:150px;bottom:138px">${X.EMPTY_MASCOT}</div>
+      <div class="lead" style="display:flex;gap:8px;align-items:center">${icon("upload", "sm")} Upload statements</div>
+      <div class="title">${X.MYDATA_HEADLINE}</div>
+      <div class="sub" style="max-width:560px">${X.MYDATA_SUB}</div>
+      <div class="actions"><a class="sa-btn on-dark">${icon("upload", "sm")} Choose CSV files</a><a class="sa-btn ghost-dark" href="#overview">Explore demo data</a></div>
+      <div class="hint">${X.DROP_HINT}</div>
+    </section>
+    <ul class="sa-promise c12">${promise()}</ul>
+    <section class="sa-card c12">
+      <div class="head"><h2>Where to download each statement</h2><span class="meta">Paths may change</span></div>
+      <div class="sa-where">${WHERE.map(([k, l, f, w]) => `<div><b><i class="sa-pdot" style="background:${PCOL(k).fill}"></i>${l}</b><div class="path">${w}</div><span class="mono">${f}</span></div>`).join("")}</div>
+    </section>
+  </div>`;
+}
+
+/* ---------------- 11 · My data, after import ---------------- */
+function mydata() {
+  const F = V.files, R = D.report_c01_q3.totals;
+  const cnyRecs = F.filter(f => f.currencies.includes("CNY")).reduce((n, f) => n + f.records, 0);
+  const from = F.map(f => f.from).sort()[0], to = F.map(f => f.to).sort().pop();
+  const remove = `<a class="sa-linkbtn">${icon("trash", "sm")} Remove</a>`;
+  return `
+  <div class="sa-top"><div><h1>My data</h1><p>${X.IMPORTED_SUB.replace("{files}", F.length).replace("{records}", V.records_total)}</p></div>
+    <div class="right"><a class="sa-btn primary sm">${icon("upload", "sm")} Add statements</a>${you()}</div></div>
+  <div class="sa-grid">
+    <section class="sa-hero c7" style="min-height:0">
+      <div class="orb"></div>
+      <img class="sa-mascot hero-mascot" src="../02-logos/mascot/celebrate.png" alt="">
+      <div class="lead">${X.LEDGER_HERO}</div>
+      <div class="sa-fig num">${usd(R.net)}</div>
+      <div class="sub">net from <b class="num">${usd(R.gross)}</b> gross · ${V.records_total} records · ${dateShort(from)} to ${dateShort(to)}</div>
+      <div class="actions"><a class="sa-btn on-dark sm" href="#ledger">${icon("ledger", "sm")} Open the ledger</a><span class="glass">${icon("lock", "sm")} Kept in this browser</span></div>
+    </section>
+    <section class="sa-card c5">
+      <div class="head"><h2>Import check</h2><span class="sa-badge ok">${icon("check", "sm")} ${F.length} files read</span></div>
+      <ul class="sa-checklist">
+        <li>${icon("check", "sm ok")}<span>${X.CHECK_PLATFORMS}</span><span class="r num">${F.length} of 8</span></li>
+        <li>${icon("check", "sm ok")}<span>${X.CHECK_RATES}</span><span class="r num">${cnyRecs} of ${cnyRecs}</span></li>
+        <li>${icon("check", "sm ok")}<span>${X.CHECK_LABELS}</span><span class="r">in this browser</span></li>
+        <li>${icon("alert", "sm bad")}<span>statement.pdf was not read</span><span class="r">1 file</span></li>
+      </ul>
+      <div class="sa-note info" style="margin-top:10px;padding:10px 12px">${icon("info", "sm")}<span>${X.CHECK_MISSING_PLATFORM}</span></div>
+    </section>
+    <section class="sa-card c12">
+      <div class="head"><h2>Imported statements</h2><span class="meta">${X.FILES_NOTE}</span></div>
+      <div class="sa-tablewrap"><table class="sa-table sa-files">
+        <thead><tr><th>Platform</th><th>File</th><th class="money">Rows</th><th>Dates</th><th>Currency</th><th>Issues</th><th></th></tr></thead>
+        <tbody>${F.map(f => `<tr>
+          <td><i class="sa-pdot" style="background:${PCOL(f.platform).fill}"></i><b>${f.label}</b><span class="acct">${f.account}</span></td>
+          <td><span class="file">${f.file}</span></td><td class="money">${f.rows}</td>
+          <td class="num">${dateShort(f.from)} to ${dateShort(f.to)}</td><td>${f.currencies.join(", ")}</td>
+          <td>${f.issues ? `<span class="sa-badge warn">${f.issues} need a rate</span>` : `<span class="sa-badge ok">None</span>`}</td>
+          <td style="text-align:right">${remove}</td></tr>`).join("")}
+          <tr class="bad"><td><i class="sa-pdot" style="background:var(--sa-line-strong)"></i><b>Not read</b></td><td><span class="file">statement.pdf</span></td>
+            <td class="money">0</td><td colspan="2">${X.BAD_FILE}</td><td><span class="sa-badge warn">Not a CSV</span></td><td style="text-align:right">${remove}</td></tr>
+        </tbody></table></div>
+    </section>
+  </div>`;
+}
+
+/* ---------------- 12 · Settings & privacy ---------------- */
+function privacy() {
+  const label = V.files.find(f => f.platform === "upwork").account;
+  return `
+  <div class="sa-top"><div><h1>Settings &amp; privacy</h1><p>${X.SETTINGS_SUB}</p></div><div class="right">${you()}</div></div>
+  <div class="sa-grid">
+    <section class="sa-card sa-settings c6">
+      <div class="head" style="margin:10px 0 2px"><h2>Settings</h2></div>
+      <div class="row"><h3>${icon("globe", "sm")} Tax home</h3>
+        <div class="ctl"><div class="sa-seg">${["United States", "China", "Both"].map(x => `<button class="${x === "China" ? "on" : ""}">${x}</button>`).join("")}</div></div>
+        <p>${X.TAXHOME_HELP_CN}</p></div>
+      <div class="row"><h3>${icon("fx", "sm")} Display currency</h3><div class="ctl">${curSeg("CNY")}</div>
+        <p>${X.CNY_NOTE} ${X.CURRENCY_HELP}</p></div>
+      <div class="row"><h3>${icon("sliders", "sm")} Set-aside rate</h3>
+        <div class="ctl"><div class="sa-seg">${[20, 25, 30].map(r => `<button class="${r === 25 ? "on" : ""}">${r}%</button>`).join("")}</div><label class="sa-rateinput"><input value="25" aria-label="Set-aside rate">%</label></div>
+        <p>${C.SETTINGS_PROMISE}</p></div>
+    </section>
+    <section class="sa-hero c6" style="min-height:0">
+      <div class="lead" style="display:flex;gap:8px;align-items:center">${icon("shield", "sm")} Privacy center</div>
+      <div class="sub" style="margin-top:10px;font-size:15px;line-height:1.5;max-width:520px;color:var(--sa-on-forest)">${X.PRIVACY_INTRO}</div>
+      <ul class="sa-datamap">
+        <li><span class="ic">${icon("monitor", "sm")}</span><div><b>This browser</b><span>${X.MAP_BROWSER}</span></div></li>
+        <li><span class="ic">${icon("server", "sm")}</span><div><b>Side Atlas server</b><span>${X.MAP_SERVER}</span></div></li>
+        <li><span class="ic">${icon("ask", "sm")}</span><div><b>Ask Atlas</b><span>${X.MAP_AI.replace("{label}", "Upwork · " + label)}</span></div></li>
+        <li><span class="ic">${icon("steps", "sm")}</span><div><b>PRISM traces</b><span>${X.MAP_PRISM}</span></div></li>
+      </ul>
+    </section>
+    <section class="sa-card c12" style="padding:20px 0">
+      <div class="sa-dataact">
+        <div><h3>Export backup</h3><p>${X.EXPORT_HELP}</p><a class="sa-btn secondary">${icon("download", "sm")} Export backup</a></div>
+        <div><h3>Delete all my data</h3><p>${X.DELETE_HELP}</p><a class="sa-btn danger">${icon("trash", "sm")} Delete all my data</a></div>
+      </div>
+    </section>
+  </div>`;
+}
+
+/* ---------------- 13 · Tax, China tax home (CNY) ---------------- */
+function taxCn() {
+  const Q = V.cny_q3, P = Q.platforms, W = V.cn_window;
+  const usdW = D.tax_c01_q3.tax_withheld_by_platform[0];
+  const outside = Object.entries(P).filter(([k]) => k !== "bilibili").sort((a, b) => b[1].net - a[1].net);
+  const records = Object.values(P).reduce((n, p) => n + p.records, 0);
+  const row = (k, p) => `<tr><td><i class="sa-pdot" style="background:${PCOL(k).fill}"></i><b>${p.label}</b></td><td class="money">${p.records}</td>
+    <td class="money">${yen(p.gross)}</td><td class="money net">${yen(p.net)}</td><td class="money ${p.withheld ? "tax" : "zero"}">${yen(p.withheld)}</td></tr>`;
+  return `
+  <div class="sa-top"><div><h1>Tax</h1><p>Q3 2026 · July to September · China tax home · shown in CNY</p></div><div class="right">${periodSeg("Q3 2026")}${you()}</div></div>
+  <div class="sa-grid">
+    <section class="sa-hero c8" style="display:grid;grid-template-columns:1fr 230px;gap:24px;min-height:220px">
+      <div>
+        <div class="lead" style="font:800 30px/1.15 var(--sa-font);color:var(--sa-on-forest);letter-spacing:-.02em">${X.CN_TAX_HERO}</div>
+        <div style="margin-top:22px;position:relative">
+          <div class="sa-fig num" style="margin:0 0 6px;font-size:48px">${yen(Q.set_aside_25)}</div>
+          <div class="sub">to set aside: ${yen(Q.totals.net)} Q3 net × the 25% you chose</div>
+        </div>
+      </div>
+      <div class="sa-count" style="align-self:end">
+        <div class="days num">${W.days_to_open}</div>
+        <div class="of">days until the 2026<br>annual filing window opens</div>
+        <div class="glass" style="margin-top:12px">${icon("calendar", "sm")} Mar 1 to Jun 30, 2027</div>
+      </div>
+    </section>
+    <section class="sa-card c4">
+      <div class="head"><h2>Tax already withheld</h2></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div><span class="sa-badge tax">${icon("globe", "sm")} China · Bilibili</span>
+          <div class="meta" style="margin-top:8px">Individual income tax, withheld by the platform</div></div>
+        <div style="text-align:right"><div class="sa-fig num" style="font:800 28px/1 var(--sa-font);color:var(--sa-tax-text)">${yen(Q.bilibili.withheld)}</div><div class="meta num">${usd(usdW.withheld_usd)}</div></div>
+      </div>
+      <div class="sa-note info" style="margin-top:16px">${icon("info", "sm")}<span>${X.CN_WITHHELD_NOTE}</span></div>
+    </section>
+    <section class="sa-card c12">
+      <div class="head"><h2>Income by where it was paid</h2><span class="meta">${X.CN_WINDOW_LABEL}</span></div>
+      <div class="sa-note warn" style="margin-bottom:14px">${icon("globe", "sm")}<span>${X.CN_FOREIGN_FLAG}</span></div>
+      <div class="sa-tablewrap"><table class="sa-table">
+        <thead><tr><th>Platform</th><th class="money">Records</th><th class="money">Gross</th><th class="money">Net</th><th class="money">Chinese tax withheld</th></tr></thead>
+        <tbody>
+          <tr class="group"><td colspan="5">Inside China <span class="sa-badge tax">Withheld at withdrawal</span></td></tr>
+          ${row("bilibili", P.bilibili)}
+          <tr class="group"><td colspan="5">Outside China · ${outside.length} platforms <span class="sa-badge warn">No Chinese tax withheld</span></td></tr>
+          ${outside.map(([k, p]) => row(k, p)).join("")}
+          <tr class="total"><td>Q3 total</td><td class="money">${records}</td><td class="money">${yen(Q.totals.gross)}</td><td class="money">${yen(Q.totals.net)}</td><td class="money">${yen(Q.totals.withheld)}</td></tr>
+        </tbody></table></div>
+    </section>
+    <section class="sa-card c12" style="display:grid;grid-template-columns:1fr auto;gap:24px;align-items:start">
+      <div><div class="head"><h2>For your accountant</h2></div>
+        <ul class="sa-check">
+          <li><span class="box"></span><span>${X.ACC_WITHHELD.replace("{amount}", `<b class="num">${yen(Q.bilibili.withheld)}</b>`)}</span></li>
+          <li><span class="box"></span><span>${X.ACC_OUTSIDE.replace("{n}", Q.outside.platforms).replace("{gross}", `<b class="num">${yen(Q.outside.gross)}</b>`).replace("{net}", `<b class="num">${yen(Q.outside.net)}</b>`)}</span></li>
+          <li><span class="box"></span><span>${X.ACC_WINDOW}</span></li>
+          <li><span class="box"></span><span>${X.ACC_FX.replace("{n}", V.fx_used_q3)}</span></li>
+        </ul>
+        <div class="meta" style="margin-top:10px;display:flex;gap:6px;align-items:center">${icon("info", "sm")} ${X.US_HIDDEN}</div>
+      </div>
+      <a class="sa-btn primary">${icon("download", "sm")} Export for my accountant</a>
+    </section>
+  </div>`;
+}
+
+/* ---------------- 14 · Overview in CNY ---------------- */
+function overviewCny() {
+  const S = V.cny_sep, t = S.totals, P = S.platforms, mom = V.cny_mom, ios = V.patreon_ios_sep;
+  const plats = Object.entries(P).map(([k, p]) => ({ k, ...p })).sort((a, b) => b.net - a.net);
+  const best = plats.reduce((a, b) => (b.kept > a.kept ? b : a));
+  const wf = [["Platform fees", t.platform_fee, "var(--sa-fee)"], ["Payout & payment fees", t.payment_fee, "var(--sa-payout)"], ["Tax withheld by platforms", t.withheld, "var(--sa-tax)"]];
+  const bar = [["Net", t.net, "var(--sa-net)"], ...wf];
+  return `
+  <div class="sa-top"><div><h1>Overview</h1><p>September 2026 · ${plats.length} platforms · shown in CNY</p></div><div class="right">${curSeg("CNY")}${periodSeg("Sep")}${you()}</div></div>
+  <div class="sa-grid">
+    <section class="sa-hero c7">
+      <div class="orb"></div>
+      <img class="sa-mascot hero-mascot" src="../02-logos/mascot/wave.png" alt="">
+      <div class="lead">${C.OVERVIEW_HERO.replace("{month}", "September")}</div>
+      <div class="sa-fig num">${yen(t.net)}</div>
+      <div class="sub">from <b class="num">${yen(t.gross)}</b> gross across ${plats.length} platforms</div>
+      <div class="chips">
+        <span class="glass">${icon("up", "sm")} ${yen(mom.change)} vs August (+${pct(mom.pct)})</span>
+        <span class="glass">${icon("fx", "sm")} USD converted at each record’s own date</span>
+      </div>
+    </section>
+    <section class="sa-card c5">
+      <div class="head"><h2>By platform</h2><span class="meta">net · kept of gross</span></div>
+      <div class="sa-bar">${plats.map(p => `<span title="${p.label}" style="width:${(p.share * 100).toFixed(2)}%;background:${PCOL(p.k).fill}"></span>`).join("")}</div>
+      <ul class="sa-legend">${plats.map(p => `<li class="${p === best ? "best" : ""}"><span class="dot round" style="background:${PCOL(p.k).fill}"></span><span>${p.label}${p === best ? `<span class="sa-badge sim">keeps the most</span>` : ""}</span><span class="amt">${yen(p.net)}</span><span class="pct">${pct(p.kept)}</span></li>`).join("")}</ul>
+    </section>
+    <section class="sa-card c7">
+      <div class="head"><h2>Where the gross went</h2></div>
+      <div class="sa-bar">${bar.map(([l, v, c]) => v > 0 ? `<span title="${l}" style="width:${(v / t.gross * 100).toFixed(2)}%;background:${c}"></span>` : "").join("")}</div>
+      <ul class="sa-legend">
+        <li><span class="dot" style="background:var(--sa-line-strong)"></span><span>Gross income</span><span class="amt">${yen(t.gross)}</span><span class="pct">100%</span></li>
+        ${wf.map(([l, v, c]) => `<li><span class="dot" style="background:${c}"></span><span>${l}</span><span class="amt">${yen(-v)}</span><span class="pct">${pct(v / t.gross)}</span></li>`).join("")}
+        <li class="total"><span class="dot" style="background:var(--sa-net)"></span><span>Net (what landed)</span><span class="amt">${yen(t.net)}</span><span class="pct">${pct(t.net / t.gross)}</span></li>
+      </ul>
+    </section>
+    <div class="c5 stack">
+      <section class="sa-card sa-kpi">
+        <div class="label">${icon("info", "sm")} Patreon iOS · simulated</div>
+        <div class="kpi-row"><div class="sa-fig num">${yen(-ios.cut_cny)}</div><span class="sa-badge sim">30% in-app cut</span></div>
+        <div class="note">${yen(ios.pledges_cny)} of ${yen(P.patreon.gross)} in Patreon pledges came through iOS. Moving those patrons to web pledges keeps this.</div>
+      </section>
+      <a class="sa-card tax-link" href="#tax-cn">${icon("tax", "sm")}<span>Tax withheld in China and the annual filing window</span><b>Tax ${icon("chevron", "sm rot")}</b></a>
+    </div>
+  </div>`;
+}
+
+const RENDER = { overview, ledger, tax, ask, report, sources, settings, missing,
+  "mydata-empty": mydataEmpty, mydata, privacy, "tax-cn": taxCn, "overview-cny": overviewCny };
+const NAV_OF = { sources: "ledger", settings: "tax", report: "tax", missing: "overview", "mydata-empty": "mydata", "tax-cn": "tax", "overview-cny": "overview" };
+const YOURS = new Set(["mydata-empty", "mydata", "privacy", "tax-cn", "overview-cny"]);
+const YOURS_HREF = { overview: "overview-cny", tax: "tax-cn" }; // in Your data mode the nav opens the v1.3 drawings
 function go() {
   const q = new URLSearchParams(location.search).get("screen");
   const s = (q || location.hash.slice(1) || "overview");
   const key = RENDER[s] ? s : "overview";
   const navKey = NAV_OF[key] || key;
-  document.getElementById("nav").innerHTML = SCREENS.map(([k, label, ic], idx) =>
-    `${k === "missing" ? `<div class="label" style="padding:18px 16px 6px">Other creators</div>` : ""}<a href="#${k}" class="${k === navKey ? "on" : ""}">${icon(ic)}${label}${k === "missing" ? `<span class="count">1</span>` : ""}</a>`).join("");
+  const yours = YOURS.has(key);
+  document.getElementById("mode").innerHTML = `<a href="#mydata" class="${yours ? "on" : ""}">${icon("lock", "sm")}Your data</a><a href="#overview" class="${yours ? "" : "on"}">Demo data</a>`;
+  document.getElementById("nav").innerHTML = NAV.map(([k, label, ic]) =>
+    `<a href="#${(yours && YOURS_HREF[k]) || k}" class="${k === navKey ? "on" : ""}">${icon(ic)}${label}</a>`).join("");
+  document.getElementById("util").innerHTML = UTIL.map(([k, label, ic]) =>
+    `<a href="#${k}" class="${k === navKey ? "on" : ""}">${icon(ic)}${label}${k === "mydata" && yours && key !== "mydata-empty" ? `<span class="r">${V.files.length} files</span>` : ""}</a>`).join("");
+  document.getElementById("prism").innerHTML = `<i></i>${yours ? "Content-free PRISM traces" : "Every run traced in PRISM"}`;
   document.getElementById("main").innerHTML = RENDER[key]();
   document.getElementById("main").scrollTop = 0;
   if (key === "settings") bindSettings();

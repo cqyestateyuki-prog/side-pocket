@@ -1,4 +1,4 @@
-/* Side Atlas · UI reference styles · v1 · 2026-10-17
+/* Side Atlas · UI reference styles · v1.3 · 2026-10-17 (colours only through --sa-* tokens; the product's web/styles/ui-reference.css is the same file)
    The component styles the prototype (07-mockups/app.html) uses. Copy these when building components.
    Rules that keep big colour + money from looking like a toy:
    1. One bold colour field per screen (.sa-hero). Lime and the semantic colours never fill a whole card.
@@ -62,10 +62,9 @@ body { background: var(--sa-page); color: var(--sa-ink); font: var(--sa-body); -
 .sa-hero .sub { color: var(--sa-on-forest-mid); font: 500 14px/1.4 var(--sa-font); position: relative; }
 .sa-hero .orb { position: absolute; right: -150px; bottom: -190px; width: 340px; height: 340px; border-radius: 50%; background: var(--sa-lime); }
 .sa-hero .orb::after { content: ""; position: absolute; inset: 58px; border-radius: 50%; border: 18px solid var(--sa-forest); border-left-color: transparent; border-bottom-color: transparent; transform: rotate(-20deg); }
-.sa-hero .glass { position: relative; display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18); border-radius: var(--sa-r-pill); padding: 7px 14px; font: 600 13px/1 var(--sa-font); color: #fff; }
-/* v1.1: the full maroon hero is retired (user ruling). A stop is a light warning card next to the forest hero. */
+.sa-hero .glass { position: relative; display: inline-flex; align-items: center; gap: 8px; background: var(--sa-on-forest-glass); border: 1px solid var(--sa-on-forest-glass-line); border-radius: var(--sa-r-pill); padding: 7px 14px; font: 600 13px/1 var(--sa-font); color: var(--sa-on-forest); }
 .sa-hero.warn { background: var(--sa-warn); }
-.sa-hero.warn .lead, .sa-hero.warn .sub { color: var(--sa-warn-tint); }
+.sa-hero.warn .lead, .sa-hero.warn .sub { color: var(--sa-on-warn-mid); }
 
 /* ---------- KPI ---------- */
 .sa-kpi .label { display: flex; align-items: center; gap: 8px; }
@@ -101,17 +100,17 @@ body { background: var(--sa-page); color: var(--sa-ink); font: var(--sa-body); -
 /* ---------- Buttons (pill; pressed sinks 1px and darkens) ---------- */
 .sa-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 20px; border-radius: var(--sa-r-pill); font: 700 15px/1 var(--sa-font); border: 1.5px solid transparent; cursor: pointer; text-decoration: none; transition: transform .06s, background .12s; }
 .sa-btn:active, .sa-btn.pressed { transform: translateY(var(--sa-press-shift)); }
-.sa-btn.primary { background: var(--sa-forest); color: #fff; }
+.sa-btn.primary { background: var(--sa-forest); color: var(--sa-on-forest); }
 .sa-btn.primary:hover, .sa-btn.primary.pressed { background: var(--sa-forest-700); }
 .sa-btn.secondary { background: var(--sa-surface); color: var(--sa-ink); border-color: var(--sa-line-strong); }
 .sa-btn.secondary:hover { border-color: var(--sa-ink); }
 .sa-btn.selected { background: var(--sa-forest-100); color: var(--sa-forest); border-color: var(--sa-forest); }
-.sa-btn.on-dark { background: #fff; color: var(--sa-forest); }
-.sa-btn.ghost-dark { background: transparent; color: #fff; border-color: rgba(255,255,255,.5); }
+.sa-btn.on-dark { background: var(--sa-surface); color: var(--sa-forest); }
+.sa-btn.ghost-dark { background: transparent; color: var(--sa-on-forest); border-color: var(--sa-on-forest-ghost-line); }
 .sa-btn.sm { height: 34px; padding: 0 14px; font-size: 13px; }
 .sa-seg { display: inline-flex; background: var(--sa-surface); border: 1px solid var(--sa-line); border-radius: var(--sa-r-pill); padding: 4px; gap: 2px; }
 .sa-seg button { border: 0; background: transparent; height: 34px; padding: 0 14px; border-radius: var(--sa-r-pill); font: 700 13px/1 var(--sa-font); color: var(--sa-text-mid); cursor: pointer; }
-.sa-seg button.on { background: var(--sa-forest); color: #fff; }
+.sa-seg button.on { background: var(--sa-forest); color: var(--sa-on-forest); }
 
 /* ---------- Table (calm) ---------- */
 .sa-tablewrap { background: var(--sa-surface); border: 1px solid var(--sa-line); border-radius: 20px; overflow: hidden; }
@@ -138,7 +137,7 @@ body { background: var(--sa-page); color: var(--sa-ink); font: var(--sa-body); -
 
 /* ---------- Countdown ---------- */
 .sa-count { position: relative; text-align: right; }
-.sa-count .days { font: 800 72px/0.9 var(--sa-font); letter-spacing: -0.04em; color: var(--sa-lime); }
+.sa-count .days { font: 800 72px/0.9 var(--sa-font); letter-spacing: -0.04em; color: var(--sa-accent-on-primary); }
 .sa-count .of { font: 700 14px/1.3 var(--sa-font); color: var(--sa-on-forest-mid); }
 
 /* ---------- Checklist ---------- */
@@ -147,12 +146,12 @@ body { background: var(--sa-page); color: var(--sa-ink); font: var(--sa-body); -
 .sa-check li:first-child { border-top: 0; }
 .sa-check .box { flex: none; width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--sa-line-strong); margin-top: 1px; }
 .sa-check .box.done { background: var(--sa-forest); border-color: var(--sa-forest); position: relative; }
-.sa-check .box.done::after { content: ""; position: absolute; left: 6px; top: 2px; width: 5px; height: 10px; border: solid #fff; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+.sa-check .box.done::after { content: ""; position: absolute; left: 6px; top: 2px; width: 5px; height: 10px; border: solid var(--sa-on-forest); border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
 
 /* ---------- Ask: answer + step timeline ---------- */
 .sa-bubble { align-self: flex-end; max-width: 78%; background: var(--sa-sage); border-radius: 22px 22px 6px 22px; padding: 14px 18px; font: 600 15px/1.45 var(--sa-font); }
 .sa-answer .sa-fig { font: 800 52px/1 var(--sa-font); letter-spacing: -0.03em; margin: 10px 0 12px; }
-.sa-ref { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 20px; border-radius: 6px; background: rgba(255,255,255,.16); color: #fff; font: 700 11px/1 var(--sa-font); padding: 0 5px; margin-left: 4px; vertical-align: 3px; }
+.sa-ref { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 20px; border-radius: 6px; background: var(--sa-on-forest-ref); color: var(--sa-on-forest); font: 700 11px/1 var(--sa-font); padding: 0 5px; margin-left: 4px; vertical-align: 3px; }
 .sa-ref.light { background: var(--sa-forest-100); color: var(--sa-forest); }
 .sa-lines { list-style: none; padding: 0; margin: 0; }
 .sa-lines li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--sa-line); font: 600 14px/1.3 var(--sa-font); }
@@ -165,7 +164,7 @@ body { background: var(--sa-page); color: var(--sa-ink); font: var(--sa-body); -
 .sa-steps li { position: relative; display: grid; grid-template-columns: 32px 1fr auto; gap: 12px; align-items: start; padding: 7px 0; }
 .sa-steps .n { width: 32px; height: 32px; border-radius: 50%; background: var(--sa-surface); border: 2px solid var(--sa-forest); color: var(--sa-forest); display: grid; place-items: center; font: 800 12px/1 var(--sa-font); position: relative; }
 .sa-steps li.llm .n { border-color: var(--sa-line-strong); color: var(--sa-meta); }
-.sa-steps li.final .n { background: var(--sa-forest); color: #fff; }
+.sa-steps li.final .n { background: var(--sa-forest); color: var(--sa-on-forest); }
 .sa-steps .t { font: 700 13.5px/1.3 var(--sa-mono); color: var(--sa-ink); }
 .sa-steps .s { font: 500 12.5px/1.35 var(--sa-font); color: var(--sa-text-mid); margin-top: 2px; }
 .sa-prism { display: inline-flex; align-items: center; gap: 8px; border-radius: var(--sa-r-pill); border: 1px solid var(--sa-line-strong); background: var(--sa-surface); padding: 7px 12px; font: 700 12.5px/1 var(--sa-font); color: var(--sa-ink); }
@@ -173,7 +172,7 @@ body { background: var(--sa-page); color: var(--sa-ink); font: var(--sa-body); -
 
 /* ---------- Report sheet ---------- */
 .sa-sheet { background: var(--sa-surface); border: 1px solid var(--sa-line); border-radius: var(--sa-r-card); overflow: hidden; box-shadow: var(--sa-shadow-float); }
-.sa-sheet .band { background: var(--sa-forest); color: #fff; padding: 28px 36px; position: relative; overflow: hidden; }
+.sa-sheet .band { background: var(--sa-forest); color: var(--sa-on-forest); padding: 28px 36px; position: relative; overflow: hidden; }
 .sa-sheet .band h1 { font: 800 30px/1.15 var(--sa-font); letter-spacing: var(--sa-tracking-tight); margin: 14px 0 8px; max-width: 560px; position: relative; }
 .sa-sheet .band .meta { color: var(--sa-on-forest-mid); position: relative; }
 .sa-sheet .body { padding: 26px 36px 30px; }
@@ -238,3 +237,97 @@ body { background: var(--sa-page); color: var(--sa-ink); font: var(--sa-body); -
 .sa-togglelist li.off { color: var(--sa-meta); }
 .sa-steps .n.range { font-size: 9.5px; letter-spacing: -.02em; }
 .sa-platchips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 2px; }
+
+/* ---------- v1.2 shell pieces (as built in web/styles/app.css) ---------- */
+.sa-logo .mark { width: 40px; height: 40px; border-radius: 10px; display: block; }
+.mono { font-family: var(--sa-mono); }
+.sa-who .av { position: relative; }
+.sa-who .av .sa-icon { color: var(--sa-forest); }
+.sa-legend .dot.round { border-radius: 50%; }
+.sa-legend li.best { font-weight: 700; }
+.sa-legend li.best .sa-badge { margin-left: 6px; vertical-align: 1px; }
+.kpi-row { display: flex; align-items: baseline; justify-content: space-between; margin-top: 10px; }
+.kpi-row .sa-fig { margin: 0; }
+.tax-link { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--sa-text-mid); font: var(--sa-small); padding: 16px 20px; }
+.tax-link b { margin-left: auto; color: var(--sa-forest); font: 700 14px/1 var(--sa-font); display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.sa-icon.rot { transform: rotate(-90deg); }
+/* Atlas the mascot: sizes are tokens; never next to a money figure. */
+.sa-mascot { display: block; width: auto; pointer-events: none; user-select: none; filter: drop-shadow(0 4px 10px var(--sa-mascot-shadow)); }
+.sa-hero .hero-mascot { position: absolute; right: 28px; bottom: 16px; height: var(--sa-mascot-hero); z-index: 1; }
+
+/* ---------- v1.3 · Your data, privacy, tax home, display currency ---------- */
+/* Data-mode switch (sidebar, under the logo): which ledger the whole app shows. */
+.sa-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: var(--sa-sage); border-radius: var(--sa-r-pill); padding: 4px; }
+.sa-mode a { display: flex; align-items: center; justify-content: center; gap: 6px; height: 32px; border-radius: var(--sa-r-pill); font: 700 13px/1 var(--sa-font); color: var(--sa-text-mid); text-decoration: none; white-space: nowrap; }
+.sa-mode a.on { background: var(--sa-surface); color: var(--sa-forest); box-shadow: var(--sa-shadow-card); }
+/* Utility links in the sidebar foot (My data, Settings & privacy). Not nav items: the nav stays at four. */
+.sa-util { display: flex; flex-direction: column; gap: 2px; padding-bottom: 12px; border-bottom: 1px solid var(--sa-line); margin: 0 -8px; }
+.sa-util a { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; border-radius: var(--sa-r-pill); color: var(--sa-text-mid); font: 600 14px/1 var(--sa-font); text-decoration: none; }
+.sa-util a:hover { background: var(--sa-sage); color: var(--sa-ink); }
+.sa-util a.on { background: var(--sa-forest-100); color: var(--sa-forest); }
+.sa-util a .r { margin-left: auto; font: 600 12px/1 var(--sa-font); color: var(--sa-meta); }
+.sa-util .sa-icon { width: 18px; height: 18px; }
+
+/* Upload hero: the screen's one bold field doubles as the drop zone (dashed inner rule). */
+.sa-hero.drop { min-height: 262px; padding: 36px 40px; }
+.sa-hero.drop::before { content: ""; position: absolute; inset: 12px; border: 2px dashed var(--sa-on-forest-ghost-line); border-radius: calc(var(--sa-r-card) - 10px); pointer-events: none; }
+.sa-hero .title { position: relative; font: 800 34px/1.12 var(--sa-font); letter-spacing: var(--sa-tracking-tight); color: var(--sa-on-forest); margin: 10px 0 8px; max-width: 620px; }
+.sa-hero .actions { position: relative; display: flex; gap: 12px; align-items: center; margin-top: 22px; flex-wrap: wrap; }
+.sa-hero .hint { position: relative; margin-top: 14px; font: 500 13px/1.4 var(--sa-font); color: var(--sa-on-forest-mid); }
+/* Atlas speech bubble (empty states only; one short line). */
+.sa-speech { position: absolute; z-index: 2; background: var(--sa-surface); color: var(--sa-ink); border-radius: 18px 18px 4px 18px; padding: 10px 14px; font: 700 13px/1.35 var(--sa-font); max-width: 230px; box-shadow: var(--sa-shadow-float); }
+
+/* Privacy promise strip: three facts with an icon each. Same words everywhere it appears. */
+.sa-promise { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); background: var(--sa-surface); border: 1px solid var(--sa-line); border-radius: var(--sa-r-card); }
+.sa-promise li { display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: center; padding: 18px 20px; border-left: 1px solid var(--sa-line); font: 700 14px/1.35 var(--sa-font); color: var(--sa-ink); }
+.sa-promise li:first-child { border-left: 0; }
+.sa-promise .ic { width: 40px; height: 40px; border-radius: 12px; background: var(--sa-forest-100); color: var(--sa-forest); display: grid; place-items: center; }
+.sa-promise small { display: block; font: 500 12.5px/1.35 var(--sa-font); color: var(--sa-meta); margin-top: 3px; }
+
+/* Where each export lives: 4 × 2 grid of small panels. */
+.sa-where { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.sa-where > div { border: 1px solid var(--sa-line); border-radius: var(--sa-r-inner); padding: 12px 14px; background: var(--sa-page); }
+.sa-where b { display: flex; align-items: center; font: 800 14px/1.2 var(--sa-font); color: var(--sa-ink); }
+.sa-where .path { font: 500 12.5px/1.4 var(--sa-font); color: var(--sa-text-mid); margin-top: 6px; }
+.sa-where .mono { display: block; font: 500 11.5px/1.2 var(--sa-mono); color: var(--sa-meta); margin-top: 5px; }
+
+/* Upload list: one row per imported statement; account IDs only as pseudonymised labels. */
+.sa-files td { padding-top: 7px; padding-bottom: 7px; }
+.sa-files td .acct { font: 500 12px/1 var(--sa-mono); color: var(--sa-meta); margin-left: 6px; }
+.sa-files td .file { font: 500 12.5px/1 var(--sa-mono); color: var(--sa-text-mid); }
+.sa-files tr.bad td { background: var(--sa-warn-tint); color: var(--sa-warn-text); }
+.sa-files tr.bad td .file { color: var(--sa-warn-text); }
+.sa-linkbtn { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; padding: 6px 10px; border-radius: var(--sa-r-pill); font: 700 13px/1 var(--sa-font); color: var(--sa-text-mid); cursor: pointer; text-decoration: none; }
+.sa-linkbtn:hover { background: var(--sa-warn-tint); color: var(--sa-warn-text); }
+
+/* Settings sheet: label + control on one line, help text under it. */
+.sa-settings { padding-top: 8px; padding-bottom: 8px; }
+.sa-settings .row { display: grid; grid-template-columns: 1fr auto; gap: 8px 24px; align-items: center; padding: 18px 0; border-top: 1px solid var(--sa-line); }
+.sa-settings .head + .row { border-top: 0; }
+.sa-settings .row h3 { margin: 0; font: 800 16px/1.3 var(--sa-font); color: var(--sa-ink); display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.sa-settings .row p { grid-column: 1 / -1; margin: 0; font: var(--sa-small); color: var(--sa-text-mid); max-width: 560px; }
+.sa-settings .row .ctl { display: flex; align-items: center; gap: 10px; }
+/* Currency switch: the segmented control with a currency glyph per option. */
+.sa-seg.cur button { min-width: 64px; }
+.sa-seg.cur button span { opacity: .7; margin-right: 4px; }
+
+/* Privacy center map (on the hero): where each kind of data goes. */
+.sa-datamap { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; position: relative; }
+.sa-datamap li { display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: center; background: var(--sa-on-forest-glass); border: 1px solid var(--sa-on-forest-glass-line); border-radius: var(--sa-r-inner); padding: 10px 14px; }
+.sa-datamap .ic { width: 36px; height: 36px; border-radius: 10px; background: var(--sa-on-forest-ref); color: var(--sa-on-forest); display: grid; place-items: center; }
+.sa-datamap b { display: block; font: 700 14px/1.3 var(--sa-font); color: var(--sa-on-forest); }
+.sa-datamap span { font: 500 13px/1.4 var(--sa-font); color: var(--sa-on-forest-mid); }
+
+/* Danger button: delete actions only. White pill, warn text and line; never filled. */
+.sa-btn.danger { background: var(--sa-surface); color: var(--sa-warn-text); border-color: var(--sa-warn-line); }
+.sa-btn.danger:hover { background: var(--sa-warn-tint); border-color: var(--sa-warn); }
+.sa-dataact { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.sa-dataact > div { display: grid; grid-template-columns: 1fr auto; gap: 6px 20px; align-items: center; align-content: center; padding: 4px 24px; }
+.sa-dataact > div + div { border-left: 1px solid var(--sa-line); }
+.sa-dataact h3 { margin: 0; font: 800 16px/1.3 var(--sa-font); }
+.sa-dataact p { margin: 0; grid-column: 1; font: var(--sa-small); color: var(--sa-text-mid); }
+.sa-dataact .sa-btn { grid-row: 1 / span 2; grid-column: 2; }
+
+/* Grouped table rows (China tax home: inside / outside China). */
+.sa-table tr.group td { background: var(--sa-page); font: var(--sa-label); letter-spacing: var(--sa-tracking-label); text-transform: uppercase; color: var(--sa-text-mid); padding-top: 9px; padding-bottom: 9px; }
+.sa-table tr.group td .sa-badge { text-transform: none; letter-spacing: 0; margin-left: 8px; }
