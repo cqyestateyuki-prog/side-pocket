@@ -8,6 +8,21 @@
 <link rel="stylesheet" href="../05-css/side-atlas-ui-reference.css">
 <script src="../03-icons/side-atlas-icons.js"></script>
 <script src="data.js"></script>
+<script>
+/* UI is single-language (English). Source data keeps "B站", Chinese record types and names; map them for display. */
+(() => {
+  const EXACT = {"充电":"Power-up","礼物":"Gift","SC":"Super Chat","舰长":"Captain (guard)","提督":"Admiral (guard)","总督":"Governor (guard)","提现代扣个税":"Tax withheld at withdrawal","平台代扣代缴":"Withheld and paid by the platform","大额单笔":"Large single payment"};
+  const INLINE = [["B站","Bilibili"],["B 站","Bilibili"],["月之灵","Moon Spirit"],["小鹿","Xiao Lu"],["阿柚","A You"],["墨白","Mo Bai"]];
+  const CJK = /[\u4e00-\u9fff]/;
+  const en = (v, k) => {
+    if (typeof v === "string") { let o = v in EXACT ? EXACT[v] : v; for (const [c, e] of INLINE) o = o.split(c).join(e); return CJK.test(o) && /profile|note|basis/.test(k) ? "" : o; }
+    if (Array.isArray(v)) return v.map(x => en(x, k));
+    if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([kk, x]) => [kk, en(x, kk)]));
+    return v;
+  };
+  window.SA_DATA = en(window.SA_DATA, "");
+})();
+</script>
 </head>
 <body>
 <div class="sa-app">
@@ -49,7 +64,7 @@ function who(name, cjk, meta) {
 function periodSeg(on) {
   return `<div class="sa-seg">${["Jul", "Aug", "Sep", "Q3 2026"].map(p => `<button class="${p === on ? "on" : ""}">${p}</button>`).join("")}</div>`;
 }
-const moon = () => who("Moon Spirit", "月", "New York · US tax home · single-member LLC");
+const moon = () => who("Moon Spirit", "", "New York · US tax home · single-member LLC");
 
 /* ---------------- Overview ---------------- */
 function overview() {
@@ -79,7 +94,7 @@ function overview() {
       <div class="sa-card sa-kpi"><div class="label">${icon("check", "sm")} Keeps the most of each dollar</div>
         <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:10px">
           <div class="sa-fig num" style="margin:0">${o.best_keep_rate.label}</div><span class="sa-badge ok">${pct(o.best_keep_rate.net_rate)} kept</span></div>
-        <div class="note" style="margin-top:6px">Lowest: B站 keeps ${pct(o.platforms.find(p => p.platform === "bilibili").net_rate)} after its 50% share</div></div>
+        <div class="note" style="margin-top:6px">Lowest: Bilibili keeps ${pct(o.platforms.find(p => p.platform === "bilibili").net_rate)} after its 50% share</div></div>
     </div>
     <section class="sa-card c7">
       <div class="head"><h2>Where the gross went</h2><span class="meta num">${usd(t.gross)} gross</span></div>
@@ -204,16 +219,16 @@ function tax() {
 /* ---------------- Ask ---------------- */
 function ask() {
   const A = D.ask_example, o = D.overview_c01_sep, t = o.totals;
-  const lines = [["Gross income", t.gross, 10], ["Platform fees", -t.platform_fee, 10], ["Payout & payment fees", -t.payout_fee, 10], ["Tax withheld by B站", -t.withheld, 10], ["Set aside at your 25%", o.set_aside.amount, 10]];
+  const lines = [["Gross income", t.gross, 10], ["Platform fees", -t.platform_fee, 10], ["Payout & payment fees", -t.payout_fee, 10], ["Tax withheld by Bilibili", -t.withheld, 10], ["Set aside at your 25%", o.set_aside.amount, 10]];
   return `
-  <div class="sa-top"><div><h1>Ask</h1><p>Questions in English or Chinese. The agent looks things up step by step; code does the math.</p></div><div class="right">${langSeg("en")}${moon()}</div></div>
+  <div class="sa-top"><div><h1>Ask</h1><p>The agent looks things up step by step; code does the math.</p></div><div class="right">${moon()}</div></div>
   <div class="sa-grid">
     <div class="c7 stack">
       <div class="sa-bubble">${A.question}</div>
       <section class="sa-hero sa-answer" style="min-height:0">
         <div class="lead">You landed in September 2026</div>
         <div class="sa-fig num">${usd(t.net)}<span class="sa-ref">11</span></div>
-        <div class="sub">out of ${usd(t.gross)} gross across 7 platforms. Contra kept the most of each dollar (100%), <span class="num">B站</span> the least (${pct(o.platforms.find(p => p.platform === "bilibili").net_rate)}).</div>
+        <div class="sub">out of ${usd(t.gross)} gross across 7 platforms. Contra kept the most of each dollar (100%), <span class="num">Bilibili</span> the least (${pct(o.platforms.find(p => p.platform === "bilibili").net_rate)}).</div>
       </section>
       <section class="sa-card" style="padding:18px 24px">
         <ul class="sa-lines">${lines.map(([l, v, s]) => `<li><span>${l}</span><span class="amt">${usd(v)}<span class="sa-ref light">${s}</span></span></li>`).join("")}</ul>
@@ -239,14 +254,14 @@ function report() {
   <div class="sa-grid">
     <div class="c8 sa-sheet">
       <div class="band"><div class="label" style="color:var(--sa-on-forest-mid)">Side Atlas · Q3 2026 report</div><h1>${C.REPORT_COVER}</h1>
-        <div class="meta">Moon Spirit (<span class="cjk">月之灵</span>) · US tax home · single-member LLC · prepared Oct 17, 2026</div></div>
+        <div class="meta">Moon Spirit · US tax home · single-member LLC · prepared Oct 17, 2026</div></div>
       <div class="body">
         <div class="sa-totals">${[["Gross", t.gross], ["Platform fees", -t.platform_fee], ["Payout fees", -t.payout_fee], ["Tax withheld", -t.withheld]].map(([l, v]) => `<div><span class="label">${l}</span><b>${usd(v)}</b></div>`).join("")}<div class="net"><span class="label">Net</span><b>${usd(t.net)}</b></div></div>
         <h3>By month</h3>
         <table class="sa-table"><thead><tr><th>Month</th><th class="money">Gross</th><th class="money">Platform fees</th><th class="money">Payout fees</th><th class="money">Tax withheld</th><th class="money">Net</th></tr></thead>
           <tbody>${R.by_month.map(m => `<tr><td>${monthName(m.month)}</td><td class="money">${usd(m.gross)}</td><td class="money fee">${usd(-m.platform_fee)}</td><td class="money payout">${usd(-m.payout_fee)}</td><td class="money tax">${usd(-m.withheld)}</td><td class="money net">${usd(m.net)}</td></tr>`).join("")}</tbody></table>
         <h3>Tax items</h3>
-        <ul class="sa-lines"><li><span>Tax withheld by B站 (China)</span><span class="amt">${usd(R.tax.total_tax_withheld_usd)}</span></li>
+        <ul class="sa-lines"><li><span>Tax withheld by Bilibili (China)</span><span class="amt">${usd(R.tax.total_tax_withheld_usd)}</span></li>
           <li><span>Set aside at the creator’s own 25%</span><span class="amt">${usd(R.tax.set_aside.amount)}</span></li>
           <li><span>Next US estimated-tax payment</span><span class="amt">${dateLong(R.tax.next_us_estimated_tax_due.due_date)}</span></li></ul>
         <div class="meta" style="margin-top:16px">${R.fx_used.length} exchange rates used, each on its record’s own date. Fees are simulated assumptions. ${C.DISCLAIMER}</div>
@@ -390,48 +405,8 @@ function bindSettings() {
   document.querySelectorAll(".sa-toggle").forEach(t => t.addEventListener("click", () => { t.classList.toggle("on"); t.closest("li").classList.toggle("off"); update(input.value); }));
 }
 
-/* ---------------- Ask in Chinese (v1.1) ---------------- */
-function askZh() {
-  const A = D.ask_zh, t = A.sep_totals;
-  const fees = [...A.platforms].sort((a, b) => b.platform_fee - a.platform_fee);
-  return `
-  <div class="sa-top"><div><h1>Ask</h1><p>Questions in English or Chinese. The agent looks things up step by step; code does the math.</p></div><div class="right">${langSeg("zh")}${moon()}</div></div>
-  <div class="sa-grid">
-    <div class="c7 stack">
-      <div class="sa-bubble">${C.ASK_ZH_QUESTION}</div>
-      <section class="sa-hero sa-answer" style="min-height:0">
-        <div class="lead">${C.ZH_LEAD}</div>
-        <div class="sa-fig num" style="font-size:40px">${usd(A.aug_net)} → ${usd(A.sep_net)}<span class="sa-ref">19</span><span class="sa-ref">18</span></div>
-        <div class="sub">${C.ZH_SUB}<span class="sa-ref">20</span></div>
-      </section>
-      <section class="sa-card" style="padding:18px 24px">
-        <div class="head" style="margin-bottom:6px"><h2>${C.ZH_DEDUCT_TITLE}</h2><span class="meta">2026 年 9 月</span></div>
-        <ul class="sa-lines">
-          <li><span>平台抽成</span><span class="amt">${usd(t.platform_fee)}<span class="sa-ref light">18</span></span></li>
-          <li style="border-top:0;padding-top:0"><div class="sa-platchips">${fees.map(p => `<span class="sa-chip" style="height:28px"><i class="dot" style="background:${PCOL(p.platform).fill}"></i>${p.label} <span class="num">${usd(p.platform_fee)}</span></span>`).join("")}</div></li>
-          <li><span>提现和支付费</span><span class="amt">${usd(t.payout_fee)}<span class="sa-ref light">18</span></span></li>
-          <li><span>B站代扣个税</span><span class="amt" style="color:var(--sa-tax-text)">${usd(t.withheld)}<span class="sa-ref light">18</span></span></li>
-        </ul>
-        <div class="sa-note info" style="margin-top:10px">${icon("globe", "sm")}<span>${C.ZH_TAX_NOTE}</span></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:12px">
-          <span class="meta" style="display:flex;gap:6px;align-items:center;color:var(--sa-forest)">${icon("check", "sm")} ${C.ASK_ZH_PROMISE}</span>
-          <span class="sa-prism"><i></i>Traced in PRISM ${icon("external", "sm")}</span>
-        </div>
-      </section>
-      <div class="sa-input"><span>${C.ASK_ZH_PLACEHOLDER}</span><a class="sa-btn primary sm">${icon("send", "sm")} 提问</a></div>
-    </div>
-    <section class="sa-card c5">
-      <div class="head"><h2>智能体步骤</h2><span class="sa-badge ok">${A.trace.tool_steps} 次工具调用</span></div>
-      <ol class="sa-steps">${A.steps.map((s, i) => `<li class="${i === A.steps.length - 1 ? "final" : ""}"><span class="n ${s.n.includes("–") ? "range" : ""}">${s.n}</span><div><div class="t">${s.tool}<span class="meta" style="font-family:var(--sa-font)"> · ${s.args}</span></div><div class="s">${s.summary}</div></div>${icon("check", "sm")}</li>`).join("")}</ol>
-    </section>
-  </div>`;
-}
-function langSeg(on) {
-  return `<div class="sa-seg"><button class="${on === "en" ? "on" : ""}" onclick="location.hash='ask'">English</button><button class="${on === "zh" ? "on" : ""}" onclick="location.hash='ask-zh'">中文</button></div>`;
-}
-
-const RENDER = { overview, ledger, tax, ask, "ask-zh": askZh, report, sources, settings, missing };
-const NAV_OF = { "ask-zh": "ask" };
+const RENDER = { overview, ledger, tax, ask, report, sources, settings, missing };
+const NAV_OF = {};
 function go() {
   const q = new URLSearchParams(location.search).get("screen");
   const s = (q || location.hash.slice(1) || "overview");

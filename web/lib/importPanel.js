@@ -17,7 +17,7 @@ const PLATFORMS = {
   youtube: { label: "YouTube", file: "youtube_revenue.csv", sig: ["Channel ID", "US Tax Withheld (USD)"], where: "Studio → Analytics → Revenue → Export" },
   twitch: { label: "Twitch", file: "twitch_payouts.csv", sig: ["Username", "Twitch Share (USD)"], where: "Creator Dashboard → Insights → Revenue → Export" },
   patreon: { label: "Patreon", file: "patreon_earnings.csv", sig: ["Creator", "Gross Pledges (USD)"], where: "Creator Settings → Earnings → Export" },
-  bilibili: { label: "B站", file: "bilibili_income.csv", sig: ["账号ID", "流水(元)"], where: "创作中心 → 收益 → 导出" },
+  bilibili: { label: "Bilibili", file: "bilibili_income.csv", sig: ["账号ID", "流水(元)"], where: "Creator Center → Earnings → Export" },
 };
 const API_SOON = ["YouTube", "Twitch", "Patreon", "Upwork", "PayPal"];
 

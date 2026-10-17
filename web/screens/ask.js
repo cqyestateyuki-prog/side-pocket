@@ -5,9 +5,10 @@ import { ask } from "../lib/api.js";
 import { COPY } from "../lib/copy.js";
 import { PLATFORM_KEY, cur, dateLong, esc, icon, monthName, usd } from "../lib/format.js";
 import { mascot } from "../lib/mascot.js";
+import { english } from "../lib/display.js";
 
-const LABEL = { bilibili: "B站", youtube: "YouTube", twitch: "Twitch", patreon: "Patreon", upwork: "Upwork", fiverr: "Fiverr", freelancer: "Freelancer.com", contra: "Contra" };
-// UI labels per language. The agent answers in the language of the question.
+const LABEL = { bilibili: "Bilibili", youtube: "YouTube", twitch: "Twitch", patreon: "Patreon", upwork: "Upwork", fiverr: "Fiverr", freelancer: "Freelancer.com", contra: "Contra" };
+// UI labels. The UI is English-only (user decision); a language switch is deferred.
 const T = {
   en: {
     examples: ["How much did I actually make in September, across every platform?", "Who took my money in Q3 — platform fees or tax?", "What tax items do I have this quarter?"],
@@ -19,20 +20,9 @@ const T = {
     setAside: r => `Set aside at your ${r}%`, nextDue: "Next US estimated tax", where: m => `Where ${monthName(m)}’s gross went`,
     fees: "Platform fees by platform",
   },
-  zh: {
-    examples: [COPY.ASK_ZH_QUESTION, "月之灵 9 月到手多少美元？", "第三季度我该预留多少税？"],
-    placeholder: COPY.ASK_ZH_PLACEHOLDER, promise: COPY.ASK_ZH_PROMISE, button: "提问", tryAsking: "试试这样问", answer: "回答",
-    steps: "智能体步骤", calls: n => `${n} 次工具调用`, running: "运行中", choosing: "智能体正在选择下一步…",
-    stepsEmpty: "每一次查询和计算都会在这里出现，并记录在 PRISM 里。",
-    thinking: "Atlas 正在一步步计算…", replay: "回放一次真实运行",
-    lines: ["毛收入", "平台抽成", "提现和支付费", "平台代扣税", "到手"],
-    setAside: r => `按你的 ${r}% 预留`, nextDue: "下一次美国季度预缴", where: m => `${+m.slice(5)} 月钱被谁扣了`,
-    fees: "各平台抽成",
-  },
 };
-const REPLAYS = { en: "demo/ask-c01-sep.json", zh: "demo/ask-c01-zh.json" };
-let lang = "en";
-const t = () => T[lang];
+const REPLAY = "demo/ask-c01-sep.json";
+const t = () => T.en;
 const PRISM_SESSIONS = "https://prism.blockconvey.com/sessions";
 
 let run = null;      // { question, creator, steps, answer, done, error, replay }
@@ -206,15 +196,10 @@ function footer() {
   </div>`;
 }
 
-function langSeg(ctx) {
-  const to = l => ctx.href("ask", { c: ctx.creator, lang: l === "zh" ? "zh" : null, replay: ctx.query.get("replay") });
-  return `<div class="sa-seg"><a href="${to("en")}" class="${lang === "en" ? "on" : ""}">English</a><a href="${to("zh")}" class="${lang === "zh" ? "on" : ""}">中文</a></div>`;
-}
-
 function view(ctx) {
   const busy = run && !run.done;
-  return `<div class="sa-top"><div><h1>Ask</h1><p>Questions in English or Chinese. The agent looks things up step by step; code does the math.</p></div>
-    <div class="right">${run?.replay ? `<span class="sa-badge sim">${t().replay}</span>` : ""}${langSeg(ctx)}${ctx.whoPill(ctx)}</div></div>
+  return `<div class="sa-top"><div><h1>Ask</h1><p>The agent looks things up step by step; code does the math.</p></div>
+    <div class="right">${run?.replay ? `<span class="sa-badge sim">${t().replay}</span>` : ""}${ctx.whoPill(ctx)}</div></div>
   <div class="sa-grid">
     <div class="c7 stack ask-col">
       ${answerBlock()}
@@ -256,9 +241,8 @@ async function start(question, ctx) {
 }
 
 async function replay() {
-  const want = lang;
-  const rec = await (await fetch(REPLAYS[want])).json();
-  run = { question: rec.question, creator: rec.creator, steps: [], answer: null, done: null, error: null, replay: true, lang: want };
+  const rec = english(await (await fetch(REPLAY)).json());
+  run = { question: rec.question, creator: rec.creator, steps: [], answer: null, done: null, error: null, replay: true };
   paint();
   for (const [name, data] of rec.events) {
     await new Promise(r => setTimeout(r, 140));
@@ -284,7 +268,6 @@ function bind() {
 }
 
 export async function render(ctx) {
-  lang = ctx.query.get("lang") === "zh" ? "zh" : "en";
   return view(ctx);
 }
 
@@ -292,6 +275,6 @@ export function mount(ctx, el) {
   root = el;
   ctxRef = ctx;
   bind();
-  if (ctx.query.get("replay") && !(run?.replay && run.lang === lang)) replay();
+  if (ctx.query.get("replay") && !run?.replay) replay();
   else if (ctx.query.get("go") && ctx.query.get("q") && !run) start(ctx.query.get("q"), ctx);
 }

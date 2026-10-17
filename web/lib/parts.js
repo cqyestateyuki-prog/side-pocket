@@ -33,7 +33,7 @@ export function warnCard(ctx, issues) {
   </section>`;
 }
 
-const KEYS = { "B站": "bilibili", "YouTube": "youtube", "Twitch": "twitch", "Patreon": "patreon", "Upwork": "upwork", "Fiverr": "fiverr", "Freelancer.com": "freelancer", "Contra": "contra" };
+const KEYS = { "Bilibili": "bilibili", "B站": "bilibili", "YouTube": "youtube", "Twitch": "twitch", "Patreon": "patreon", "Upwork": "upwork", "Fiverr": "fiverr", "Freelancer.com": "freelancer", "Contra": "contra" };
 export const platformKey = label => KEYS[label] ?? String(label).toLowerCase();
 
 export const COUNTRY = { CN: "China", US: "United States", DE: "Germany", JP: "Japan", CA: "Canada", GB: "United Kingdom" };

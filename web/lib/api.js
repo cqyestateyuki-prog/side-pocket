@@ -1,4 +1,6 @@
 // Thin client for the Side Atlas API. Every money figure on screen comes through here.
+// Responses pass through english() so the UI stays single-language (lib/display.js).
+import { english } from "./display.js";
 
 const cache = new Map();
 
@@ -7,7 +9,7 @@ export async function get(path, params = {}) {
   if (!cache.has(url)) {
     cache.set(url, fetch(url).then(async r => {
       if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
-      return r.json();
+      return english(await r.json());
     }).catch(e => { cache.delete(url); throw e; }));
   }
   return cache.get(url);
@@ -34,7 +36,7 @@ export async function ask(question, creator, onEvent) {
       buf = buf.slice(cut + 2);
       const event = /^event: (.*)$/m.exec(block)?.[1];
       const data = /^data: (.*)$/m.exec(block)?.[1];
-      if (event && data) onEvent(event, JSON.parse(data));
+      if (event && data) onEvent(event, english(JSON.parse(data)));
     }
   }
 }

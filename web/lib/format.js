@@ -21,7 +21,7 @@ export const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;"
 export const pcol = key => ({ fill: `var(--sa-p-${key})`, tint: `var(--sa-p-${key}-tint)`, text: `var(--sa-p-${key}-text)` });
 
 export const PLATFORM_KEY = {
-  "B站": "bilibili", "YouTube": "youtube", "Twitch": "twitch", "Patreon": "patreon",
+  "Bilibili": "bilibili", "B站": "bilibili", "YouTube": "youtube", "Twitch": "twitch", "Patreon": "patreon",
   "Upwork": "upwork", "Fiverr": "fiverr", "Freelancer.com": "freelancer", "Contra": "contra",
 };
 

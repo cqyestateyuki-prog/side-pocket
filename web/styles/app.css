@@ -128,8 +128,6 @@ a.sa-prism { text-decoration: none; }
 .sa-platchips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }
 
 /* ---------- Nav & creator picker ---------- */
-.sa-nav a .cn { margin-left: auto; font: 600 12px/1 var(--sa-font-cjk); color: var(--sa-meta); }
-.sa-nav a.on .cn { color: var(--sa-on-forest-mid); }
 .sa-who .av { position: relative; }
 .sa-who .warn-dot { position: absolute; right: -2px; top: -2px; width: 10px; height: 10px; border-radius: 50%; background: var(--sa-warn); box-shadow: 0 0 0 2px var(--sa-surface); }
 

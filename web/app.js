@@ -13,26 +13,29 @@ import * as report from "./screens/report.js";
 // The nav has exactly four screens (user decision). `period` is "month" (Jul/Aug/Sep/Q3) or null.
 // The accountant report is reached from Tax ("Export for my accountant"), not from the nav.
 const SCREENS = [
-  { key: "overview", label: "Overview", cn: "总览", icon: "overview", module: overview, period: "month" },
-  { key: "ledger", label: "Ledger", cn: "账本", icon: "ledger", module: ledger, period: "month" },
-  { key: "tax", label: "Tax", cn: "税务", icon: "tax", module: tax, period: "quarter" },
-  { key: "ask", label: "Ask Atlas", cn: "问 Atlas", icon: "ask", module: ask, period: null },
+  { key: "overview", label: "Overview", icon: "overview", module: overview, period: "month" },
+  { key: "ledger", label: "Ledger", icon: "ledger", module: ledger, period: "month" },
+  { key: "tax", label: "Tax", icon: "tax", module: tax, period: "quarter" },
+  { key: "ask", label: "Ask Atlas", icon: "ask", module: ask, period: null },
   { key: "report", label: "Report", icon: "report", module: report, period: "quarter", nav: false, navAs: "tax" },
 ];
 
 const DEFAULTS = { c: "C01", month: "2026-09", quarter: "2026-Q3" };
 const PERIODS = ["2026-07", "2026-08", "2026-09", "2026-Q3"];
 
-// How each fictional creator is introduced in the UI (labels only — no money).
+// How each fictional creator is introduced in the UI (labels only — no money). The UI is
+// English-only, so creators whose data name is Chinese get a romanised display name.
 const PERSONA = {
-  C01: { display: "Moon Spirit", cjk: "月", meta: "New York · US tax home · single-member LLC" },
+  C01: { display: "Moon Spirit", meta: "New York · US tax home · single-member LLC" },
+  C02: { display: "Xiao Lu" },
+  C04: { display: "A You" },
+  C07: { display: "Mo Bai" },
   C11: { display: "Lena Koch", meta: "Berlin · DE tax home" },
 };
 
 export function persona(c) {
   const p = PERSONA[c.id] ?? {};
-  const cjk = p.cjk ?? (/[一-鿿]/.test(c.name) ? c.name[0] : null);
-  return { display: p.display ?? c.name, cjk, meta: p.meta ?? `${c.tax_country} tax home`, name: c.name };
+  return { display: p.display ?? c.name, meta: p.meta ?? `${c.tax_country} tax home`, name: c.name };
 }
 
 function parse() {
@@ -67,10 +70,10 @@ export function whoPill(ctx) {
   const p = persona(me);
   const warn = me.data_issues?.length;
   return `<label class="sa-who picker" title="${warn ? esc(issueText(me)) : "Switch creator"}">
-    <div class="av">${p.cjk ? `<span class="cjk">${esc(p.cjk)}</span>` : esc(p.display[0])}${warn ? `<i class="warn-dot" aria-label="Has data issues"></i>` : ""}</div>
+    <div class="av">${esc(p.display[0])}${warn ? `<i class="warn-dot" aria-label="Has data issues"></i>` : ""}</div>
     <div><b>${esc(p.display)}</b><span>${esc(warn ? issueText(me) : p.meta)}</span></div>
     ${icon("chevron", "sm chev")}
-    <select data-creator-switch aria-label="Creator">${ctx.creators.map(c => `<option value="${c.id}" ${c.id === me.id ? "selected" : ""}>${esc(persona(c).display)}${persona(c).display !== c.name ? ` · ${esc(c.name)}` : ""}${c.data_issues?.length ? ` — ${esc(issueText(c))}` : ""}</option>`).join("")}</select>
+    <select data-creator-switch aria-label="Creator">${ctx.creators.map(c => `<option value="${c.id}" ${c.id === me.id ? "selected" : ""}>${esc(persona(c).display)}${c.data_issues?.length ? ` — ${esc(issueText(c))}` : ""}</option>`).join("")}</select>
   </label>`;
 }
 
@@ -108,7 +111,7 @@ async function go() {
 function renderNav(ctx) {
   const current = ctx.screen.navAs ?? ctx.screen.key;
   document.getElementById("nav").innerHTML = SCREENS.filter(s => s.nav !== false).map(s =>
-    `<a href="${href(s.key, { c: ctx.creator === DEFAULTS.c ? null : ctx.creator, p: periodFor(s, ctx.period) })}" class="${s.key === current ? "on" : ""}">${icon(s.icon)}<span>${s.label}</span><span class="cn">${s.cn}</span></a>`).join("");
+    `<a href="${href(s.key, { c: ctx.creator === DEFAULTS.c ? null : ctx.creator, p: periodFor(s, ctx.period) })}" class="${s.key === current ? "on" : ""}">${icon(s.icon)}<span>${s.label}</span></a>`).join("");
 }
 
 document.getElementById("tagline").textContent = COPY.TAGLINE;

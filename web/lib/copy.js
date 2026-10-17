@@ -23,8 +23,5 @@ export const COPY = {
   IMPORT_CHECK_OK: "Exchange rates available for these records.",
   SETTINGS_HEADLINE: "Your set-aside rate",
   SETTINGS_PROMISE: "You choose your set-aside rate; Side Atlas does not suggest one.",
-  ASK_ZH_QUESTION: "我九月为什么比八月多到手了？哪些钱被平台扣了？",
-  ASK_ZH_PROMISE: "回答中的每个数字都来自计算步骤，不由模型生成。",
-  ASK_ZH_PLACEHOLDER: "问问你的收入、平台扣款或税务事项",
   DISCLAIMER: "Estimate only — not tax, legal, or financial advice.",
 };
