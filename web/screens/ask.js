@@ -15,7 +15,7 @@ const T = {
     placeholder: COPY.ASK_PLACEHOLDER, promise: COPY.ASK_PROMISE, button: "Ask", tryAsking: "Try asking", answer: "Answer",
     steps: "Agent steps", calls: n => `${n} tool calls`, running: "running", choosing: "The agent is choosing its next step…",
     stepsEmpty: "Each lookup and calculation shows up here as the agent works, and is traced in PRISM.",
-    thinking: "Atlas is working through the steps…", replay: "Replay of a recorded run",
+    thinking: "Atlas is working through the steps…", replay: "Replay of a real traced run",
     lines: ["Gross income", "Platform fees", "Payout & payment fees", "Tax withheld by platforms", "Net — what landed"],
     setAside: r => `Set aside at your ${r}%`, nextDue: "Next US estimated tax", where: m => `Where ${monthName(m)}’s gross went`,
     fees: "Platform fees by platform",
@@ -223,7 +223,11 @@ function onEvent(name, data) {
   if (name === "step") run.steps.push(data);
   else if (name === "answer") run.answer = data;
   else if (name === "error") run.error = data.message;
-  else if (name === "done") run.done = data;
+  else if (name === "done") {
+    run.done = data;
+    // The public deployment has no model key, so the server streams a recorded real run.
+    if (data.replay) { run.replay = true; if (data.recorded_question) run.question = data.recorded_question; }
+  }
   paint();
 }
 

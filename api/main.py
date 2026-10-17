@@ -10,8 +10,10 @@ estimated: it is left out of the totals and reported under `issues`, with `compl
 from __future__ import annotations
 
 import json
+import os
 import queue
 import threading
+import time
 import uuid
 from datetime import date
 from decimal import Decimal
@@ -361,11 +363,31 @@ def _step_event(step: dict) -> dict:
             "duration_ms": step["duration_ms"]}
 
 
+REPLAY = ROOT / "web" / "demo" / "ask-c01-sep.json"
+
+
+def _replay_stream() -> StreamingResponse:
+    """No model key (e.g. the public deployment): stream a recorded real traced run, paced like a live one."""
+    recording = json.loads(REPLAY.read_text(encoding="utf-8"))
+
+    def stream():
+        for name, payload in recording["events"]:
+            if name == "done":
+                payload = {**payload, "replay": True, "recorded_question": recording["question"]}
+            yield f"event: {name}\ndata: {json.dumps(payload, ensure_ascii=False, default=str)}\n\n"
+            time.sleep(0.35 if name == "step" else 0.1)
+
+    return StreamingResponse(stream(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
 @app.post("/api/ask")
 def ask(req: AskRequest) -> StreamingResponse:
     question = req.question.strip()
     if not question:
         raise HTTPException(422, "question is empty")
+    if not os.environ.get("NICRRON_API_KEY"):
+        return _replay_stream()
     if req.creator:
         c = _creator(req.creator)
         question = f"[Creator: {c['name']} ({c['creator_id']})] {question}"

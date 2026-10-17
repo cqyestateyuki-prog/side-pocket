@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+.venv
+.git
+__pycache__
+*.pyc
+results
+design
+docs
+web/_checks
+daoshou_testdata/tools
+scripts
