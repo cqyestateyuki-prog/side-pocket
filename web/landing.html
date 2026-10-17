@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Side Atlas — Global side income. One ledger. Tax items sorted.</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/logo/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png">
+<link rel="stylesheet" href="styles/fonts.css">
+<link rel="stylesheet" href="styles/tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--sa-page); color: var(--sa-ink); font: var(--sa-body); -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 32px; }
+  .top { display: flex; align-items: center; justify-content: space-between; padding: 24px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; font: var(--sa-h3); font-weight: 800; text-decoration: none; }
+  .brand img { width: 36px; height: 36px; border-radius: 10px; }
+  .top nav a { font: var(--sa-small); color: var(--sa-text-mid); text-decoration: none; margin-left: 22px; }
+
+  .hero { position: relative; overflow: hidden; background: var(--sa-forest); color: var(--sa-on-forest); border-radius: var(--sa-r-card); padding: 56px 56px 52px; display: grid; grid-template-columns: 1.35fr 1fr; gap: 32px; align-items: center; }
+  .hero h1 { font: 800 54px/1.04 var(--sa-font); letter-spacing: var(--sa-tracking-tight); margin: 0 0 18px; }
+  .hero p { font: 500 17px/1.6 var(--sa-font); color: var(--sa-on-forest-mid); margin: 0 0 28px; max-width: 560px; }
+  .hero .orb { position: absolute; right: -120px; bottom: -160px; width: 420px; height: 420px; border-radius: 50%; background: var(--sa-lime); opacity: .9; }
+  .hero .mascot { position: relative; justify-self: center; width: 240px; z-index: 1; filter: drop-shadow(0 6px 14px var(--sa-mascot-shadow)); }
+  .btns { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; border-radius: var(--sa-r-pill); padding: 13px 22px; font: 700 15px/1 var(--sa-font); text-decoration: none; }
+  .btn.primary { background: var(--sa-surface); color: var(--sa-forest); }
+  .btn.ghost { border: 1.5px solid var(--sa-on-forest-mid); color: var(--sa-on-forest); }
+
+  section { padding: 56px 0 8px; }
+  .label { font: var(--sa-label); letter-spacing: var(--sa-tracking-label); text-transform: uppercase; color: var(--sa-meta); margin: 0 0 8px; }
+  h2 { font: var(--sa-h1); letter-spacing: var(--sa-tracking-tight); margin: 0 0 22px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .card { background: var(--sa-surface); border: 1px solid var(--sa-line); border-radius: var(--sa-r-card); padding: 24px; box-shadow: var(--sa-shadow-card); }
+  .card h3 { font: var(--sa-h3); margin: 0 0 8px; }
+  .card p { margin: 0 0 12px; color: var(--sa-text-mid); font: var(--sa-small); }
+  .card .src { font: var(--sa-small); color: var(--sa-accent-text); text-decoration: none; }
+  .step .n { width: 34px; height: 34px; border-radius: 50%; background: var(--sa-forest-100); color: var(--sa-forest); display: grid; place-items: center; font: 800 14px/1 var(--sa-font); margin-bottom: 14px; }
+
+  .proof { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .stat { display: flex; gap: 28px; flex-wrap: wrap; margin: 0 0 22px; }
+  .stat div b { display: block; font: 800 34px/1.1 var(--sa-font); color: var(--sa-forest); font-variant-numeric: tabular-nums; }
+  .stat div span { font: var(--sa-small); color: var(--sa-meta); }
+  .shot { margin: 0; background: var(--sa-surface); border: 1px solid var(--sa-line); border-radius: var(--sa-r-card); padding: 14px; }
+  .shot img { width: 100%; border-radius: 12px; display: block; }
+  .shot figcaption { font: var(--sa-small); color: var(--sa-text-mid); padding: 12px 4px 2px; }
+  .tag { display: inline-block; border-radius: var(--sa-r-badge); padding: 3px 9px; font: 700 12px/1.3 var(--sa-font); margin-right: 6px; }
+  .tag.bad { background: var(--sa-warn-tint); color: var(--sa-warn-text); }
+  .tag.good { background: var(--sa-ok-tint); color: var(--sa-ok-text); }
+  .lead { font: 500 16px/1.6 var(--sa-font); color: var(--sa-text-mid); max-width: 760px; margin: 0 0 22px; }
+
+  .built { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  footer { padding: 48px 0 56px; color: var(--sa-meta); font: var(--sa-small); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+
+  @media (max-width: 760px) {
+    .wrap { padding: 0 16px; }
+    .top nav { display: none; }
+    .hero { grid-template-columns: 1fr; padding: 36px 24px 32px; }
+    .hero h1 { font-size: 38px; }
+    .hero .mascot { width: 160px; }
+    .grid3, .proof, .built { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="landing.html"><img src="assets/logo/icon-96.png" alt="">Side Atlas</a>
+    <nav><a href="#problem">Problem</a><a href="#how">How it works</a><a href="#proof">What we learned</a><a href="https://github.com/cqyestateyuki-prog/hackson_global_income">Code</a></nav>
+  </header>
+
+  <div class="hero">
+    <div style="position:relative;z-index:1">
+      <h1>Global side income. One ledger. Tax items sorted.</h1>
+      <p>Side Atlas brings global side income into one multi-currency ledger, with a tax layer that organises the items you will probably need. It separates fees from withholding, compares form-style totals with payouts, and prepares a report for your accountant.</p>
+      <div class="btns">
+        <a class="btn primary" href="/">Open the live demo</a>
+        <a class="btn ghost" href="https://github.com/cqyestateyuki-prog/hackson_global_income">View the code</a>
+      </div>
+    </div>
+    <img class="mascot" src="assets/mascot/wave.png" alt="Atlas, the Side Atlas pigeon, waving">
+    <div class="orb" aria-hidden="true"></div>
+  </div>
+
+  <section id="problem">
+    <p class="label">The problem</p>
+    <h2>Your tax form says one thing. Your bank says another.</h2>
+    <div class="grid3">
+      <div class="card"><h3>Forms don't match what landed</h3><p>1099-K forms report gross, including the platform's own fee, and PayPal can report the same money again.</p><a class="src" href="https://www.reddit.com/r/Upwork/comments/1jpvezq/upwork_tax_papers_super_wrong_usa/">r/Upwork</a> · <a class="src" href="https://www.reddit.com/r/tax/comments/1i9d1y0/">r/tax</a></div>
+      <div class="card"><h3>Fees with no paper trail</h3><p>One Fiverr seller reported over $12,000 in fees across two years, without documentation for tax time.</p><a class="src" href="https://www.reddit.com/r/Fiverr/comments/1sfn33q/">r/Fiverr</a></div>
+      <div class="card"><h3>Nothing set aside</h3><p>US platforms withhold nothing for US persons, leaving quarterly estimated taxes as a surprise.</p><a class="src" href="https://www.reddit.com/r/PartneredYoutube/comments/1pk2tou/">r/PartneredYoutube</a></div>
+    </div>
+  </section>
+
+  <section id="how">
+    <p class="label">How it works</p>
+    <h2>One ledger, then the tax layer on top.</h2>
+    <div class="grid3">
+      <div class="card step"><div class="n">1</div><h3>Import every export</h3><p>Drop multiple platform exports into Side Atlas; it detects each platform automatically.</p></div>
+      <div class="card step"><div class="n">2</div><h3>One ledger</h3><p>The ledger separates gross income, platform fees, payment fees, tax withheld and net income. Non-USD records use their own transaction date's exchange rate.</p></div>
+      <div class="card step"><div class="n">3</div><h3>Tax items, sorted</h3><p>Withholding by platform and country, a set-aside at your chosen rate, the next US estimated-tax deadline, and an accountant export.</p></div>
+    </div>
+  </section>
+
+  <section id="proof">
+    <p class="label">What we learned</p>
+    <h2>Every number needs a source — not a confident guess.</h2>
+    <p class="lead">Our first version gave the model raw exports and let it calculate. When an exchange rate was missing, it silently borrowed a nearby day's rate and returned a confident number. In v2, code does every calculation; AI orchestrates and explains. Missing data stops the run instead of triggering a guess.</p>
+    <div class="stat">
+      <div><b>72 / 81</b><span>v1, model does the math</span></div>
+      <div><b>9 / 9</b><span>v2 on the questions v1 failed</span></div>
+      <div><b>89 / 89</b><span>v2 on the full test set</span></div>
+    </div>
+    <div class="proof">
+      <figure class="shot"><img src="assets/landing/05-trace-analysis-v1-critical.jpg" alt="PRISM analysis of a v1 run: critical compliance failure, fabricated earnings data"><figcaption><span class="tag bad">v1 · CRITICAL</span>PRISM: the agent fabricated earnings data when a rate was missing.</figcaption></figure>
+      <figure class="shot"><img src="assets/landing/06-trace-analysis-v2-low.jpg" alt="PRISM analysis of a v2 run: compliant, appropriately refused to estimate"><figcaption><span class="tag good">v2 · compliant</span>PRISM: the agent appropriately refused to estimate missing critical data.</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="built">
+    <p class="label">Built with</p>
+    <div class="built">
+      <div class="card"><h3>PRISM by Block Convey</h3><p>Every run is traced, with every model and tool call recorded as a step. PRISM clustered 11 failed v1 runs, and per-trace analysis moved from CRITICAL/HIGH for missing-rate runs to LOW for explicit refusals.</p></div>
+      <div class="card"><h3>Nicrron</h3><p>Claude Fable 5.1 and Claude Opus 5.5 run the agent through Nicrron. GPT-6 Astra wrote all product copy. Google nano-banana-pro drew the Atlas mascot and app icon.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Fictional demo data · Estimate only — not tax, legal, or financial advice.</span>
+    <span>Side Atlas · MONEY TALKS 2 · Money Operations track</span>
+  </footer>
+</div>
+</body>
+</html>

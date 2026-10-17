@@ -28,6 +28,7 @@ export async function render() {
         <button class="sa-btn secondary wl-alt" type="button" disabled>Sign in with Google — coming soon</button>
         <p class="wl-foot">Fictional demo data · Estimate only — not tax, legal, or financial advice.</p>
         <span class="sa-prism wl-built"><i></i>Built on PRISM · Models via Nicrron</span>
+        <a class="wl-about" href="landing.html">About Side Atlas</a>
       </div>
     </section>
   </div>`;

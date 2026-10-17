@@ -238,3 +238,5 @@ a.sa-prism { text-decoration: none; }
 .wl-card .sa-btn[disabled] { color: var(--sa-meta); cursor: not-allowed; }
 .wl-foot { margin: 6px 0 0; font: var(--sa-small); color: var(--sa-meta); }
 .wl-built { align-self: flex-start; }
+
+.wl-about { display: block; margin-top: 14px; font: var(--sa-small); color: var(--sa-meta); text-decoration: underline; text-underline-offset: 3px; }
