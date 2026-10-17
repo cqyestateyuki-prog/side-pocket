@@ -67,7 +67,7 @@
 <div class="wrap">
   <header class="top">
     <a class="brand" href="landing.html"><img src="assets/logo/icon-96.png" alt="">Side Atlas</a>
-    <nav><a href="#problem">Problem</a><a href="#how">How it works</a><a href="#proof">What we learned</a><a href="https://github.com/cqyestateyuki-prog/hackson_global_income">Code</a></nav>
+    <nav><a href="#problem">Problem</a><a href="#how">How it works</a><a href="#proof">What we learned</a><a href="#faq">FAQ</a><a href="https://github.com/cqyestateyuki-prog/hackson_global_income">Code</a></nav>
   </header>
 
   <div class="hero">
@@ -123,6 +123,16 @@
     <div class="built">
       <div class="card"><h3>PRISM by Block Convey</h3><p>Every run is traced, with every model and tool call recorded as a step. PRISM clustered 11 failed v1 runs, and per-trace analysis moved from CRITICAL/HIGH for missing-rate runs to LOW for explicit refusals.</p></div>
       <div class="card"><h3>Nicrron</h3><p>Claude Fable 5.1 and Claude Opus 5.5 run the agent through Nicrron. GPT-6 Astra wrote all product copy. Google nano-banana-pro drew the Atlas mascot and app icon.</p></div>
+    </div>
+  </section>
+
+    <section id="faq">
+    <p class="label">FAQ</p>
+    <div class="built">
+      <div class="card"><h3>What is it built with?</h3><p>We built Side Atlas with Python and FastAPI on Vercel, plus a plain HTML, CSS and JavaScript front end with design tokens. Our hand-written tool-calling agent runs on Claude Opus 5.5 through the Nicrron API, which handles all model calls; early traced runs used Claude Fable 5.1. We used GPT-6 Astra for product copy and Google nano-banana-pro for the mascot. We calculate every amount in plain Python with Decimal, trace every run with PRISM by Block Convey, and test against 89 questions with reference answers and an independent checker.</p></div>
+      <div class="card"><h3>How do I know the AI is right?</h3><p>Our AI does not produce the numbers: code computes every amount the same way every time, and every number in an answer links to the step that produced it. We show the original amount, currency, exchange rate and rate date on every ledger row so you can check it against your own platform export. When data is missing, we stop and name the affected record instead of guessing. Our v2 answered 89 of 89 test questions correctly against reference answers, and we trace every run in PRISM with alerts on failures.</p></div>
+      <div class="card"><h3>Is this tax advice?</h3><p>No. We organise tax items and prepare an export for your accountant; you choose the set-aside rate. We do not calculate tax owed or judge tax residency. Estimate only. Not tax, legal, or financial advice.</p></div>
+      <div class="card"><h3>Is the data real?</h3><p>We use fictional creators and data in the demo. We use the real 1099-K threshold and the real Fiverr, Upwork, Freelancer.com and Contra fee rules. We simulate and label other fee and form assumptions.</p></div>
     </div>
   </section>
 
