@@ -1,0 +1,489 @@
+{
+  "side-atlas": {
+    "$description": "Side Atlas design tokens v1, 2026-10-17. Reference: Linktree for form, not colour; primary = forest green (user choice).",
+    "core": {
+      "forest": {
+        "$type": "color",
+        "$value": "#1F4B2C",
+        "$description": "Brand primary: primary buttons, active nav, net/landed, hero field"
+      },
+      "forest-700": {
+        "$type": "color",
+        "$value": "#163A21",
+        "$description": "Pressed/hover on primary"
+      },
+      "forest-100": {
+        "$type": "color",
+        "$value": "#DCE8DD",
+        "$description": "Selected fill, net tint"
+      },
+      "lime": {
+        "$type": "color",
+        "$value": "#C5E35A",
+        "$description": "The one bright accent: large shapes, chart highlight; never small text"
+      },
+      "lime-100": {
+        "$type": "color",
+        "$value": "#EEF6D2",
+        "$description": "Accent tint"
+      },
+      "page": {
+        "$type": "color",
+        "$value": "#F6F4EC",
+        "$description": "Page background (warm off-white)"
+      },
+      "sage": {
+        "$type": "color",
+        "$value": "#E7EDDF",
+        "$description": "Secondary surface, table header"
+      },
+      "surface": {
+        "$type": "color",
+        "$value": "#FFFFFF",
+        "$description": "Cards"
+      },
+      "line": {
+        "$type": "color",
+        "$value": "#E1E3D6",
+        "$description": "Hairlines"
+      },
+      "line-strong": {
+        "$type": "color",
+        "$value": "#C9CDBD",
+        "$description": "Control borders"
+      },
+      "ink": {
+        "$type": "color",
+        "$value": "#18211B",
+        "$description": "Primary text and money figures"
+      },
+      "text-mid": {
+        "$type": "color",
+        "$value": "#4A574D",
+        "$description": "Secondary text"
+      },
+      "meta": {
+        "$type": "color",
+        "$value": "#7B867D",
+        "$description": "Captions, meta"
+      },
+      "on-forest": {
+        "$type": "color",
+        "$value": "#FFFFFF",
+        "$description": "Text on forest"
+      },
+      "on-forest-mid": {
+        "$type": "color",
+        "$value": "#C9D8CC",
+        "$description": "Secondary text on forest"
+      }
+    },
+    "semantic": {
+      "net": {
+        "fill": {
+          "$type": "color",
+          "$value": "#1F4B2C",
+          "$description": "Net / landed"
+        },
+        "tint": {
+          "$type": "color",
+          "$value": "#DCE8DD",
+          "$description": "Net / landed tint"
+        },
+        "text-on-white": {
+          "$type": "color",
+          "$value": "#1F4B2C",
+          "$description": "Net / landed text on white"
+        }
+      },
+      "fee": {
+        "fill": {
+          "$type": "color",
+          "$value": "#B65A34",
+          "$description": "Platform fee"
+        },
+        "tint": {
+          "$type": "color",
+          "$value": "#F6E3D9",
+          "$description": "Platform fee tint"
+        },
+        "text-on-white": {
+          "$type": "color",
+          "$value": "#9A4826",
+          "$description": "Platform fee text on white"
+        }
+      },
+      "payout": {
+        "fill": {
+          "$type": "color",
+          "$value": "#9A8E78",
+          "$description": "Payout & payment fees"
+        },
+        "tint": {
+          "$type": "color",
+          "$value": "#EEEBE4",
+          "$description": "Payout & payment fees tint"
+        },
+        "text-on-white": {
+          "$type": "color",
+          "$value": "#6F6553",
+          "$description": "Payout & payment fees text on white"
+        }
+      },
+      "fx": {
+        "fill": {
+          "$type": "color",
+          "$value": "#5D7685",
+          "$description": "Currency conversion"
+        },
+        "tint": {
+          "$type": "color",
+          "$value": "#E3E9ED",
+          "$description": "Currency conversion tint"
+        },
+        "text-on-white": {
+          "$type": "color",
+          "$value": "#4A5F6C",
+          "$description": "Currency conversion text on white"
+        }
+      },
+      "tax": {
+        "fill": {
+          "$type": "color",
+          "$value": "#2F59C9",
+          "$description": "Tax withheld by a platform"
+        },
+        "tint": {
+          "$type": "color",
+          "$value": "#E2E8FA",
+          "$description": "Tax withheld by a platform tint"
+        },
+        "text-on-white": {
+          "$type": "color",
+          "$value": "#2A4FB3",
+          "$description": "Tax withheld by a platform text on white"
+        }
+      },
+      "warn": {
+        "fill": {
+          "$type": "color",
+          "$value": "#8C1D2C",
+          "$description": "Missing data / stopped"
+        },
+        "tint": {
+          "$type": "color",
+          "$value": "#F6E1E3",
+          "$description": "Missing data / stopped tint"
+        },
+        "text-on-white": {
+          "$type": "color",
+          "$value": "#8C1D2C",
+          "$description": "Missing data / stopped text on white"
+        }
+      },
+      "ok": {
+        "fill": {
+          "$type": "color",
+          "$value": "#1F4B2C",
+          "$description": "Success"
+        },
+        "tint": {
+          "$type": "color",
+          "$value": "#E3F1C9",
+          "$description": "Success tint"
+        },
+        "text-on-white": {
+          "$type": "color",
+          "$value": "#1F4B2C",
+          "$description": "Success text on white"
+        }
+      }
+    },
+    "platform": {
+      "bilibili": {
+        "fill": {
+          "$type": "color",
+          "$value": "#1F8A84",
+          "$description": "bilibili"
+        },
+        "tint": {
+          "$type": "color",
+          "$value": "#DDF1EF",
+          "$description": "bilibili tint"
+        },
+        "text-on-white": {
+          "$type": "color",
+          "$value": "#17706B",
+          "$description": "bilibili text on white"
+        }
+      },
+      "youtube": {
+        "fill": {
+          "$type": "color",
+          "$value": "#D2465A",
+          "$description": "youtube"
+        },
+        "tint": {
+          "$type": "color",
+          "$value": "#FADFE3",
+          "$description": "youtube tint"
+        },
+        "text-on-white": {
+          "$type": "color",
+          "$value": "#B23345",
+          "$description": "youtube text on white"
+        }
+      },
+      "twitch": {
+        "fill": {
+          "$type": "color",
+          "$value": "#6F5FD3",
+          "$description": "twitch"
+        },
+        "tint": {
+          "$type": "color",
+          "$value": "#E8E5FA",
+          "$description": "twitch tint"
+        },
+        "text-on-white": {
+          "$type": "color",
+          "$value": "#5B4BC0",
+          "$description": "twitch text on white"
+        }
+      },
+      "patreon": {
+        "fill": {
+          "$type": "color",
+          "$value": "#B4549A",
+          "$description": "patreon"
+        },
+        "tint": {
+          "$type": "color",
+          "$value": "#F4E0EE",
+          "$description": "patreon tint"
+        },
+        "text-on-white": {
+          "$type": "color",
+          "$value": "#974282",
+          "$description": "patreon text on white"
+        }
+      },
+      "upwork": {
+        "fill": {
+          "$type": "color",
+          "$value": "#5D8E2E",
+          "$description": "upwork"
+        },
+        "tint": {
+          "$type": "color",
+          "$value": "#E6F0DA",
+          "$description": "upwork tint"
+        },
+        "text-on-white": {
+          "$type": "color",
+          "$value": "#4A7522",
+          "$description": "upwork text on white"
+        }
+      },
+      "fiverr": {
+        "fill": {
+          "$type": "color",
+          "$value": "#D9A514",
+          "$description": "fiverr"
+        },
+        "tint": {
+          "$type": "color",
+          "$value": "#FBF0CF",
+          "$description": "fiverr tint"
+        },
+        "text-on-white": {
+          "$type": "color",
+          "$value": "#8A6700",
+          "$description": "fiverr text on white"
+        }
+      },
+      "freelancer": {
+        "fill": {
+          "$type": "color",
+          "$value": "#4D5A66",
+          "$description": "freelancer"
+        },
+        "tint": {
+          "$type": "color",
+          "$value": "#E5E8EB",
+          "$description": "freelancer tint"
+        },
+        "text-on-white": {
+          "$type": "color",
+          "$value": "#3F4A55",
+          "$description": "freelancer text on white"
+        }
+      },
+      "contra": {
+        "fill": {
+          "$type": "color",
+          "$value": "#8B5A3C",
+          "$description": "contra"
+        },
+        "tint": {
+          "$type": "color",
+          "$value": "#F1E6DE",
+          "$description": "contra tint"
+        },
+        "text-on-white": {
+          "$type": "color",
+          "$value": "#74482D",
+          "$description": "contra text on white"
+        }
+      }
+    },
+    "type": {
+      "family": {
+        "$type": "fontFamily",
+        "$value": [
+          "Plus Jakarta Sans",
+          "ui-sans-serif",
+          "system-ui"
+        ]
+      },
+      "display": {
+        "$type": "typography",
+        "$value": {
+          "fontFamily": "Plus Jakarta Sans",
+          "fontWeight": 800,
+          "fontSize": "56px",
+          "lineHeight": 1.0,
+          "letterSpacing": "-0.02em"
+        }
+      },
+      "h1": {
+        "$type": "typography",
+        "$value": {
+          "fontFamily": "Plus Jakarta Sans",
+          "fontWeight": 800,
+          "fontSize": "32px",
+          "lineHeight": 1.15,
+          "letterSpacing": "-0.02em"
+        }
+      },
+      "h2": {
+        "$type": "typography",
+        "$value": {
+          "fontFamily": "Plus Jakarta Sans",
+          "fontWeight": 800,
+          "fontSize": "22px",
+          "lineHeight": 1.25,
+          "letterSpacing": "-0.01em"
+        }
+      },
+      "h3": {
+        "$type": "typography",
+        "$value": {
+          "fontFamily": "Plus Jakarta Sans",
+          "fontWeight": 700,
+          "fontSize": "17px",
+          "lineHeight": 1.35
+        }
+      },
+      "body": {
+        "$type": "typography",
+        "$value": {
+          "fontFamily": "Plus Jakarta Sans",
+          "fontWeight": 500,
+          "fontSize": "15px",
+          "lineHeight": 1.5
+        }
+      },
+      "small": {
+        "$type": "typography",
+        "$value": {
+          "fontFamily": "Plus Jakarta Sans",
+          "fontWeight": 500,
+          "fontSize": "13px",
+          "lineHeight": 1.45
+        }
+      },
+      "label": {
+        "$type": "typography",
+        "$value": {
+          "fontFamily": "Plus Jakarta Sans",
+          "fontWeight": 700,
+          "fontSize": "12px",
+          "lineHeight": 1.3,
+          "letterSpacing": "0.06em",
+          "textCase": "uppercase"
+        }
+      },
+      "numbers": {
+        "$type": "other",
+        "$value": "font-variant-numeric: tabular-nums for every money figure"
+      }
+    },
+    "radius": {
+      "card": {
+        "$type": "dimension",
+        "$value": "24px"
+      },
+      "inner": {
+        "$type": "dimension",
+        "$value": "16px"
+      },
+      "input": {
+        "$type": "dimension",
+        "$value": "14px"
+      },
+      "badge": {
+        "$type": "dimension",
+        "$value": "8px"
+      },
+      "pill": {
+        "$type": "dimension",
+        "$value": "9999px"
+      }
+    },
+    "shadow": {
+      "card": {
+        "$type": "shadow",
+        "$value": "0 1px 2px rgba(24, 33, 27, .05)"
+      },
+      "float": {
+        "$type": "shadow",
+        "$value": "0 1px 2px rgba(24, 33, 27, .06), 0 12px 32px rgba(24, 33, 27, .10)"
+      }
+    },
+    "space": {
+      "s1": {
+        "$type": "dimension",
+        "$value": "4px"
+      },
+      "s2": {
+        "$type": "dimension",
+        "$value": "8px"
+      },
+      "s3": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "s4": {
+        "$type": "dimension",
+        "$value": "16px"
+      },
+      "s5": {
+        "$type": "dimension",
+        "$value": "20px"
+      },
+      "s6": {
+        "$type": "dimension",
+        "$value": "24px"
+      },
+      "s8": {
+        "$type": "dimension",
+        "$value": "32px"
+      },
+      "s10": {
+        "$type": "dimension",
+        "$value": "40px"
+      }
+    }
+  }
+}

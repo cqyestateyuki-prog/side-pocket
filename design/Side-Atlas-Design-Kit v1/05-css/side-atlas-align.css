@@ -1,0 +1,18 @@
+/* Side Atlas · drop-in alignment stylesheet · v1
+   One @import restyles a plain app to the Side Atlas base: fonts, tokens, page colour,
+   type, tabular money figures and pill buttons. Component classes live in side-atlas-ui-reference.css. */
+@import "../06-fonts/side-atlas-fonts.css";
+@import "../04-tokens/side-atlas-tokens.css";
+
+html { background: var(--sa-page); }
+body { font: var(--sa-body); color: var(--sa-ink); background: var(--sa-page); -webkit-font-smoothing: antialiased; }
+h1 { font: var(--sa-h1); letter-spacing: var(--sa-tracking-tight); }
+h2 { font: var(--sa-h2); letter-spacing: -0.01em; }
+h3 { font: var(--sa-h3); }
+small, .meta { font: var(--sa-small); color: var(--sa-meta); }
+a { color: var(--sa-forest); }
+table { font-variant-numeric: tabular-nums; }
+button, .button { font: 700 15px/1 var(--sa-font); border-radius: var(--sa-r-pill); }
+button.primary, .button.primary { background: var(--sa-forest); color: #fff; border: 0; height: 44px; padding: 0 20px; }
+button.primary:active, .button.primary:active { background: var(--sa-forest-700); transform: translateY(var(--sa-press-shift)); }
+input, select, textarea { font: var(--sa-body); border-radius: var(--sa-r-input); border: 1.5px solid var(--sa-line-strong); }

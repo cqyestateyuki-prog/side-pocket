@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440">
+<title>Side Atlas · prototype v1</title>
+<link rel="icon" href="../02-logos/app-icons-and-favicons/favicon.svg">
+<link rel="stylesheet" href="../05-css/side-atlas-ui-reference.css">
+<script src="../03-icons/side-atlas-icons.js"></script>
+<script src="data.js"></script>
+</head>
+<body>
+<div class="sa-app">
+  <aside class="sa-side">
+    <div class="sa-logo">
+      <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="#1F4B2C"/><circle cx="32" cy="32" r="17" fill="none" stroke="#C5E35A" stroke-width="5"/><path d="M32 15c-7 5-7 29 0 34" fill="none" stroke="#C5E35A" stroke-width="5" stroke-linecap="round"/><path d="M15.5 27.5h33" fill="none" stroke="#C5E35A" stroke-width="5" stroke-linecap="round"/></svg>
+      <div><b>Side Atlas</b><span>副业图谱</span></div>
+    </div>
+    <nav class="sa-nav" id="nav"></nav>
+    <div class="foot">
+      <div class="tag" id="tagline"></div>
+      <span class="sa-prism"><i></i>Every run traced in PRISM</span>
+      <div class="meta" id="disclaimer"></div>
+    </div>
+  </aside>
+  <main class="sa-main" id="main"></main>
+</div>
+
+<script>
+const D = window.SA_DATA, C = D.copy;
+const PCOL = k => ({ fill: `var(--sa-p-${k})`, tint: `var(--sa-p-${k}-tint)`, text: `var(--sa-p-${k}-text)` });
+const usd = v => (v < 0 ? "−" : "") + "$" + Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const usd0 = v => "$" + Math.round(v).toLocaleString("en-US");
+const cny = v => "¥" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const pct = v => (v * 100).toFixed(1) + "%";
+const icon = (n, cls = "") => `<svg class="sa-icon ${cls}"><use href="#sa-i-${n}"/></svg>`;
+const monthName = m => new Date(m + "-01T12:00:00").toLocaleString("en-US", { month: "long" });
+const dateLong = d => new Date(d + "T12:00:00").toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+const SCREENS = [
+  ["overview", "Overview", "overview"], ["ledger", "Ledger", "ledger"], ["tax", "Tax items", "tax"],
+  ["ask", "Ask", "ask"], ["report", "Report", "report"], ["missing", "Lena · Aug", "alert"],
+];
+
+function who(name, cjk, meta) {
+  return `<div class="sa-who"><div class="av">${cjk ? `<span class="cjk">${cjk}</span>` : name[0]}</div><div><b>${name}</b><span>${meta}</span></div></div>`;
+}
+function periodSeg(on) {
+  return `<div class="sa-seg">${["Jul", "Aug", "Sep", "Q3 2026"].map(p => `<button class="${p === on ? "on" : ""}">${p}</button>`).join("")}</div>`;
+}
+const moon = () => who("Moon Spirit", "月", "New York · US tax home · single-member LLC");
+
+/* ---------------- Overview ---------------- */
+function overview() {
+  const o = D.overview_c01_sep, t = o.totals, mom = o.month_over_month;
+  const wf = [
+    ["Net", t.net, "var(--sa-net)"], ["Platform fees", t.platform_fee, "var(--sa-fee)"],
+    ["Payout & payment fees", t.payout_fee, "var(--sa-payout)"], ["Tax withheld by platforms", t.withheld, "var(--sa-tax)"]];
+  const plats = [...o.platforms].sort((a, b) => b.net - a.net);
+  return `
+  <div class="sa-top"><div><h1>Overview</h1><p>September 2026 · ${o.platforms.length} platforms · 2 currencies</p></div>
+    <div class="right">${periodSeg("Sep")}${moon()}</div></div>
+  <div class="sa-grid">
+    <section class="sa-hero c7">
+      <div class="orb"></div>
+      <div class="lead">${C.OVERVIEW_HERO.replace("{month}", "September")}</div>
+      <div class="sa-fig num">${usd(t.net)}</div>
+      <div class="sub">from <b class="num">${usd(t.gross)}</b> gross across ${o.platforms.length} platforms</div>
+      <div class="chips">
+        <span class="glass">${icon("up", "sm")} ${usd(mom.change)} vs August (${mom.change_pct > 0 ? "+" : ""}${pct(mom.change_pct)})</span>
+        <span class="glass">${icon("fx", "sm")} CNY converted at each record’s own date</span>
+      </div>
+    </section>
+    <div class="c5 stack">
+      <div class="sa-card sa-kpi"><div class="label">${icon("tax", "sm")} Set aside at your ${Math.round(o.set_aside.rate * 100)}%</div>
+        <div class="sa-fig forest num">${usd(o.set_aside.amount)}</div>
+        <div class="note">Next US estimated tax: <b>Jan 15, 2027</b> · 90 days</div></div>
+      <div class="sa-card sa-kpi"><div class="label">${icon("check", "sm")} Keeps the most of each dollar</div>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:10px">
+          <div class="sa-fig num" style="margin:0">${o.best_keep_rate.label}</div><span class="sa-badge ok">${pct(o.best_keep_rate.net_rate)} kept</span></div>
+        <div class="note" style="margin-top:6px">Lowest: B站 keeps ${pct(o.platforms.find(p => p.platform === "bilibili").net_rate)} after its 50% share</div></div>
+    </div>
+    <section class="sa-card c7">
+      <div class="head"><h2>Where the gross went</h2><span class="meta num">${usd(t.gross)} gross</span></div>
+      <div class="sa-bar">${wf.map(([l, v, c]) => `<span title="${l}" style="width:${(v / t.gross * 100).toFixed(2)}%;background:${c}"></span>`).join("")}</div>
+      <ul class="sa-legend">
+        <li><span class="dot" style="background:var(--sa-line-strong)"></span><span>Gross income</span><span class="amt">${usd(t.gross)}</span><span class="pct">100%</span></li>
+        ${wf.slice(1).map(([l, v, c]) => `<li><span class="dot" style="background:${c}"></span><span>${l}</span><span class="amt">${usd(-v)}</span><span class="pct">${pct(v / t.gross)}</span></li>`).join("")}
+        <li class="total"><span class="dot" style="background:var(--sa-net)"></span><span>Net — what landed</span><span class="amt">${usd(t.net)}</span><span class="pct">${pct(t.net / t.gross)}</span></li>
+      </ul>
+    </section>
+    <section class="sa-card c5">
+      <div class="head"><h2>By platform</h2><span class="meta">share of net</span></div>
+      <div class="sa-bar">${plats.map(p => `<span title="${p.label}" style="width:${(p.share_of_net * 100).toFixed(2)}%;background:${PCOL(p.platform).fill}"></span>`).join("")}</div>
+      <ul class="sa-legend">${plats.map(p => `<li><span class="dot" style="background:${PCOL(p.platform).fill};border-radius:50%"></span><span>${p.label}</span><span class="amt">${usd(p.net)}</span><span class="pct">${pct(p.net_rate)} kept</span></li>`).join("")}</ul>
+    </section>
+  </div>`;
+}
+
+/* ---------------- Ledger ---------------- */
+function ledger() {
+  const L = D.ledger_c01_sep, t = L.totals;
+  const rows = [...L.rows].sort((a, b) => a.date.localeCompare(b.date) || a.platform.localeCompare(b.platform));
+  const cell = (v, cls) => `<td class="money ${v === 0 ? "zero" : cls}">${v === 0 ? "—" : usd(cls === "net" ? v : -v)}</td>`;
+  return `
+  <div class="sa-top"><div><h1>Ledger</h1><p>${C.LEDGER_INTRO}</p></div><div class="right">${periodSeg("Sep")}${moon()}</div></div>
+  <div class="sa-kpirow">
+    ${[["Gross", t.gross, ""], ["Platform fees", -t.platform_fee, "var(--sa-fee-text)"], ["Payout fees", -t.payout_fee, "var(--sa-payout-text)"], ["Tax withheld", -t.withheld, "var(--sa-tax-text)"], ["Net", t.net, "var(--sa-forest)"]]
+      .map(([l, v, c]) => `<div class="sa-card sa-kpi"><div class="label">${l}</div><div class="sa-fig num" style="${c ? `color:${c}` : ""}">${usd(v)}</div></div>`).join("")}
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+    <span class="sa-chip on">All · ${rows.length} records</span>
+    ${D.overview_c01_sep.platforms.map(p => `<span class="sa-chip"><i class="dot" style="background:${PCOL(p.platform).fill}"></i>${p.label}</span>`).join("")}
+    <span style="margin-left:auto" class="sa-btn secondary sm">${icon("filter", "sm")} Type</span>
+    <span class="sa-btn secondary sm">${icon("download", "sm")} CSV</span>
+  </div>
+  <div class="sa-tablewrap"><table class="sa-table dense">
+    <thead><tr><th>Date</th><th>Platform</th><th>Type</th><th>Original</th><th class="money">Gross</th><th class="money">Platform fee</th><th class="money">Payout fee</th><th class="money">Withheld</th><th class="money">Net</th></tr></thead>
+    <tbody>${rows.map(r => `<tr>
+      <td class="num">${r.date.slice(5).replace("-", "/")}</td>
+      <td><i class="sa-pdot" style="background:${PCOL(r.platform).fill}"></i>${r.platform_label}</td>
+      <td>${r.type}${r.ref ? `<span class="sub">${r.ref}</span>` : ""}</td>
+      <td class="num">${r.original.currency === "USD" ? `<span class="meta">USD</span>` : `${cny(r.original.gross)}<span class="fx">÷ ${r.fx.rate.toFixed(4)} · ${r.fx.rate_date}</span>`}</td>
+      <td class="money">${usd(r.gross_usd)}</td>${cell(r.platform_fee_usd, "fee")}${cell(r.payout_fee_usd, "payout")}${cell(r.withheld_usd, "tax")}<td class="money net">${usd(r.net_usd)}</td></tr>`).join("")}
+      <tr class="total"><td colspan="4">September total</td><td class="money">${usd(t.gross)}</td><td class="money">${usd(-t.platform_fee)}</td><td class="money">${usd(-t.payout_fee)}</td><td class="money">${usd(-t.withheld)}</td><td class="money">${usd(t.net)}</td></tr>
+    </tbody></table></div>`;
+}
+
+/* ---------------- Tax items (hero) ---------------- */
+function tax() {
+  const T = D.tax_c01_q3, F = D.forms_placeholder.rows;
+  const w = T.tax_withheld_by_platform[0];
+  return `
+  <div class="sa-top"><div><h1>Tax items</h1><p>Q3 2026 · July–September</p></div><div class="right">${periodSeg("Q3 2026")}${moon()}</div></div>
+  <div class="sa-grid">
+    <section class="sa-hero c8" style="display:grid;grid-template-columns:1fr 210px;gap:24px;min-height:220px">
+      <div>
+        <div class="lead" style="font:800 30px/1.15 var(--sa-font);color:#fff;letter-spacing:-.02em">${C.TAX_HERO}</div>
+        <div class="sub" style="margin-top:10px;max-width:470px">${C.TAX_SUB}</div>
+        <div style="margin-top:20px;position:relative">
+          <div class="sa-fig num" style="margin:0 0 6px;font-size:48px">${usd(T.set_aside.amount)}</div>
+          <div class="sub">to set aside: ${usd(T.total_net_usd)} Q3 net × the 25% you chose</div>
+        </div>
+      </div>
+      <div class="sa-count" style="align-self:end">
+        <div class="days num">${T.next_us_estimated_tax_due.days_left}</div>
+        <div class="of">days to the next US<br>estimated-tax payment</div>
+        <div class="glass" style="margin-top:12px">${icon("calendar", "sm")} ${dateLong(T.next_us_estimated_tax_due.due_date)}</div>
+      </div>
+    </section>
+    <section class="sa-card c4">
+      <div class="head"><h2>Tax already withheld</h2></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div><span class="sa-badge tax">${icon("globe", "sm")} China · ${w.platform}</span>
+          <div class="meta" style="margin-top:8px">Individual income tax, withheld by the platform</div></div>
+        <div style="text-align:right"><div class="sa-fig num" style="font:800 28px/1 var(--sa-font);color:var(--sa-tax-text)">${usd(w.withheld_usd)}</div><div class="meta num">${cny(w.withheld_cny)}</div></div>
+      </div>
+      <div class="sa-note info" style="margin-top:16px">${icon("info", "sm")}<span>Nothing was withheld on Contra, Fiverr, Patreon, Twitch, Upwork or YouTube. The set-aside covers that income.</span></div>
+    </section>
+    <section class="sa-card c12">
+      <div class="head"><div><h2>${C.FORMS_HEADLINE}</h2><div class="mid" style="margin-top:6px;max-width:760px">${C.FORMS_SUB}</div></div><span class="sa-ribbon">${icon("info", "sm")} Placeholder numbers</span></div>
+      <div class="sa-tablewrap"><table class="sa-table">
+        <thead><tr><th>Platform</th><th>Form (simulated)</th><th class="money">Form view</th><th class="money">Bank view</th><th>${C.GAP_LABEL}</th><th class="money">Records</th><th>Status</th></tr></thead>
+        <tbody>${F.map(f => { const g = f.form_view - f.bank_view, s = f.gap; return `<tr>
+          <td><i class="sa-pdot" style="background:${PCOL(f.platform).fill}"></i><b>${f.label}</b></td>
+          <td><span class="sa-badge sim">${f.form}</span></td>
+          <td class="money">${usd(f.form_view)}</td><td class="money net">${usd(f.bank_view)}</td>
+          <td><div style="display:flex;align-items:center;gap:10px"><div class="sa-gap">${g > 0 ? [[s.platform_fee, "var(--sa-fee)"], [s.payout_fee, "var(--sa-payout)"], [s.withheld, "var(--sa-tax)"]].map(([v, c]) => v > 0 ? `<span style="width:${Math.max(4, v / g * 100)}%;background:${c}"></span>` : "").join("") : ""}</div><span class="num ${g > 0 ? "" : "meta"}">${g > 0 ? usd(-g) : "no gap"}</span></div></td>
+          <td class="money">${f.records}</td>
+          <td>${f.duplicate ? `<span class="sa-badge warn">${icon("duplicate", "sm")} Possible duplicate</span>` : f.threshold === "below" ? `<span class="sa-badge sim">Below 1099-K threshold</span>` : `<span class="sa-badge tax">CN record</span>`}</td></tr>`; }).join("")}</tbody></table></div>
+      <div class="sa-grid" style="margin-top:14px;gap:12px">
+        <div class="sa-note info c6">${icon("info", "sm")}<span>${C.THRESHOLD_NOTE}</span></div>
+        <div class="sa-note warn c6">${icon("duplicate", "sm")}<span>${C.DUPLICATE_NOTE}</span></div>
+      </div>
+    </section>
+    <section class="sa-card c12" style="display:grid;grid-template-columns:1fr auto;gap:24px;align-items:start">
+      <div><div class="head"><h2>For your accountant</h2></div>
+        <ul class="sa-check">${T.items_for_accountant.map((x, i) => `<li><span class="box ${i === 1 ? "done" : ""}"></span><span>${x}</span></li>`).join("")}
+          <li><span class="box"></span><span>Patreon pays out through PayPal: the same money may appear on two 1099-Ks.</span></li></ul></div>
+      <a class="sa-btn primary">${icon("download", "sm")} Export for my accountant</a>
+    </section>
+  </div>`;
+}
+
+/* ---------------- Ask ---------------- */
+function ask() {
+  const A = D.ask_example, o = D.overview_c01_sep, t = o.totals;
+  const lines = [["Gross income", t.gross, 10], ["Platform fees", -t.platform_fee, 10], ["Payout & payment fees", -t.payout_fee, 10], ["Tax withheld by B站", -t.withheld, 10], ["Set aside at your 25%", o.set_aside.amount, 10]];
+  return `
+  <div class="sa-top"><div><h1>Ask</h1><p>Questions in English or Chinese. The agent looks things up step by step; code does the math.</p></div><div class="right">${moon()}</div></div>
+  <div class="sa-grid">
+    <div class="c7 stack">
+      <div class="sa-bubble">${A.question}</div>
+      <section class="sa-hero sa-answer" style="min-height:0">
+        <div class="lead">You landed in September 2026</div>
+        <div class="sa-fig num">${usd(t.net)}<span class="sa-ref">11</span></div>
+        <div class="sub">out of ${usd(t.gross)} gross across 7 platforms. Contra kept the most of each dollar (100%), <span class="num">B站</span> the least (${pct(o.platforms.find(p => p.platform === "bilibili").net_rate)}).</div>
+      </section>
+      <section class="sa-card" style="padding:18px 24px">
+        <ul class="sa-lines">${lines.map(([l, v, s]) => `<li><span>${l}</span><span class="amt">${usd(v)}<span class="sa-ref light">${s}</span></span></li>`).join("")}</ul>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:12px">
+          <span class="meta" style="display:flex;gap:6px;align-items:center;color:var(--sa-forest)">${icon("check", "sm")} ${C.ASK_PROMISE}</span>
+          <span class="sa-prism"><i></i>Traced in PRISM ${icon("external", "sm")}</span>
+        </div>
+      </section>
+      <div class="sa-input"><span>${C.ASK_PLACEHOLDER}</span><a class="sa-btn primary sm">${icon("send", "sm")} Ask</a></div>
+    </div>
+    <section class="sa-card c5">
+      <div class="head"><h2>Agent steps</h2><span class="sa-badge ok">${A.trace.steps} tool calls</span></div>
+      <ol class="sa-steps">${A.steps.map((s, i) => `<li class="${i === A.steps.length - 1 ? "final" : ""}"><span class="n">${i + 1}</span><div><div class="t">${s.tool}<span class="meta" style="font-family:var(--sa-font)"> · ${s.args}</span></div><div class="s">${s.summary}</div></div>${icon("check", "sm")}</li>`).join("")}</ol>
+    </section>
+  </div>`;
+}
+
+/* ---------------- Report ---------------- */
+function report() {
+  const R = D.report_c01_q3, t = R.totals;
+  return `
+  <div class="sa-top"><div><h1>Report</h1><p>Hand this to your accountant. Every figure links back to the ledger.</p></div><div class="right">${periodSeg("Q3 2026")}${moon()}</div></div>
+  <div class="sa-grid">
+    <div class="c8 sa-sheet">
+      <div class="band"><div class="label" style="color:var(--sa-on-forest-mid)">Side Atlas · Q3 2026 report</div><h1>${C.REPORT_COVER}</h1>
+        <div class="meta">Moon Spirit (<span class="cjk">月之灵</span>) · US tax home · single-member LLC · prepared Oct 17, 2026</div></div>
+      <div class="body">
+        <div class="sa-totals">${[["Gross", t.gross], ["Platform fees", -t.platform_fee], ["Payout fees", -t.payout_fee], ["Tax withheld", -t.withheld]].map(([l, v]) => `<div><span class="label">${l}</span><b>${usd(v)}</b></div>`).join("")}<div class="net"><span class="label">Net</span><b>${usd(t.net)}</b></div></div>
+        <h3>By month</h3>
+        <table class="sa-table"><thead><tr><th>Month</th><th class="money">Gross</th><th class="money">Platform fees</th><th class="money">Payout fees</th><th class="money">Tax withheld</th><th class="money">Net</th></tr></thead>
+          <tbody>${R.by_month.map(m => `<tr><td>${monthName(m.month)}</td><td class="money">${usd(m.gross)}</td><td class="money fee">${usd(-m.platform_fee)}</td><td class="money payout">${usd(-m.payout_fee)}</td><td class="money tax">${usd(-m.withheld)}</td><td class="money net">${usd(m.net)}</td></tr>`).join("")}</tbody></table>
+        <h3>Tax items</h3>
+        <ul class="sa-lines"><li><span>Tax withheld by B站 (China)</span><span class="amt">${usd(R.tax.total_tax_withheld_usd)}</span></li>
+          <li><span>Set aside at the creator’s own 25%</span><span class="amt">${usd(R.tax.set_aside.amount)}</span></li>
+          <li><span>Next US estimated-tax payment</span><span class="amt">${dateLong(R.tax.next_us_estimated_tax_due.due_date)}</span></li></ul>
+        <div class="meta" style="margin-top:16px">${R.fx_used.length} exchange rates used, each on its record’s own date. Fees are simulated assumptions. ${C.DISCLAIMER}</div>
+      </div>
+    </div>
+    <div class="c4 stack">
+      <section class="sa-card"><div class="head"><h2>Export</h2></div>
+        <div class="stack" style="gap:10px"><a class="sa-btn primary">${icon("download", "sm")} PDF for my accountant</a><a class="sa-btn secondary">${icon("ledger", "sm")} Ledger as CSV</a></div></section>
+      <section class="sa-card sage"><div class="label">Included</div>
+        <ul class="sa-check" style="margin-top:8px">${["Totals and gross → net", "By month and by platform", "Tax withheld, set-aside, next due date", "Every exchange rate used", "Form view vs bank view (placeholder)"].map(x => `<li><span class="box done"></span><span>${x}</span></li>`).join("")}</ul></section>
+    </div>
+  </div>`;
+}
+
+/* ---------------- Missing data (Lena, Aug) ---------------- */
+function missing() {
+  const O = D.overview_c11_aug, i = O.issues[0], L = D.ledger_c11_aug;
+  return `
+  <div class="sa-top"><div><h1>Overview</h1><p>August 2026 · Lena Koch</p></div><div class="right">${periodSeg("Aug")}${who("Lena Koch", "", "Berlin · DE tax home")}</div></div>
+  <div class="sa-grid">
+    <section class="sa-hero warn c12" style="min-height:0;display:grid;grid-template-columns:1fr 420px;gap:28px">
+      <div>
+        <div class="label" style="color:#F2D3D7;display:flex;gap:8px;align-items:center">${icon("alert", "sm")} Stopped</div>
+        <div style="font:800 32px/1.15 var(--sa-font);letter-spacing:-.02em;margin:10px 0">${C.MISSING_HEADLINE}</div>
+        <div class="sub" style="max-width:560px;font-size:15px">${C.MISSING_BODY}</div>
+        <div style="display:flex;gap:10px;margin-top:20px"><a class="sa-btn on-dark" style="color:var(--sa-warn)">Add the EUR rate for Aug 21</a><a class="sa-btn ghost-dark">Open record</a></div>
+      </div>
+      <div style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:18px;padding:18px 20px;position:relative">
+        <div class="label" style="color:#F2D3D7">The record</div>
+        <ul class="sa-lines" style="margin-top:6px">${[["Platform", i.platform], ["Type", i.record.type], ["Reference", i.record.ref], ["Amount", "€" + i.record.amount.toFixed(2)], ["Date", i.date], ["EUR → USD rate", "missing"]].map(([k, v]) => `<li style="border-color:rgba(255,255,255,.18)"><span style="color:#F2D3D7">${k}</span><span class="amt">${v}</span></li>`).join("")}</ul>
+        <div style="margin-top:12px"><span class="sa-prism" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)"><i></i>Run marked failed · PRISM alert fired</span></div>
+      </div>
+    </section>
+    <section class="sa-card c5 sa-kpi"><div class="label">Net so far · incomplete</div>
+      <div class="sa-fig num" style="color:var(--sa-text-mid)">${usd(O.totals.net)}</div>
+      <div class="note">Leaves out ${i.record.ref} (€${i.record.amount.toFixed(2)}) until the rate is added. Nothing was estimated.</div>
+      <div style="margin-top:14px"><span class="sa-badge warn">${icon("alert", "sm")} 1 record waiting for a rate</span></div></section>
+    <section class="sa-card c7"><div class="head"><h2>August records</h2><span class="meta">${L.rows.length} records</span></div>
+      <div class="sa-tablewrap"><table class="sa-table"><thead><tr><th>Date</th><th>Platform</th><th>Original</th><th class="money">Net (USD)</th></tr></thead>
+      <tbody>${L.rows.map(r => { const miss = r.net_usd === null; return `<tr class="${miss ? "missing" : ""}"><td class="num">${r.date.slice(5).replace("-", "/")}</td><td><i class="sa-pdot" style="background:${PCOL(r.platform).fill}"></i>${r.platform_label}</td>
+        <td class="num">${r.original.currency} ${r.original.gross.toLocaleString("en-US", { minimumFractionDigits: 2 })}${r.fx && r.fx.rate ? `<span class="fx">× ${r.fx.rate} · ${r.fx.rate_date}</span>` : miss ? `<span class="fx" style="color:var(--sa-warn)">no rate for ${r.date}</span>` : ""}</td>
+        <td class="money ${miss ? "" : "net"}">${miss ? `<span class="sa-badge warn">rate missing</span>` : usd(r.net_usd)}</td></tr>`; }).join("")}</tbody></table></div></section>
+  </div>`;
+}
+
+const RENDER = { overview, ledger, tax, ask, report, missing };
+function go() {
+  const q = new URLSearchParams(location.search).get("screen");
+  const s = (q || location.hash.slice(1) || "overview");
+  const key = RENDER[s] ? s : "overview";
+  document.getElementById("nav").innerHTML = SCREENS.map(([k, label, ic], idx) =>
+    `${idx === 5 ? `<div class="label" style="padding:18px 16px 6px">Other creators</div>` : ""}<a href="#${k}" class="${k === key ? "on" : ""}">${icon(ic)}${label}${k === "missing" ? `<span class="count">1</span>` : ""}</a>`).join("");
+  document.getElementById("main").innerHTML = RENDER[key]();
+  document.getElementById("main").scrollTop = 0;
+}
+document.getElementById("tagline").textContent = C.TAGLINE;
+document.getElementById("disclaimer").textContent = C.DISCLAIMER;
+window.addEventListener("hashchange", go);
+document.addEventListener("DOMContentLoaded", go);
+</script>
+</body>
+</html>
