@@ -218,23 +218,25 @@ a.sa-prism { text-decoration: none; }
 .sa-app.bare .sa-main { padding: 0; }
 .sa-signout { align-self: flex-start; background: none; border: 0; padding: 0; font: var(--sa-small); color: var(--sa-meta); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .sa-signout:hover { color: var(--sa-ink); }
-.sa-welcome { display: grid; grid-template-columns: 1.15fr 1fr; gap: 28px; min-height: 100vh; padding: 28px; background: var(--sa-page); }
-.wl-brand { position: relative; overflow: hidden; background: var(--sa-forest); color: var(--sa-on-forest); border-radius: var(--sa-r-card); padding: 44px 48px; display: flex; flex-direction: column; }
+.sa-welcome { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; height: 100vh; min-height: 640px; padding: 28px; background: var(--sa-page); }
+.wl-brand { position: relative; overflow: hidden; background: var(--sa-forest); color: var(--sa-on-forest); border-radius: var(--sa-r-card); padding: 44px 48px; display: flex; flex-direction: column; justify-content: center; }
+.wl-brand .wl-logo { position: absolute; top: 44px; left: 48px; }
 .wl-logo { display: flex; align-items: center; gap: 12px; font: 800 22px/1 var(--sa-font); }
 .wl-logo img { border-radius: 12px; display: block; }
-.wl-brand h1 { font: 800 48px/1.06 var(--sa-font); letter-spacing: -0.03em; margin: 72px 0 32px; max-width: 560px; }
+.wl-brand h1 { font: 800 46px/1.1 var(--sa-font); letter-spacing: -0.025em; margin: 0 0 30px; }
+.wl-brand h1 span { display: block; }
 .wl-points { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 16px; max-width: 470px; position: relative; z-index: 2; }
-.wl-points li { display: grid; grid-template-columns: 36px 1fr; gap: 14px; align-items: center; font: 600 15.5px/1.45 var(--sa-font); color: var(--sa-on-forest-mid); }
-.wl-points .sa-icon { width: 36px; height: 36px; padding: 7px; border-radius: 12px; border: 1.5px solid var(--sa-on-forest-ghost-line); color: var(--sa-on-forest); }
-.wl-brand .wl-mascot { position: absolute; right: 40px; bottom: 32px; height: 164px; width: auto; z-index: 1; }
-.wl-panel { display: grid; place-items: center; }
-.wl-card { width: 100%; max-width: 440px; background: var(--sa-surface); border: 1px solid var(--sa-line); border-radius: var(--sa-r-card); box-shadow: var(--sa-shadow-float); padding: 40px 36px; display: flex; flex-direction: column; gap: 16px; }
-.wl-card h2 { font: var(--sa-h1); letter-spacing: -0.02em; margin: 0 0 4px; }
-.wl-account { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--sa-line); border-radius: var(--sa-r-inner); background: var(--sa-page); }
-.wl-account .av { width: 36px; height: 36px; border-radius: 50%; background: var(--sa-forest-100); color: var(--sa-forest); display: grid; place-items: center; font: 800 15px/1 var(--sa-font); }
-.wl-account b { display: block; font: 700 15px/1.3 var(--sa-font); }
+.wl-points li { display: grid; grid-template-columns: 32px 1fr; gap: 12px; align-items: center; font: 500 15px/1.45 var(--sa-font); color: var(--sa-on-forest-mid); }
+.wl-points .sa-icon { width: 32px; height: 32px; padding: 6px; border-radius: 10px; border: 1.5px solid var(--sa-on-forest-ghost-line); color: var(--sa-on-forest); }
+.wl-brand .wl-mascot { position: absolute; right: 36px; bottom: 28px; height: 140px; width: auto; z-index: 1; }
+.wl-panel { display: grid; place-items: center; background: var(--sa-forest-100); border-radius: var(--sa-r-card); padding: 44px; }
+.wl-card { width: 100%; max-width: 540px; background: var(--sa-surface); border: 1px solid var(--sa-line); border-radius: var(--sa-r-card); box-shadow: var(--sa-shadow-float); padding: 52px 48px; display: flex; flex-direction: column; gap: 18px; }
+.wl-card h2 { font: 800 44px/1.1 var(--sa-font); letter-spacing: -0.025em; margin: 0 0 8px; }
+.wl-account { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border: 1px solid var(--sa-line); border-radius: var(--sa-r-inner); background: var(--sa-page); }
+.wl-account .av { width: 48px; height: 48px; border-radius: 50%; background: var(--sa-forest-100); color: var(--sa-forest); display: grid; place-items: center; font: 800 19px/1 var(--sa-font); }
+.wl-account b { display: block; font: 700 18px/1.3 var(--sa-font); }
 .wl-account span { font: var(--sa-small); color: var(--sa-meta); }
-.wl-card .sa-btn { width: 100%; height: 50px; }
+.wl-card .sa-btn { width: 100%; height: 56px; font-size: 16px; }
 .wl-card .sa-btn[disabled] { color: var(--sa-meta); cursor: not-allowed; }
 .wl-foot { margin: 6px 0 0; font: var(--sa-small); color: var(--sa-meta); }
 .wl-built { align-self: flex-start; }

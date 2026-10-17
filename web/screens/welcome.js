@@ -16,7 +16,7 @@ export async function render() {
   return `<div class="sa-welcome">
     <section class="wl-brand">
       <div class="wl-logo"><img src="assets/logo/icon-96.png" alt="" width="44" height="44"><b>Side Atlas</b></div>
-      <h1>${TAGLINE}</h1>
+      <h1>${TAGLINE.split(/(?<=\.) /).map(line => `<span>${line}</span>`).join("")}</h1>
       <ul class="wl-points">${POINTS.map(([i, t]) => `<li>${icon(i)}<span>${t}</span></li>`).join("")}</ul>
       ${mascot("wave", "wl-mascot")}
     </section>
