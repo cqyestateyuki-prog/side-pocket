@@ -10,6 +10,8 @@
 <script src="data.js"></script>
 <script src="data-v13.js"></script>
 <script src="data-v131-ledger.js"></script>
+<script src="data-v14.js"></script>
+<script src="copy-v14.js"></script>
 <script src="copy-v13.js"></script>
 <script>
 /* UI is single-language (English). Source data keeps "B站", Chinese record types and names; map them for display. */
@@ -26,6 +28,7 @@
   window.SA_DATA = en(window.SA_DATA, "");
   if (window.SA_V13) window.SA_V13 = en(window.SA_V13, "");
   if (window.SA_V131_LEDGER) window.SA_V131_LEDGER = en(window.SA_V131_LEDGER, "");
+  if (window.SA_V14_RAW) window.SA_V14_RAW = en(window.SA_V14_RAW, "");
 })();
 </script>
 </head>
@@ -62,7 +65,8 @@ const dateLong = d => new Date(d + "T12:00:00").toLocaleString("en-US", { month:
 /* v1.3 nav: exactly four screens (decision #23). My data and Settings & privacy are utility links in the
    sidebar foot; every other screen is a route reached from inside the four. */
 const NAV = [["overview", "Overview", "overview"], ["ledger", "Ledger", "ledger"], ["tax", "Tax", "tax"], ["ask", "Ask Atlas", "ask"]];
-const UTIL = [["mydata", "My data", "upload"], ["privacy", "Settings & privacy", "shield"]];
+// v1.4: Milestones joins the utility links (decision #47); the nav stays at four.
+const UTIL = [["mydata", "My data", "upload"], ["milestones", "Milestones", "award"], ["privacy", "Settings & privacy", "shield"]];
 const V = window.SA_V13, X = window.SA_COPY_V13;
 const yen = v => (v < 0 ? "−" : "") + "¥" + Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const dateShort = d => new Date(d + "T12:00:00").toLocaleString("en-US", { month: "short", day: "numeric" });
@@ -755,14 +759,183 @@ function ledgerCnyCase(kind) {
 }
 const ledgerCny = () => ledgerCnyCase("ecb"), ledgerCnyFile = () => ledgerCnyCase("file");
 
+/* ================= v1.4 · all side income: entries, expenses, goal, milestones ================= */
+// Numbers: data-v14.js from gen_data_v14.py (POST /api/personal/ledger in-process + daoshou/rewards.py + the C01
+// manual-entries fixture). Copy: copy-v14.js (GPT-6 Astra). Badge reasons below are number labels built from rewards.py.
+const R = window.SA_V14_RAW, Y = window.SA_COPY_V14;
+const money = v => (v < 0 ? "−" : "") + "$" + Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const money0 = v => "$" + Math.round(v).toLocaleString("en-US");
+const BCOPY = { first_1k_month: "B1", best_month: "B2", growth_streak_3: "B3", new_source: "B4", five_sources: "B5", new_currency: "B6", total_10k: "B7", complete_month: "B8" };
+const reasonOf = b => { const n = b.numbers; switch (b.id) {
+  case "first_1k_month": return `${monthName(n.month)}: ${money(n.income_usd)} income`;
+  case "best_month": return `${monthName(n.month)}: ${money(n.income)}, above ${monthName(n.previous_best_month)} (${money(n.previous_best)})`;
+  case "growth_streak_3": return b.earned ? n.months.map(monthName).join(", ") : "";
+  case "new_source": return `${n.source}${n.manual ? ", added by you" : ""}, first income ${dateShort(b.earned_on)}`;
+  case "five_sources": return `${n.count} sources now; the 5th was ${n.fifth}`;
+  case "new_currency": return `${n.currency} on ${dateShort(n.first_date)}, after ${n.earlier_currencies.join(" and ")}`;
+  case "total_10k": return `${money(n.total_usd)} in total; passed $10,000 on ${dateShort(b.earned_on)}`;
+  case "complete_month": return `${monthName(n.month)}: all ${n.platforms} platforms imported`; } return ""; };
+const leftOf = b => !b.progress ? "" : b.progress.unit === "months" ? `${b.progress.current} of ${b.progress.target} months up in a row`
+  : b.progress.unit === "sources" ? `${b.progress.current} of ${b.progress.target} sources` : `${money(b.progress.current)} of ${money0(b.progress.target)}`;
+function W14(m) {
+  const o = R.months[m], g = R.goal.months.find(x => x.month === m);
+  const badges = R.badges[m].map(b => ({ ...b, key: BCOPY[b.id], art: R.art[b.id], reason: reasonOf(b), left: leftOf(b), date_label: b.earned_on ? dateLong(b.earned_on) : "" }));
+  const latest = badges.filter(b => b.earned).sort((x, y) => x.earned_on.localeCompare(y.earned_on)).pop();
+  return { ...o, badges, latest, goal: { amount: R.goal.amount, month: m, net: g.income, reached: g.reached, reached_on: g.reached_on, remaining: g.remaining } };
+}
+const youTag = () => `<span class="sa-you">${icon("pencil", "sm")}Added by you</span>`;
+const goalCard = g => g.reached
+  ? `<section class="sa-card sa-goal reached"><div><div class="label">${icon("target", "sm")} ${monthName(g.month)} goal · reached ${dateShort(g.reached_on)}</div>
+      <h3>${Y.GOAL_REACHED_TITLE.replace("{month}", monthName(g.month))}</h3>
+      <p>${Y.GOAL_REACHED_BODY.replace("{net}", `<b class="num">${money(g.net)}</b>`).replace("{goal}", money0(g.amount))}</p>
+      <div class="sa-progress"><i style="width:100%"></i></div><div class="note"><span class="num">${Y.GOAL_REACHED_NOTE.replace("{over}", money(g.net - g.amount)).replace("{goal}", money0(g.amount))}</span><a href="#goal-sheet">Change goal</a></div></div>
+      <img class="sa-mascot" src="${R.art.goal}" alt=""></section>`
+  : `<section class="sa-card sa-goal"><div class="top"><div class="label">${icon("target", "sm")} ${monthName(g.month)} goal</div><span class="sa-badge sim num">${pct(g.net / g.amount)}</span></div>
+      <div class="fig num">${money(g.net)}<small>of ${money0(g.amount)}</small></div>
+      <div class="sa-progress"><i style="width:${Math.min(100, g.net / g.amount * 100).toFixed(1)}%"></i></div>
+      <div class="note"><span>${Y.GOAL_SHORT.replace("{left}", `<b class="num">${money(g.remaining)}</b>`).replace("{goal}", money0(g.amount))}</span><a href="#goal-sheet">Change goal</a></div></section>`;
+const latestCard = b => `<section class="sa-card sa-latest"><img class="sa-mascot" src="${b.art}" alt="">
+  <div><div class="label">${Y.LATEST_BADGE} · ${dateShort(b.earned_on)}</div><b>${Y[b.key + "_NAME"]}</b><span class="s">${b.reason}</span></div><a href="#milestones">All ${icon("chevron", "sm rot")}</a></section>`;
+
+/* ---------------- 20 · Overview v1.4 (income first, then expenses, goal and latest badge); 22b reached ---------------- */
+function overviewV14(m) {
+  const W = W14(m), I = W.income, E = W.expenses;
+  const srcs = [...I.sources].sort((a, b) => b.net - a.net), own = srcs.filter(x => x.own);
+  const maxCat = Math.max(...E.by_category.map(c => c.amount));
+  return `
+  <div class="sa-top"><div><h1>Overview</h1><p>${monthName(m)} 2026 · ${srcs.length} income sources · ${E.count} expenses</p></div><div class="right">${periodSeg(monthName(m).slice(0, 3))}${you()}</div></div>
+  <div class="sa-grid">
+    <section class="sa-hero c7">
+      <div class="orb"></div>
+      <img class="sa-mascot hero-mascot" src="../02-logos/mascot/wave.png" alt="">
+      <div class="lead">${C.OVERVIEW_HERO.replace("{month}", monthName(m))}</div>
+      <div class="sa-fig num">${money(I.net)}</div>
+      <div class="sub">from <b class="num">${money(I.gross)}</b> gross across ${srcs.length} sources</div>
+      <div class="chips">
+        <span class="glass">${icon(I.mom.change >= 0 ? "up" : "down", "sm")} ${money(I.mom.change)} vs ${monthName(W.prev_month)} (${I.mom.change >= 0 ? "+" : ""}${pct(I.mom.pct)})</span>
+        <span class="glass">${icon("pencil", "sm")} ${money(own.reduce((t, x) => t + x.net, 0))} from ${own.length} source${own.length === 1 ? "" : "s"} you added</span>
+      </div>
+    </section>
+    <div class="c5 stack">${goalCard(W.goal)}${latestCard(W.latest)}</div>
+    <section class="sa-card c7">
+      <div class="head"><h2>Income by source</h2><span class="meta">net · share of net</span></div>
+      <div class="sa-bar">${srcs.map(x => `<span title="${x.label}" class="${x.own ? "own" : ""}" style="width:${(x.net / I.net * 100).toFixed(2)}%;${x.own ? "" : `background:${PCOL(x.key).fill}`}"></span>`).join("")}</div>
+      <ul class="sa-legend">${srcs.map(x => `<li><span class="dot round" style="${x.own ? "background:transparent;box-shadow:inset 0 0 0 2px var(--sa-accent-text)" : `background:${PCOL(x.key).fill}`}"></span><span>${x.label}${x.own ? youTag() : ""}</span><span class="amt">${money(x.net)}</span><span class="pct">${pct(x.net / I.net)}</span></li>`).join("")}</ul>
+    </section>
+    <section class="sa-card c5">
+      <div class="head"><h2>Expenses by category</h2><span class="meta">${E.count} entries</span></div>
+      <ul class="sa-catbars">${E.by_category.map(c => `<li><span>${c.category}</span><span class="amt">${money(-c.amount)}</span><span class="track"><i style="width:${(c.amount / maxCat * 100).toFixed(1)}%"></i></span></li>`).join("")}</ul>
+      <div class="sa-kept"><ul><li><span>Net income</span><span>${money(I.net)}</span></li><li><span>Your expenses</span><span>${money(-E.total)}</span></li><li class="total"><span>Kept after expenses</span><span>${money(W.kept)}</span></li></ul></div>
+      <div class="meta" style="margin-top:8px">${Y.KEPT_NOTE}</div>
+    </section>
+  </div>`;
+}
+
+/* ---------------- 19 · Ledger v1.4 (statements, your income, your expenses) ---------------- */
+function ledgerV14() {
+  const L = R.ledger, t = L.totals, m = R.show;
+  const cell = (v, cls) => !v ? `<td class="money zero">—</td>` : `<td class="money ${cls}">${money(-v)}</td>`;
+  const orig = r => r.original.currency === "USD" ? `<span class="meta">USD</span>`
+    : `${r.original.currency === "CNY" ? cny(r.original.amount) : "€" + r.original.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}<span class="fx">${r.fx_line}</span>`;
+  const row = r => {
+    const d = `<td class="num">${r.date.slice(5).replace("-", "/")}</td>`;
+    if (r.kind === "expense") return `<tr class="expense">${d}<td><i class="sa-pdot exp"></i>${r.label}${youTag()}</td><td>Expense<span class="sub">${r.ref}</span></td><td class="num">${orig(r)}</td><td class="money zero">—</td><td class="money zero">—</td><td class="money zero">—</td><td class="money exp">${money(-r.amount_usd)}</td></tr>`;
+    const dot = r.kind === "statement" ? `<i class="sa-pdot" style="background:${PCOL(r.key).fill}"></i>` : `<i class="sa-pdot own"></i>`;
+    return `<tr>${d}<td>${dot}${r.label}${r.kind === "income" ? youTag() : ""}</td><td>${r.type}${r.ref ? `<span class="sub">${r.ref}</span>` : ""}</td><td class="num">${orig(r)}</td>
+      <td class="money">${money(r.gross)}</td>${cell(r.fees, "fee")}${cell(r.withheld, "tax")}<td class="money net">${money(r.net)}</td></tr>`;
+  };
+  return `
+  <div class="sa-top"><div><h1>Ledger</h1><p>${monthName(m)} 2026 · ${Y.LEDGER_V14_SUB}</p></div>
+    <div class="right"><a class="sa-btn secondary sm">${icon("upload", "sm")} Add statements</a><a class="sa-btn primary sm" href="#entry-expense">${icon("plus", "sm")} Add entry</a>${periodSeg("Sep")}</div></div>
+  <div class="sa-kpirow">
+    ${[["Gross income", t.gross, ""], ["Fees", -t.fees, "var(--sa-fee-text)"], ["Tax withheld", -t.withheld, "var(--sa-tax-text)"], ["Your expenses", -t.expenses, ""], ["Kept after expenses", t.kept, "var(--sa-forest)"]]
+      .map(([l, v, c]) => `<div class="sa-card sa-kpi"><div class="label">${l}</div><div class="sa-fig num" style="${c ? `color:${c}` : ""}">${money(v)}</div></div>`).join("")}
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+    <span class="sa-chip on">All <span class="n">${L.counts.all}</span></span><span class="sa-chip">${icon("up", "sm")} Income <span class="n">${L.counts.income}</span></span><span class="sa-chip">${icon("down", "sm")} Expenses <span class="n">${L.counts.expenses}</span></span>
+    <span class="meta" style="margin-left:12px;display:flex;gap:6px;align-items:center">${youTag()} ${L.counts.own} entries this month</span>
+    <span style="margin-left:auto" class="sa-btn secondary sm">${icon("filter", "sm")} Source</span><span class="sa-btn secondary sm">${icon("download", "sm")} CSV</span>
+  </div>
+  <div class="sa-tablewrap"><table class="sa-table dense">
+    <thead><tr><th>Date</th><th>Source</th><th>Type</th><th>Original</th><th class="money">Gross</th><th class="money">Fees</th><th class="money">Withheld</th><th class="money">Net</th></tr></thead>
+    <tbody>${L.rows.map(row).join("")}
+      <tr class="total"><td colspan="4">${monthName(m)} total · net income ${money(t.net)}, kept after expenses ${money(t.kept)}</td><td class="money">${money(t.gross)}</td><td class="money">${money(-t.fees)}</td><td class="money">${money(-t.withheld)}</td><td class="money">${money(t.net_after_expenses)}</td></tr>
+    </tbody></table></div>`;
+}
+
+/* ---------------- 18 · Add entry sheet (over the Ledger): 18 expense, 18b income ---------------- */
+function entrySheet(kind) {
+  const ex = R.entry_examples[kind];
+  const CATS = ["Software & subscriptions", "Equipment", "Internet & phone", "Education", "Travel", "Marketing", "Other"];
+  const field = (label, ctl, help = "") => `<div class="sa-field"><span class="label">${label}</span>${ctl}${help ? `<span class="help">${help}</span>` : ""}</div>`;
+  const sym = { USD: "$", CNY: "¥", EUR: "€" }[ex.currency];
+  return ledgerV14() + `<div class="sa-drawer-backdrop"></div>
+  <aside class="sa-drawer" role="dialog" aria-label="Add entry">
+    <div class="head"><div><h2>Add entry</h2><p>${Y.ENTRY_SUB}</p></div><button class="sa-btn secondary sm">Close</button></div>
+    <div class="sa-seg wide"><button class="${kind === "income" ? "on" : ""}">${icon("up", "sm")} Income</button><button class="${kind === "expense" ? "on" : ""}">${icon("down", "sm")} Expense</button></div>
+    <div class="sa-row2">${field("Date", `<div class="ctl">${icon("calendar", "sm")} ${dateLong(ex.date)}</div>`)}${field("Currency", `<div class="ctl">${ex.currency}<span class="end">${icon("chevron", "sm")}</span></div>`)}</div>
+    ${field("Amount", `<div class="ctl big focus"><span class="pre">${sym}</span><span class="num">${ex.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span></div>`)}
+    ${kind === "income"
+      ? field("Source", `<div class="ctl">${ex.source}</div>`, Y.SOURCE_HINT) + `<div class="sa-cats">${R.own_sources.map(x => `<span class="sa-chip ${x === ex.source ? "on" : ""}"><i class="sa-pdot own" style="margin-right:2px"></i>${x}</span>`).join("")}<span class="sa-chip">${icon("plus", "sm")} New source</span></div>`
+      : field("Category", `<div class="sa-cats">${CATS.map(c => `<span class="sa-chip ${c === ex.category ? "on" : ""}">${c}</span>`).join("")}</div>`, Y.CATEGORY_HINT)}
+    ${field("Note · optional", `<div class="ctl area" style="color:var(--sa-ink)">${kind === "expense" ? ex.source : "Add a note"}</div>`, `${icon("lock", "sm")} ${Y.NOTE_PRIVACY}`)}
+    <div class="foot"><a class="sa-btn primary">${icon("plus", "sm")} Add ${kind}</a><a class="sa-btn ghost">Cancel</a></div>
+  </aside>`;
+}
+
+/* ---------------- 21 · Milestones (utility link in the sidebar; the latest badge also sits on Overview) ---------------- */
+function milestones() {
+  const W = W14(R.show), earned = W.badges.filter(b => b.earned), b0 = W.latest;
+  return `
+  <div class="sa-top"><div><h1>Milestones</h1><p>${Y.MILESTONES_SUB}</p></div><div class="right">${you()}</div></div>
+  <div class="sa-grid">
+    <section class="sa-hero c12" style="min-height:0;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;padding-top:24px;padding-bottom:24px">
+      <div><div class="lead">${Y.LATEST_BADGE} · ${b0.date_label}</div>
+        <div class="sa-fig num" style="font-size:44px;margin:10px 0 8px">${earned.length} of ${W.badges.length} earned</div>
+        <div class="sub">${Y[b0.key + "_NAME"]}: ${b0.reason}</div></div>
+      <img class="sa-mascot" src="${b0.art}" alt="" style="height:var(--sa-mascot-hero);position:relative">
+    </section>
+    <div class="c12 sa-badgegrid">${W.badges.map(b => `<div class="sa-badgetile ${b.earned ? "" : "locked"} ${b === b0 ? "latest" : ""}">
+      ${b.earned ? "" : `<span class="lock">${icon("lock", "sm")}</span>`}
+      <div class="art"><img src="${b.art}" alt=""></div>
+      <b>${Y[b.key + "_NAME"]}</b><span class="d">${Y[b.key + "_DESC"]}</span>
+      ${b.earned ? `<div class="why">${b.reason}<span>Earned ${b.date_label}</span></div>`
+        : `<div class="why">${b.left}<div class="sa-progress"><i style="width:${(b.progress.current / b.progress.target * 100).toFixed(1)}%"></i></div></div>`}
+    </div>`).join("")}</div>
+  </div>`;
+}
+
+/* ---------------- 22 · Set monthly goal sheet (over Overview, August) ---------------- */
+function goalSheet() {
+  const amt = R.goal.amount;
+  return overviewV14("2026-08") + `<div class="sa-drawer-backdrop"></div>
+  <aside class="sa-drawer" role="dialog" aria-label="Set a monthly goal">
+    <div class="head"><div><h2>Set a monthly goal</h2><p>${Y.GOAL_SHEET_SUB}</p></div><button class="sa-btn secondary sm">Close</button></div>
+    <div class="sa-field"><span class="label">Goal per month</span><div class="ctl big focus"><span class="pre">$</span><span class="num">${amt.toLocaleString("en-US")}</span><span class="end" style="font:600 14px/1 var(--sa-font)">net income</span></div></div>
+    <div class="sa-seg wide" style="grid-template-columns:repeat(4,1fr)">${R.goal_presets.map(v => `<button class="${v === amt ? "on" : ""}">${money0(v)}</button>`).join("")}</div>
+    <section class="sa-card" style="padding:16px 18px">
+      <div class="label" style="margin-bottom:6px">Your last ${R.goal.months.length} months at ${money0(amt)}</div>
+      <ul class="sa-catbars">${R.goal.months.map(x => `<li><span>${monthName(x.month)}</span><span class="amt">${money(x.income)} ${x.reached ? `<span class="sa-badge ok">${icon("check", "sm")} reached</span>` : `<span class="sa-badge sim">${pct(x.progress)}</span>`}</span><span class="track"><i style="width:${Math.min(100, x.progress * 100).toFixed(1)}%;background:var(--sa-forest)"></i></span></li>`).join("")}</ul>
+    </section>
+    <div class="foot"><a class="sa-btn primary">${icon("target", "sm")} Save goal</a><a class="sa-btn ghost">Cancel</a></div>
+  </aside>`;
+}
+const overviewV14p = () => overviewV14("2026-08"), overviewV14r = () => overviewV14("2026-09");
+const entryExpense = () => entrySheet("expense"), entryIncome = () => entrySheet("income");
+
 const RENDER = { overview, ledger, tax, ask, report, sources, settings, missing,
   "mydata-empty": mydataEmpty, mydata, privacy, "tax-cn": taxCn, "overview-cny": overviewCny,
-  "privacy-delete": privacyDelete, "tax-both": taxBoth, "overview-empty": overviewEmpty, "ledger-cny": ledgerCny, "ledger-cny-file": ledgerCnyFile };
+  "privacy-delete": privacyDelete, "tax-both": taxBoth, "overview-empty": overviewEmpty, "ledger-cny": ledgerCny, "ledger-cny-file": ledgerCnyFile,
+  "entry-expense": entryExpense, "entry-income": entryIncome, "ledger-v14": ledgerV14, "overview-v14": overviewV14p, milestones, "goal-sheet": goalSheet, "goal-reached": overviewV14r };
 const NAV_OF = { sources: "ledger", settings: "tax", report: "tax", missing: "overview", "mydata-empty": "mydata", "tax-cn": "tax", "overview-cny": "overview",
-  "privacy-delete": "privacy", "tax-both": "tax", "overview-empty": "overview", "ledger-cny": "ledger", "ledger-cny-file": "ledger" };
-const YOURS = new Set(["mydata-empty", "mydata", "privacy", "tax-cn", "overview-cny", "privacy-delete", "tax-both", "overview-empty", "ledger-cny", "ledger-cny-file"]);
+  "privacy-delete": "privacy", "tax-both": "tax", "overview-empty": "overview", "ledger-cny": "ledger", "ledger-cny-file": "ledger",
+  "entry-expense": "ledger", "entry-income": "ledger", "ledger-v14": "ledger", "overview-v14": "overview", "goal-sheet": "overview", "goal-reached": "overview" };
+const YOURS = new Set(["mydata-empty", "mydata", "privacy", "tax-cn", "overview-cny", "privacy-delete", "tax-both", "overview-empty", "ledger-cny", "ledger-cny-file",
+  "entry-expense", "entry-income", "ledger-v14", "overview-v14", "milestones", "goal-sheet", "goal-reached"]);
 const NO_DATA = new Set(["mydata-empty", "overview-empty"]); // Your data mode before any import
+const V14_SCREENS = new Set(["entry-expense", "entry-income", "ledger-v14", "overview-v14", "milestones", "goal-sheet", "goal-reached"]);
 const YOURS_HREF = { overview: "overview-cny", ledger: "ledger-cny", tax: "tax-cn" }; // in Your data mode the nav opens the v1.3 drawings
+const V14_HREF = { overview: "overview-v14", ledger: "ledger-v14", tax: "tax-cn" }; // and the v1.4 drawings from v1.4 screens
 function go() {
   const q = new URLSearchParams(location.search).get("screen");
   const s = (q || location.hash.slice(1) || "overview");
@@ -771,9 +944,9 @@ function go() {
   const yours = YOURS.has(key);
   document.getElementById("mode").innerHTML = `<a href="#mydata" class="${yours ? "on" : ""}">${icon("lock", "sm")}Your data</a><a href="#overview" class="${yours ? "" : "on"}">Demo data</a>`;
   document.getElementById("nav").innerHTML = NAV.map(([k, label, ic]) =>
-    `<a href="#${(yours && (NO_DATA.has(key) ? (k === "overview" ? "overview-empty" : "") : YOURS_HREF[k])) || k}" class="${k === navKey ? "on" : ""}">${icon(ic)}${label}</a>`).join("");
+    `<a href="#${(yours && (NO_DATA.has(key) ? (k === "overview" ? "overview-empty" : "") : (V14_SCREENS.has(key) ? V14_HREF : YOURS_HREF)[k])) || k}" class="${k === navKey ? "on" : ""}">${icon(ic)}${label}</a>`).join("");
   document.getElementById("util").innerHTML = UTIL.map(([k, label, ic]) =>
-    `<a href="#${k}" class="${k === navKey ? "on" : ""}">${icon(ic)}${label}${k === "mydata" && yours && !NO_DATA.has(key) ? `<span class="r">${V.files.length} files</span>` : ""}</a>`).join("");
+    `<a href="#${k}" class="${k === navKey ? "on" : ""}">${icon(ic)}${label}${k === "mydata" && yours && !NO_DATA.has(key) ? `<span class="r">${V.files.length} files</span>` : ""}${k === "milestones" && yours && !NO_DATA.has(key) ? `<span class="r">${R.badges[R.show].filter(b => b.earned).length} of ${R.badges[R.show].length}</span>` : ""}</a>`).join("");
   document.getElementById("prism").innerHTML = `<i></i>${yours ? "Content-free PRISM traces" : "Every run traced in PRISM"}`;
   document.getElementById("main").innerHTML = RENDER[key]();
   document.getElementById("main").scrollTop = 0;

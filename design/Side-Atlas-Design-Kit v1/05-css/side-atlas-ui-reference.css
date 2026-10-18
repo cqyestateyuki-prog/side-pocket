@@ -376,3 +376,87 @@ body { background: var(--sa-page); color: var(--sa-ink); font: var(--sa-body); -
 .sa-btn.danger.solid:hover { box-shadow: inset 0 0 0 999px var(--sa-scrim); }
 .sa-btn.ghost { background: transparent; border-color: transparent; color: var(--sa-text-mid); }
 .sa-btn.ghost:hover { color: var(--sa-ink); }
+
+/* ---------- v1.4 · all side income: entries, expenses, goal, milestones ---------- */
+/* Right-hand sheet (Add entry, Set goal). Same frame as the product's Import statements drawer. */
+.sa-drawer-backdrop { position: fixed; inset: 0; background: var(--sa-scrim); z-index: 40; }
+.sa-drawer { position: fixed; z-index: 41; top: 0; right: 0; bottom: 0; width: 480px; background: var(--sa-page); box-shadow: var(--sa-shadow-float); padding: 24px 26px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+.sa-drawer .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.sa-drawer .head h2 { font: var(--sa-h2); margin: 0; }
+.sa-drawer .head p { margin: 6px 0 0; font: var(--sa-small); color: var(--sa-text-mid); }
+.sa-drawer .foot { margin-top: auto; display: flex; gap: 10px; padding-top: 8px; }
+/* Form fields: label 12 uppercase, control 48px, radius 14, help line under. */
+.sa-field { display: flex; flex-direction: column; gap: 7px; }
+.sa-field > .label { font-size: 11px; }
+.sa-field .ctl { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 14px; background: var(--sa-surface); border: 1.5px solid var(--sa-line-strong); border-radius: var(--sa-r-input); font: 600 15px/1 var(--sa-font); color: var(--sa-ink); }
+.sa-field .ctl.focus { border-color: var(--sa-forest); box-shadow: 0 0 0 3px var(--sa-forest-100); }
+.sa-field .ctl .pre { color: var(--sa-meta); font-weight: 700; }
+.sa-field .ctl .end { margin-left: auto; color: var(--sa-meta); }
+.sa-field .ctl.big { height: 60px; font: 800 26px/1 var(--sa-font); letter-spacing: -0.01em; }
+.sa-field .ctl.area { height: 76px; align-items: flex-start; padding-top: 12px; font: 500 14px/1.4 var(--sa-font); color: var(--sa-meta); }
+.sa-field .help { font: var(--sa-small); color: var(--sa-meta); display: flex; gap: 6px; align-items: center; }
+.sa-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* Income | Expense toggle: a two-option segmented pill that fills the sheet width. */
+.sa-seg.wide { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+.sa-seg.wide button { height: 40px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+/* Category pills (expenses): radio chips that wrap. */
+.sa-cats { display: flex; flex-wrap: wrap; gap: 8px; }
+.sa-cats .sa-chip { cursor: pointer; }
+/* "Added by you": tag on rows the person entered by hand. */
+.sa-you { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; border-radius: var(--sa-r-badge); padding: 3px 7px; background: var(--sa-lime-100); color: var(--sa-accent-text); font: 700 11px/1.1 var(--sa-font); white-space: nowrap; vertical-align: 1px; }
+.sa-you .sa-icon { width: 12px; height: 12px; }
+/* Dots: platforms are filled; your own sources are hollow rings; expenses use a dark square. */
+.sa-pdot.own { background: transparent; box-shadow: inset 0 0 0 2px var(--sa-accent-text); }
+.sa-pdot.exp { border-radius: 3px; background: var(--sa-text-mid); }
+.sa-bar span.own { background: repeating-linear-gradient(135deg, var(--sa-lime) 0 4px, var(--sa-lime-100) 4px 8px); }
+.sa-table td.exp { color: var(--sa-ink); font-weight: 700; }
+.sa-table tr.expense td { background: var(--sa-page); }
+/* Filter chips with counts. */
+.sa-chip .n { font-variant-numeric: tabular-nums; color: var(--sa-meta); font-weight: 600; }
+.sa-chip.on .n { color: var(--sa-forest); }
+/* Expenses by category: one bar per row, one colour (expenses are not a platform deduction). */
+.sa-catbars { list-style: none; margin: 0; padding: 0; }
+.sa-catbars li { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; padding: 9px 0; border-top: 1px solid var(--sa-line); font: 600 14px/1.3 var(--sa-font); }
+.sa-catbars li:first-child { border-top: 0; }
+.sa-catbars .amt { font-variant-numeric: tabular-nums; }
+.sa-catbars .track { grid-column: 1 / -1; height: 6px; border-radius: var(--sa-r-pill); background: var(--sa-sage); overflow: hidden; }
+.sa-catbars .track i { display: block; height: 100%; background: var(--sa-text-mid); border-radius: var(--sa-r-pill); }
+/* Kept after expenses: a three-line sum. */
+.sa-kept { margin-top: 14px; border-radius: var(--sa-r-inner); background: var(--sa-sage); padding: 10px 16px; }
+.sa-kept li { display: flex; justify-content: space-between; padding: 5px 0; font: 600 14px/1.3 var(--sa-font); font-variant-numeric: tabular-nums; list-style: none; }
+.sa-kept ul { margin: 0; padding: 0; }
+.sa-kept li.total { border-top: 1px solid var(--sa-line-strong); margin-top: 4px; padding-top: 9px; font-weight: 800; color: var(--sa-forest); }
+/* Monthly goal card: progress, then the reached state. */
+.sa-goal .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.sa-goal .fig { font: 800 30px/1.1 var(--sa-font); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: 8px; }
+.sa-goal .fig small { font: 600 15px/1 var(--sa-font); color: var(--sa-meta); margin-left: 6px; letter-spacing: 0; }
+.sa-progress { height: 12px; border-radius: var(--sa-r-pill); background: var(--sa-sage); overflow: hidden; margin: 12px 0 8px; }
+.sa-progress i { display: block; height: 100%; border-radius: var(--sa-r-pill); background: var(--sa-forest); }
+.sa-goal .note { font: var(--sa-small); color: var(--sa-text-mid); display: flex; justify-content: space-between; gap: 10px; }
+.sa-goal .note a { color: var(--sa-forest); font-weight: 700; text-decoration: none; white-space: nowrap; }
+.sa-goal.reached { background: var(--sa-lime-100); border-color: transparent; display: grid; grid-template-columns: 1fr var(--sa-mascot-card); gap: 16px; align-items: center; }
+.sa-goal.reached .sa-progress { background: var(--sa-surface); }
+.sa-goal.reached h3 { margin: 4px 0 4px; font: 800 20px/1.25 var(--sa-font); letter-spacing: var(--sa-tracking-tight); }
+.sa-goal.reached p { margin: 0; font: var(--sa-small); font-size: 14px; color: var(--sa-text-mid); }
+.sa-goal.reached img { height: var(--sa-mascot-card); width: auto; }
+/* Badge tile: Atlas pose, name, the reason in numbers or what's left. Locked tiles are greyed with a lock. */
+.sa-badgegrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.sa-badgetile { position: relative; background: var(--sa-surface); border: 1px solid var(--sa-line); border-radius: var(--sa-r-card); padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 6px; min-height: 236px; }
+.sa-badgetile .art { height: 96px; display: grid; place-items: center; background: var(--sa-lime-100); border-radius: var(--sa-r-inner); margin-bottom: 6px; }
+.sa-badgetile .art img { height: 84px; width: auto; }
+.sa-badgetile b { font: 800 15.5px/1.25 var(--sa-font); color: var(--sa-ink); }
+.sa-badgetile .d { font: var(--sa-small); color: var(--sa-text-mid); }
+.sa-badgetile .why { margin-top: auto; padding-top: 8px; border-top: 1px solid var(--sa-line); font: 600 12.5px/1.35 var(--sa-font); color: var(--sa-forest); font-variant-numeric: tabular-nums; }
+.sa-badgetile .why span { display: block; color: var(--sa-meta); font-weight: 500; }
+.sa-badgetile.locked .art { background: var(--sa-sage); }
+.sa-badgetile.locked .art img { filter: grayscale(1); opacity: .45; }
+.sa-badgetile.locked .lock { position: absolute; top: 26px; right: 26px; width: 28px; height: 28px; border-radius: 50%; background: var(--sa-surface); color: var(--sa-meta); display: grid; place-items: center; box-shadow: var(--sa-shadow-card); }
+.sa-badgetile.locked .why { color: var(--sa-text-mid); }
+.sa-badgetile .sa-progress { height: 6px; margin: 6px 0 2px; }
+.sa-badgetile.latest { border: 2px solid var(--sa-forest); }
+/* Latest badge on Overview: compact row. */
+.sa-latest { display: grid; grid-template-columns: var(--sa-mascot-inline) 1fr auto; gap: 14px; align-items: center; padding: 16px 20px; }
+.sa-latest img { height: var(--sa-mascot-inline); width: auto; }
+.sa-latest b { display: block; font: 800 16px/1.25 var(--sa-font); }
+.sa-latest span.s { font: var(--sa-small); color: var(--sa-text-mid); }
+.sa-latest a { color: var(--sa-forest); font: 700 13px/1 var(--sa-font); text-decoration: none; white-space: nowrap; display: flex; align-items: center; gap: 4px; }

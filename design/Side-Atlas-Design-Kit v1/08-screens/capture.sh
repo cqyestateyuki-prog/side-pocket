@@ -1,7 +1,7 @@
 #!/bin/bash
 # Export prototype screens as 1440×900 PNGs with headless Chrome (v1.3.1).
 #   bash capture.sh          every screen
-#   bash capture.sh v13      only the v1.3 and v1.3.1 screens (10 to 17)
+#   bash capture.sh v13      only the v1.3, v1.3.1 and v1.4 screens (10 to 22)
 set -euo pipefail
 KIT="$(cd "$(dirname "$0")/.." && pwd)"
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -36,3 +36,13 @@ shoot 17-ledger-cny-ecb ledger-cny 900
 shoot 17-ledger-cny-ecb-full ledger-cny "${LEDGER_ECB_FULL_HEIGHT:-2000}"
 shoot 17b-ledger-cny-ratefile ledger-cny-file 900
 shoot 17b-ledger-cny-ratefile-full ledger-cny-file "${LEDGER_FILE_FULL_HEIGHT:-2230}"
+# v1.4
+shoot 18-add-expense entry-expense 900
+shoot 18b-add-income entry-income 900
+shoot 19-ledger-v14 ledger-v14 900
+shoot 19b-ledger-v14-full ledger-v14 "${LEDGER_V14_FULL_HEIGHT:-2460}"
+shoot 20-overview-v14 overview-v14 900
+shoot 20b-overview-v14-full overview-v14 "${OVERVIEW_V14_FULL_HEIGHT:-960}"
+shoot 21-milestones milestones 900
+shoot 22-goal-sheet goal-sheet 900
+shoot 22b-goal-reached goal-reached 900
