@@ -55,9 +55,13 @@ WCAG AA checks led to specific fixes: on-primary text reached 4.71:1, metadata i
 
 ![Palette lab: forest, Instagram gradient and violet above pink, forest with pink and the chosen soft violet](case_study_assets/02-palette-lab.png)
 
-The mascot started with Pop Mart blind-box references. I ruled out an owl because it felt too close to Duolingo. The pigeon’s round, shiny eyes had the same problem, so I chose crescent `^ ^` eyes.
+### Mascot references: Duolingo and Pop Mart
 
-I moved from 3D concepts to a flat sticker illustration. The first placement was too large, so I defined size tokens of 128, 84, 56 and 40 pixels.
+I wanted Side Pocket to have a mascot. My references were Duolingo and Pop Mart. From Duolingo, I took the idea of a character reacting to the product. Tilly waves on the overview and works while the assistant runs. Tilly looks worried when data is missing and celebrates milestones, giving rewards and empty states a face in a finance app.
+
+I did not want Duolingo’s look. An owl felt too close, so I chose a carrier pigeon, which fits money arriving from many places. The first drafts had big, round, shiny eyes that still read as Duolingo. I switched to closed crescent `^ ^` eyes.
+
+From Pop Mart’s blind-box designer toys, I took chubby proportions and a pastel palette. The collectible approach became 16 poses, with a different pose on each milestone badge. The first concepts looked like 3D toy renders. I moved to flat sticker illustration so Tilly would read at small UI sizes: 128, 84, 56 and 40 px.
 
 ![Pigeon concepts move from 3D round eyes to crescent eyes and a flat sticker](case_study_assets/03-mascot-iterations.png)
 
