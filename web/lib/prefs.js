@@ -43,11 +43,11 @@ const ENTERED = "sa_entered";
 export const entered = () => read(ENTERED) === "1";
 export const setEntered = on => write(ENTERED, on ? "1" : null);
 
-// Which ledger the app shows: "demo" (the fictional creators) or "yours" (statements uploaded in this
-// browser, lib/store.js). Remembered per viewer.
-const MODE = "sideatlas.mode";
-export const mode = () => (read(MODE) === "yours" ? "yours" : "demo");
-export const setMode = m => write(MODE, m === "yours" ? "yours" : null);
+// Whether Moon Spirit's account has been loaded into this browser once (lib/seed.js). Kept apart from
+// the sideatlas.* keys so Delete all data doesn't bring her statements straight back.
+const SEEDED = "sa_seeded";
+export const seeded = () => read(SEEDED) === "1";
+export const setSeeded = on => write(SEEDED, on ? "1" : null);
 
 // Delete all my data also clears this viewer's Side Pocket preferences (set-aside choices, mode).
 export function clearPrefs() {

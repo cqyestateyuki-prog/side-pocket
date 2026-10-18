@@ -9,11 +9,9 @@ import { CATEGORIES, CURRENCIES, current, newEntryId, remove, upsert } from "./e
 const SYMBOL = { USD: "$", CNY: "¥", EUR: "€", GBP: "£" };
 const MAX_LABEL = 60;
 
-// The sample account's statements cover July to September 2026, so her entries stay in that range.
-function dateRange(ctx) {
-  const today = localDay();
-  if (ctx.yours) return { min: "2000-01-01", max: today };
-  return { min: "2026-07-01", max: today < "2026-09-30" ? today : "2026-09-30" };
+// Any past date up to today (the server rejects future dates).
+function dateRange() {
+  return { min: "2000-01-01", max: localDay() };
 }
 
 function defaultDate(ctx, { min, max }) {

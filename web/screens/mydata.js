@@ -151,7 +151,7 @@ async function importedView(ctx) {
     <section class="sa-hero drop c7" style="min-height:0">
       <div class="orb"></div>
       ${mascot("receipt", "hero-mascot")}
-      <div class="sa-fig num">${read} statement${read === 1 ? "" : "s"}</div>
+      <div class="sa-fig num">${stmts.length} statement${stmts.length === 1 ? "" : "s"}</div>
       <div class="sub">${sum.records} records${first ? ` · ${dateShort(first)} to ${dateShort(last)}` : ""}</div>
       <div class="actions"><button type="button" class="sa-btn on-dark" data-choose>${icon("upload", "sm")} Add statements</button></div>
       ${fileInput}

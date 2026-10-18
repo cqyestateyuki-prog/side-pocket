@@ -23,14 +23,14 @@ const lastDay = m => `${m}-${String(new Date(+m.slice(0, 4), +m.slice(5, 7), 0).
 export function goalCard(goal) {
   const change = `<button type="button" class="linkbtn" data-goal>${V14.CHANGE_GOAL}</button>`;
   if (!goal?.months?.length) {
-    return `<section class="sa-card sa-goal empty"><div class="top"><div class="label">${icon("target", "sm")} ${V14.GOAL_EMPTY_TITLE}</div></div>
-      <p class="meta">${V14.GOAL_EMPTY_BODY}</p><button type="button" class="sa-btn secondary sm" data-goal>${icon("target", "sm")} ${V14.SET_GOAL}</button></section>`;
+    return `<section class="sa-card sa-goal empty"><div class="top"><div class="label"><img class="goal-tilly" src="assets/mascot/badges/flag.png" alt="" width="28" height="28">${V14.GOAL_EMPTY_TITLE}</div></div>
+      <p class="meta">${V14.GOAL_EMPTY_BODY}</p><button type="button" class="sa-btn secondary sm" data-goal>${icon("flag", "sm")} ${V14.SET_GOAL}</button></section>`;
   }
   const g = goal.months.at(-1), c = goal.currency, month = monthName(g.month);
   if (g.reached) {
     const over = Math.round((g.income - goal.amount) * 100) / 100;
     return `<section class="sa-card sa-goal reached"><div>
-        <div class="label">${icon("target", "sm")} ${V14.GOAL_REACHED_LABEL.replace("{month}", month).replace("{date}", dateShort(g.reached_on))}</div>
+        <div class="label">${icon("flag", "sm")} ${V14.GOAL_REACHED_LABEL.replace("{month}", month).replace("{date}", dateShort(g.reached_on))}</div>
         <h3>${V14.GOAL_REACHED_TITLE.replace("{month}", month)}</h3>
         <p>${V14.GOAL_REACHED_BODY.replace("{net}", `<b class="num">${cur(g.income, c)}</b>`).replace("{goal}", whole(goal.amount, c))}</p>
         <div class="sa-progress"><i style="width:100%"></i></div>
@@ -39,7 +39,7 @@ export function goalCard(goal) {
   }
   const ended = lastDay(g.month) < localDay();
   const left = `<b class="num">${cur(g.remaining, c)}</b>`;
-  return `<section class="sa-card sa-goal"><div class="top"><div class="label">${icon("target", "sm")} ${V14.GOAL_LABEL.replace("{month}", month)}</div><span class="sa-badge sim num">${pct(g.progress)}</span></div>
+  return `<section class="sa-card sa-goal"><div class="top"><div class="label"><img class="goal-tilly" src="assets/mascot/badges/flag.png" alt="" width="28" height="28">${V14.GOAL_LABEL.replace("{month}", month)}</div><span class="sa-badge sim num">${pct(g.progress)}</span></div>
       <div class="fig num">${cur(g.income, c)}<small>of ${whole(goal.amount, c)}</small></div>
       <div class="sa-progress"><i style="width:${Math.min(100, g.progress * 100).toFixed(1)}%"></i></div>
       <div class="note"><span>${(ended ? V14.GOAL_SHORT : V14.GOAL_TO_GO).replace("{left}", left).replace("{goal}", whole(goal.amount, c))}</span>${change}</div></section>`;

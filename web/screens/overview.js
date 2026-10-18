@@ -20,7 +20,7 @@ const youTag = `<span class="sa-you">${icon("pencil", "sm")}${V14.YOU_TAG}</span
 const ring = `<span class="dot round own"></span>`;
 
 export async function render(ctx) {
-  if (ctx.yours && !ctx.has) return emptyScreen(ctx, "Overview", YOURS.EMPTY_OVERVIEW);
+  if (!ctx.has) return emptyScreen(ctx, "Overview", YOURS.EMPTY_OVERVIEW);
   const money = ctx.money;
   const o = await load(ctx);
   ctx.noteBadges(o.badges);
@@ -28,14 +28,13 @@ export async function render(ctx) {
   const income = k?.income ?? t.net, gross = k?.gross_income ?? t.gross;
   const label = periodLabel(ctx.period).split(" · ")[0];
   const head = top(ctx, "Overview", "", { actions: ctx.currencySeg(ctx) });
-  if (!gross && !o.expenses?.total) return head + `<div class="sa-grid">${warnCard(ctx, o.issues)}${empty("No income recorded for this period.", ctx.yours ? "Pick another month." : "Pick another month, or another creator.")}</div>`;
+  if (!gross && !o.expenses?.total) return head + `<div class="sa-grid">${warnCard(ctx, o.issues)}${empty("No income recorded for this period.", "Pick another month.")}</div>`;
 
   const isQ = ctx.period.includes("Q");
-  const currencies = [...new Set(o.platforms.flatMap(p => p.currencies ?? []))].filter(c => c !== ctx.cur);
   const mom = o.mom, own = o.sources.filter(s => s.manual);
   const sources = [...o.sources].sort((a, b) => b.income - a.income);
   const maxCat = Math.max(0, ...o.categories.map(c => c.amount));
-  const milestones = ctx.href("milestones", { c: ctx.yours || ctx.creator === "C01" ? null : ctx.creator });
+  const milestones = "#milestones";
 
   return head + `
   <div class="sa-grid">
@@ -50,7 +49,6 @@ export async function render(ctx) {
         ${o.complete ? "" : `<span class="glass">${icon("alert", "sm")} Incomplete · ${o.issues.length} record${o.issues.length === 1 ? "" : "s"} waiting for a rate</span>`}
         ${mom?.change != null ? `<span class="glass">${icon(mom.change >= 0 ? "up" : "down", "sm")} ${money(mom.change)} vs ${monthName(mom.previous_month)}${mom.change_pct != null ? ` (${mom.change_pct > 0 ? "+" : ""}${pct(mom.change_pct)})` : ""}</span>` : ""}
         ${own.length ? `<span class="glass">${icon("pencil", "sm")} ${V14.CHIP_OWN.replace("{amount}", money(o.manual.total)).replace("{n}", own.length).replace("sources", own.length === 1 ? "source" : "sources")}</span>` : ""}
-        ${currencies.length ? `<span class="glass">${icon("fx", "sm")} ${currencies.join(" & ")} converted using record-date rates</span>` : ""}
       </div>
     </section>
     <div class="c5 stack">${goalCard(o.goal)}${latestCard(o.badges, milestones)}</div>

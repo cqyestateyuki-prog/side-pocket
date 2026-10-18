@@ -1,11 +1,10 @@
-// Side Pocket front end: hash router + shared shell (nav, data switch, creator switcher, period switcher).
+// Side Pocket front end: hash router + shared shell (nav, period and currency switches).
 // Screens live in screens/*.js and register below; each exports render(ctx) -> Promise<html>
 // and may export mount(ctx) to wire up events after the html is in the page.
-// Two ledgers: "Demo data" (the fictional creators, GET /api/*) and "Your data" (statements uploaded
-// in this browser, POST /api/personal/*). Screens ask ctx.load() and don't care which.
-import { get, postDemo } from "./lib/api.js";
-import { demoBody } from "./lib/entries.js";
-import { cur, esc, icon, monthName, monthShort, quarterOf } from "./lib/format.js";
+// One account: Moon Spirit, whose statements, entries and settings are kept in this browser
+// (lib/store.js, loaded the first time by lib/seed.js); every screen asks ctx.load(), which posts
+// them to /api/personal/*.
+import { cur, esc, icon, monthName, quarterOf } from "./lib/format.js";
 import * as overview from "./screens/overview.js";
 import * as ledger from "./screens/ledger.js";
 import * as tax from "./screens/tax.js";
@@ -15,14 +14,15 @@ import * as welcome from "./screens/welcome.js";
 import * as mydata from "./screens/mydata.js";
 import * as settings from "./screens/settings.js";
 import * as milestones from "./screens/milestones.js";
-import { entered, mode, setEntered, setMode } from "./lib/prefs.js";
+import { entered, setEntered } from "./lib/prefs.js";
 import * as store from "./lib/store.js";
+import { seedOnFirstVisit } from "./lib/seed.js";
 import { bindDropdowns, dropdown } from "./lib/dropdown.js";
 import { post } from "./lib/personal.js";
 
-// The nav has exactly four screens (user decision). `period` is "month" (Jul/Aug/Sep/Q3) or null.
+// The nav has exactly four screens (user decision). `period` is "month" or "quarter" or null.
 // The accountant report is reached from Tax ("Export for my accountant"), not from the nav.
-// Under a rule: My data and Settings & privacy (they always show My uploads) and Milestones (either account).
+// Under a rule: My data, Milestones and Settings & privacy.
 const SCREENS = [
   { key: "overview", label: "Overview", icon: "overview", module: overview, period: "month" },
   { key: "ledger", label: "Ledger", icon: "ledger", module: ledger, period: "month" },
@@ -30,51 +30,31 @@ const SCREENS = [
   { key: "ask", label: "Ask Tilly", icon: "ask", module: ask, period: null },
   { key: "report", label: "Report", icon: "report", module: report, period: "quarter", nav: false, navAs: "tax" },
   { key: "welcome", label: "Welcome", module: welcome, period: null, nav: false, bare: true },
-  { key: "mydata", label: "My data", icon: "upload", module: mydata, period: null, nav: false, yours: true, util: true },
+  { key: "mydata", label: "My data", icon: "upload", module: mydata, period: null, nav: false, util: true },
   { key: "milestones", label: "Milestones", icon: "award", module: milestones, period: null, nav: false, util: true },
-  { key: "settings", label: "Settings & privacy", icon: "shield", module: settings, period: null, nav: false, yours: true, util: true },
+  { key: "settings", label: "Settings & privacy", icon: "shield", module: settings, period: null, nav: false, util: true },
 ];
 
-const DEFAULTS = { c: "C01", month: "2026-09", quarter: "2026-Q3" };
-const PERIODS = ["2026-07", "2026-08", "2026-09", "2026-Q3"];
+// The person using the app (fictional).
+export const ME = { name: "Moon Spirit", initial: "M", meta: "New York · designer" };
 
-// How each fictional creator is introduced in the UI (labels only — no money). The UI is
-// English-only, so creators whose data name is Chinese get a romanised display name.
-const PERSONA = {
-  C01: { display: "Moon Spirit", meta: "New York · US tax home · single-member LLC" },
-  C02: { display: "Xiao Lu" },
-  C04: { display: "A You" },
-  C07: { display: "Mo Bai" },
-  C11: { display: "Lena Koch", meta: "Berlin · DE tax home" },
-};
-
-export function persona(c) {
-  if (c.id === "you") return { display: "You", meta: "Your data", name: "You" };
-  const p = PERSONA[c.id] ?? {};
-  return { display: p.display ?? c.name, meta: p.meta ?? `${c.tax_country} tax home`, name: c.name };
-}
-
-// Your data: the months in the uploaded statements and the quarters they fall in (the last four).
-function yourPeriods(data) {
+// The months in the stored statements and the quarters they fall in (the last four).
+function periods(data) {
   const months = data?.summary?.months ?? [];
   return { months, quarters: [...new Set(months.map(quarterOf))].slice(-4) };
 }
 
-function parse(yours, data) {
+function parse(data) {
   const [screen, query = ""] = location.hash.slice(1).split("?");
   const q = new URLSearchParams(query);
   const def = SCREENS.find(s => s.key === screen) ?? SCREENS[0];
   let period = q.get("p");
-  if (yours) {
-    const { months, quarters } = yourPeriods(data);
-    const latest = months.at(-1) ?? null;
-    if (!period || !(months.includes(period) || quarters.includes(period))) {
-      period = def.period === "quarter" ? (latest && quarterOf(latest)) : latest;
-    }
-  } else {
-    period ??= def.period === "quarter" ? DEFAULTS.quarter : DEFAULTS.month;
+  const { months, quarters } = periods(data);
+  const latest = months.at(-1) ?? null;
+  if (!period || !(months.includes(period) || quarters.includes(period))) {
+    period = def.period === "quarter" ? (latest && quarterOf(latest)) : latest;
   }
-  return { screen: def, creator: q.get("c") ?? DEFAULTS.c, period, query: q };
+  return { screen: def, period, query: q };
 }
 
 export function href(screen, params) {
@@ -83,8 +63,7 @@ export function href(screen, params) {
 }
 
 function periodsOf(ctx) {
-  if (!ctx.yours) return PERIODS;
-  const { months, quarters } = yourPeriods(ctx.data);
+  const { months, quarters } = periods(ctx.data);
   return [...months, ...quarters];
 }
 
@@ -107,64 +86,37 @@ export function periodSeg(ctx) {
     trigger: `${icon("calendar", "sm")}<span>${periodName(ctx.period)}</span>` });
 }
 
-const issueText = c => c.data_issues?.length
-  ? `${c.data_issues.reduce((n, i) => n + i.count, 0)} record${c.data_issues.length === 1 && c.data_issues[0].count === 1 ? "" : "s"} need${c.data_issues.length === 1 && c.data_issues[0].count === 1 ? "s" : ""} a rate · ${monthShort(c.data_issues[0].month)}`
-  : "";
-
-export function whoPill(ctx) {
-  if (ctx.yours) {
-    return `<div class="sa-who"><div class="av">${icon("lock", "sm")}</div><div><b>You</b><span>Your data · ${ctx.data.persistent ? "kept in this browser" : "this tab only"}</span></div></div>`;
-  }
-  const me = ctx.creators.find(c => c.id === ctx.creator) ?? ctx.creators[0];
-  const p = persona(me);
-  const warn = me.data_issues?.length;
-  return dropdown({ name: "creator", label: "Creator", value: me.id, cls: "sa-who picker",
-    options: ctx.creators.map(c => ({ value: c.id, label: persona(c).display, meta: c.data_issues?.length ? issueText(c) : persona(c).meta,
-      icon: `<span class="av-mini">${esc(persona(c).display[0])}</span>` })),
-    trigger: `<div class="av">${esc(p.display[0])}${warn ? `<i class="warn-dot" aria-label="Has data issues"></i>` : ""}</div>
-    <div><b>${esc(p.display)}</b><span>${esc(warn ? issueText(me) : p.meta)}</span></div>` });
+export function whoPill() {
+  return `<div class="sa-who"><div class="av">${ME.initial}</div><div><b>${ME.name}</b><span>${ME.meta}</span></div></div>`;
 }
 
-// Display currency switch (Your data only; the demo is in USD). Saving it re-renders the screen.
+// Display currency switch. Saving it re-renders the screen.
 const CURRENCIES = [["USD", "$", "US dollar"], ["CNY", "¥", "Chinese yuan"]];
 export function currencySeg(ctx) {
-  if (!ctx.yours) return "";
   const [, g] = CURRENCIES.find(([c]) => c === ctx.cur) ?? CURRENCIES[0];
   return dropdown({ name: "currency", label: "Display currency", value: ctx.cur,
     options: CURRENCIES.map(([c, sym, n]) => ({ value: c, label: c, meta: n, icon: `<b class="sym">${sym}</b>` })),
     trigger: `<b class="g">${g}</b><span>${ctx.cur}</span>` });
 }
 
-// The sample account's pages go through POST once this browser has changed her entries or goal.
-const OWN = new Set(["overview", "ledger", "report"]);
-async function loadDemo(creator, path, params) {
-  const own = OWN.has(path) ? await demoBody(creator) : null;
-  return own ? postDemo(path, { creator, ...params, ...own }) : get(path, { creator, ...params });
-}
-
-// "7 of 8" next to Milestones, once a screen has loaded the badges for this account.
-const badgeCounts = new Map();
-const accountKey = (yours, creator) => (yours ? "yours" : creator);
+// "7 of 8" next to Milestones, once a screen has loaded the badges.
+let badgeCount = null;
 
 let renderSeq = 0;
 
 async function go() {
   const seq = ++renderSeq;
   const [screenKey] = location.hash.slice(1).split("?");
-  const target = SCREENS.find(s => s.key === screenKey);
-  if (target?.yours && mode() !== "yours") setMode("yours");
-  const yours = mode() === "yours" && !target?.bare;
-  const data = yours ? await store.load() : null;
-  const route = parse(yours, data);
+  const bare = !!SCREENS.find(s => s.key === screenKey)?.bare;
+  const data = bare ? await store.load() : await seedOnFirstVisit();
+  const route = parse(data);
   const main = document.getElementById("main");
-  const creators = await get("creators");
   const ctx = {
-    ...route, creators, me: creators.find(c => c.id === route.creator) ?? creators[0], href, periodSeg, whoPill, persona, currencySeg,
-    yours, mode: yours ? "yours" : "demo", data, has: yours && store.hasData(data),
-    cur: yours ? data.settings.currency : "USD",
-    load: (path, params = {}) => yours ? post(path, params, data) : loadDemo(route.creator, path, params),
-    latestMonth: yours ? yourPeriods(data).months.at(-1) ?? null : DEFAULTS.month,
-    noteBadges: list => { badgeCounts.set(accountKey(yours, route.creator), [list.filter(b => b.earned).length, list.length]); },
+    ...route, href, periodSeg, whoPill, currencySeg, me: ME,
+    data, has: store.hasData(data), cur: data.settings.currency,
+    load: (path, params = {}) => post(path, params, data),
+    latestMonth: periods(data).months.at(-1) ?? null,
+    noteBadges: list => { badgeCount = [list.filter(b => b.earned).length, list.length]; },
     refresh: () => go(),
   };
   ctx.money = v => cur(v, ctx.cur);
@@ -187,46 +139,27 @@ async function go() {
     main.classList.remove("loading");
   }
   bindDropdowns(main, {
-    creator: id => {
-      // A creator with unconvertible records opens on the month that needs attention.
-      const next = creators.find(c => c.id === id);
-      const issueMonth = ctx.screen.period === "month" ? next?.data_issues?.[0]?.month : null;
-      location.hash = href(ctx.screen.key, { c: id, p: issueMonth ?? (ctx.screen.period ? ctx.period : null) });
-    },
-    period: p => { location.hash = href(ctx.screen.key, { c: ctx.yours ? null : ctx.creator, p }); },
+    period: p => { location.hash = href(ctx.screen.key, { p }); },
     currency: async c => { await store.saveSettings({ currency: c }); go(); },
   });
 }
 
 function renderNav(ctx) {
   const current = ctx.screen.navAs ?? ctx.screen.key;
-  const c = ctx.yours || ctx.creator === DEFAULTS.c ? null : ctx.creator;
-  const files = ctx.yours ? ctx.data.files.filter(f => f.kind === "statement").length : 0;
-  // One menu: the four screens, then My data and Settings & privacy under a thin rule.
+  const files = ctx.data.files.filter(f => f.kind === "statement").length;
+  // One menu: the four screens, then My data, Milestones and Settings & privacy under a thin rule.
   document.getElementById("nav").innerHTML = SCREENS.filter(s => s.nav !== false).map(s =>
-    `<a href="${href(s.key, { c, p: periodFor(s, ctx) })}" class="${s.key === current ? "on" : ""}">${icon(s.icon)}<span>${s.label}</span></a>`).join("")
+    `<a href="${href(s.key, { p: periodFor(s, ctx) })}" class="${s.key === current ? "on" : ""}">${icon(s.icon)}<span>${s.label}</span></a>`).join("")
     + `<hr class="sa-navsep">` + SCREENS.filter(s => s.util).map(s => {
       const count = s.key === "mydata" && files ? `${files} file${files === 1 ? "" : "s"}`
-        : s.key === "milestones" && badgeCounts.has(accountKey(ctx.yours, ctx.creator)) ? badgeCounts.get(accountKey(ctx.yours, ctx.creator)).join(" of ") : "";
-      return `<a href="${s.key === "milestones" ? href(s.key, { c }) : `#${s.key}`}" class="${s.key === current ? "on" : ""}">${icon(s.icon)}<span>${esc(s.label)}</span>${count ? `<span class="r">${count}</span>` : ""}</a>`;
+        : s.key === "milestones" && badgeCount && ctx.has ? badgeCount.join(" of ") : "";
+      return `<a href="#${s.key}" class="${s.key === current ? "on" : ""}">${icon(s.icon)}<span>${esc(s.label)}</span>${count ? `<span class="r">${count}</span>` : ""}</a>`;
     }).join("");
-  const keep = SCREENS.find(s => s.key === current && s.nav !== false) ? current : "overview";
-  document.getElementById("mode").innerHTML =
-    `<a href="#${keep}" data-mode="demo" class="${ctx.yours ? "" : "on"}"><span class="av-mini">M</span>Moon Spirit</a><a href="#${keep}" data-mode="yours" class="${ctx.yours ? "on" : ""}">${icon("lock", "sm")}My uploads</a>`;
 }
 
 document.getElementById("signout").addEventListener("click", () => {
   setEntered(false);
   location.hash = "#welcome";
-});
-// The data switch: remember the choice, then open the same screen with the other ledger.
-document.getElementById("mode").addEventListener("click", ev => {
-  const a = ev.target.closest("[data-mode]");
-  if (!a) return;
-  ev.preventDefault();
-  setMode(a.dataset.mode);
-  const target = a.getAttribute("href");
-  if (location.hash === target) go(); else location.hash = target;
 });
 // First visit to the bare URL opens the welcome screen; any deep link goes straight to its screen.
 if (!location.hash && !entered()) history.replaceState(null, "", "#welcome");

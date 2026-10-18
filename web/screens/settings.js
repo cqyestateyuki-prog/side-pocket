@@ -1,9 +1,9 @@
-// Settings & privacy (kit 12 and 12b): tax home, display currency and set-aside rate for Your data;
+// Settings & privacy (kit 12 and 12b): tax home, display currency and set-aside rate;
 // where each kind of data goes; backup export and load; Delete all data behind a confirmation.
 import { COPY, YOURS } from "../lib/copy.js";
 import { esc, icon, localDay } from "../lib/format.js";
 import { mascot } from "../lib/mascot.js";
-import { clearPrefs, setMode } from "../lib/prefs.js";
+import { clearPrefs } from "../lib/prefs.js";
 import * as store from "../lib/store.js";
 import { shortLabel } from "../lib/statements.js";
 import { invalidate } from "../lib/personal.js";
@@ -109,7 +109,6 @@ function openDialog(ctx, root) {
   wrap.querySelector("[data-delete-confirm]").addEventListener("click", async () => {
     await store.clear();
     clearPrefs();
-    setMode("yours");
     invalidate();
     close();
     location.hash = "#mydata";

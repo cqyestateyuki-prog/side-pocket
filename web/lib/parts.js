@@ -11,7 +11,7 @@ export function top(ctx, title, subtitle, { period = true, actions = "" } = {}) 
     <div class="right">${actions}${period ? ctx.periodSeg(ctx) : ""}${ctx.whoPill(ctx)}</div></div>`;
 }
 
-// Why a record has no rate, from the API's `reason` (Your data); the demo only has missing rate-table days.
+// Why a record has no rate, from the API's `reason`.
 const NO_RATE = {
   not_in_rate_file: () => "Your rate file has no rate for this date",
   reference_rates_unavailable: () => "ECB rates couldn’t be loaded",
@@ -28,15 +28,15 @@ export function warnCard(ctx, issues) {
   const r = i.record ?? (i.entry ? { type: i.entry.kind === "income" ? "Income" : "Expense", ref: null, amount: i.entry.amount, currency: i.entry.currency } : {});
   const who = i.platform ?? i.entry?.label;
   const more = issues.length > 1 ? ` · ${issues.length} records waiting for a rate` : " · 1 record waiting for a rate";
-  const open = ctx.href("ledger", { c: ctx.yours ? null : ctx.creator, p: i.date.slice(0, 7), f: i.platform ? platformKey(i.platform) : "__own" });
-  // Your data: the rate comes from the person's own rate file or the ECB, so the card says which and
-  // the fix is on My data.
+  const open = ctx.href("ledger", { p: i.date.slice(0, 7), f: i.platform ? platformKey(i.platform) : "__own" });
+  // The rate comes from the person's own rate file or the ECB, so the card says which and the fix is
+  // on My data.
   const fromFile = i.reason === "not_in_rate_file";
-  const headline = ctx.yours && fromFile ? YOURS.RATE_STOP_TITLE : COPY.MISSING_HEADLINE;
-  const body = ctx.yours ? (fromFile ? YOURS.RATE_STOP_BODY : esc(i.message ?? COPY.MISSING_BODY)) : COPY.MISSING_BODY;
-  const fix = ctx.yours ? "#mydata" : open;
+  const headline = fromFile ? YOURS.RATE_STOP_TITLE : COPY.MISSING_HEADLINE;
+  const body = fromFile ? YOURS.RATE_STOP_BODY : esc(i.message ?? COPY.MISSING_BODY);
+  const fix = "#mydata";
   // A USD record shown in CNY needs a USD → CNY rate (the issue names CNY); anything else needs its currency → USD.
-  const rateLabel = ctx.yours && i.currency === "CNY" && r.currency !== "CNY" ? `${esc(r.currency)} → CNY rate` : `${esc(i.currency)} → USD rate`;
+  const rateLabel = i.currency === "CNY" && r.currency !== "CNY" ? `${esc(r.currency)} → CNY rate` : `${esc(i.currency)} → USD rate`;
   return `<section class="sa-warncard c12">
     <div class="wc-icon">${icon("alert")}${mascot("worried")}</div>
     <div class="wc-body">
@@ -44,7 +44,7 @@ export function warnCard(ctx, issues) {
       <h2>${headline}</h2>
       <p>${body}</p>
       <div class="wc-actions">
-        <a class="sa-btn primary sm" href="${fix}">${ctx.yours ? `Add the ${dateShort(i.date)} rate` : `Add the ${esc(i.currency)} rate for ${dateShort(i.date)}`}</a>
+        <a class="sa-btn primary sm" href="${fix}">Add the ${dateShort(i.date)} rate</a>
         <a class="sa-btn secondary sm" href="${open}">${icon("ledger", "sm")} Open record</a>
       </div>
     </div>
@@ -67,13 +67,13 @@ export function empty(title, body) {
   return `<section class="sa-card sa-empty c12">${icon("info")}${mascot("think", "empty-mascot")}<div><b>${title}</b><div class="meta">${body}</div></div></section>`;
 }
 
-// Your data before any import (kit 16): Tilly thinking, one title, one sentence, one link to My data.
+// Nothing in this browser yet (kit 16): Tilly thinking, one title, one sentence, one link to My data.
 export function emptyCard(text) {
   return `<div class="sa-emptycard">${mascot("think")}<div><b>${YOURS.EMPTY_TITLE}</b><p>${text}</p></div>
     <a class="sa-btn primary sm" href="#mydata">${icon("upload", "sm")} Go to My data</a></div>`;
 }
 
-// A whole screen in Your data mode with nothing imported yet.
+// A whole screen with nothing imported yet.
 export function emptyScreen(ctx, title, text) {
   return `<div class="sa-top"><div><h1>${title}</h1><p>No statements yet</p></div><div class="right">${ctx.whoPill(ctx)}</div></div>
   <div class="sa-grid"><div class="c8">${emptyCard(text)}</div></div>`;

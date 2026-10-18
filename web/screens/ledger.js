@@ -3,10 +3,9 @@ import { cur, dateShort, esc, icon, mmdd, periodLabel, picon, usd, weekday } fro
 import { emptyScreen, noRateText, th, top, warnCard } from "../lib/parts.js";
 import { bindDropdowns, dropdown } from "../lib/dropdown.js";
 import { mascot } from "../lib/mascot.js";
-import { openPanel } from "../lib/importPanel.js";
 import { openEntry } from "../lib/entrySheet.js";
 
-// Kit 19 (v1.4): statement rows, the income you add and your expenses in one table, for either account.
+// Kit 19 (v1.4): statement rows, the income you add and your expenses in one table.
 // A quarter is its three months' ledgers; the totals and "kept after expenses" come from the report.
 async function load(ctx) {
   if (ctx.period.includes("Q")) {
@@ -95,11 +94,6 @@ function rateLine(fx, date) {
   return `<span class="rate">${op} ${fx.rate.toFixed(4)} · ${src}</span>`;
 }
 
-// The sample account's rate tables: the rate and its date under the original amount.
-function demoFx(fx) {
-  return fx?.rate ? `<span class="fx">${fx.currency === "CNY" ? "÷" : "×"} ${fx.rate.toFixed(4)} · ${fx.rate_date}</span>` : "";
-}
-
 const conversions = r => [r.fx, r.fx_cny].filter(x => x?.rate);
 const issueFor = (L, r) => L.issues.find(i => i.date === r.date && i.platform === r.platform_label && (i.record?.ref ?? null) === (r.ref ?? null))
   ?? L.issues.find(i => i.date === r.date && i.platform === r.platform_label);
@@ -108,18 +102,15 @@ function statementRow(ctx, L, r, money) {
   const k = ctx.cur.toLowerCase();
   const neg = (v, cls) => v == null ? `<td class="money"><span class="sa-badge warn">rate missing</span></td>`
     : !v ? `<td class="money zero">—</td>` : `<td class="money ${cls}">${money(-v)}</td>`;
-  const orig = ctx.yours
-    ? `${cur(r.original.gross, r.original.currency)}<span class="sub">${esc(r.original.currency)}</span>`
-    : r.original.currency === "USD" ? `<span class="meta">USD</span>`
-    : `${cur(r.original.gross, r.original.currency)}${r.fx?.rate ? demoFx(r.fx) : `<span class="fx missing">no rate for ${r.date}</span>`}`;
+  const orig = `${cur(r.original.gross, r.original.currency)}<span class="sub">${esc(r.original.currency)}</span>`;
   const lead = `<td class="num">${mmdd(r.date)}</td><td>${picon(r.platform)}${esc(r.platform_label)}</td>
       <td>${esc(r.type)}${r.ref ? `<span class="sub">${esc(r.ref)}</span>` : ""}</td><td class="num">${orig}</td>`;
   const pf = r[`platform_fee_${k}`], po = r[`payout_fee_${k}`];
   if (r.issue || r[`net_${k}`] == null) {
     const i = issueFor(L, r);
-    return `<tr class="missing">${lead}<td class="money"><span class="sa-badge warn">rate missing</span>${ctx.yours && i ? `<span class="rate miss">${esc(noRateText(i))}</span>` : ""}</td><td colspan="3" class="money meta">left out of totals</td></tr>`;
+    return `<tr class="missing">${lead}<td class="money"><span class="sa-badge warn">rate missing</span>${i ? `<span class="rate miss">${esc(noRateText(i))}</span>` : ""}</td><td colspan="3" class="money meta">left out of totals</td></tr>`;
   }
-  return `<tr>${lead}<td class="money">${money(r[`gross_${k}`])}${ctx.yours ? conversions(r).map(x => rateLine(x, r.date)).join("") : ""}</td>
+  return `<tr>${lead}<td class="money">${money(r[`gross_${k}`])}${conversions(r).map(x => rateLine(x, r.date)).join("")}</td>
       ${neg(pf == null || po == null ? null : pf + po, "fee")}${neg(r[`withheld_${k}`], "tax")}<td class="money net">${money(r[`net_${k}`])}</td></tr>`;
 }
 
@@ -127,8 +118,8 @@ function entryRow(ctx, e, money) {
   const k = ctx.cur.toLowerCase(), amount = e[`amount_${k}`], income = e.kind === "income";
   const label = income ? e.source : e.category;
   // Like a statement row: the original amount in its column, the conversion under the converted amount.
-  const conv = e.original.currency === ctx.cur ? "" : ctx.yours ? conversions(e).map(x => rateLine(x, e.date)).join("") : "";
-  const orig = `${cur(e.original.amount, e.original.currency)}<span class="sub">${esc(e.original.currency)}</span>${ctx.yours ? "" : demoFx(e.fx)}`;
+  const conv = e.original.currency === ctx.cur ? "" : conversions(e).map(x => rateLine(x, e.date)).join("");
+  const orig = `${cur(e.original.amount, e.original.currency)}<span class="sub">${esc(e.original.currency)}</span>`;
   const lead = `<td class="num">${mmdd(e.date)}</td>
       <td><i class="sa-pdot ${income ? "own" : "exp"}"></i>${esc(label)}${youTag}</td>
       <td>${income ? V14.TYPE_INCOME : "Expense"}${!income && e.source ? `<span class="sub">${esc(e.source)}</span>` : ""}</td><td class="num">${orig}</td>`;
@@ -164,26 +155,23 @@ function totalRow(ctx, L, rows, money) {
 // ---------------------------------------------------------------- the screen
 
 export async function render(ctx) {
-  if (ctx.yours && !ctx.has) return emptyScreen(ctx, "Ledger", YOURS.EMPTY_LEDGER);
+  if (!ctx.has) return emptyScreen(ctx, "Ledger", YOURS.EMPTY_LEDGER);
   const money = ctx.money ?? usd;
   const L = await load(ctx);
   const rows = filtered(ctx, items(L));
   const body = rows.map(r => (r.entry ? entryRow(ctx, r, money) : statementRow(ctx, L, r, money))).join("");
 
-  // Where the rates for converted records came from (My uploads): the person's rate file, used exactly,
-  // or ECB reference rates for a currency without one.
-  let note = "";
-  if (ctx.yours) {
-    const converted = L.rows.filter(r => r.issue || conversions(r).length);
-    const withFile = L.rows.some(r => conversions(r).some(x => /rate file/.test(x.source ?? ""))) || L.issues.some(i => i.reason === "not_in_rate_file")
-      || ctx.data.files.some(f => f.kind === "rates");
-    if (converted.length) note = `<div class="sa-note info" style="margin-bottom:14px">${icon("info", "sm")}<span>${withFile ? YOURS.LEDGER_FILE_NOTE : YOURS.LEDGER_ECB_NOTE}</span></div>`;
-  }
-  const actions = (ctx.yours ? `<a class="sa-btn secondary sm" href="#mydata">${icon("upload", "sm")} ${V14.ADD_STATEMENTS}</a>`
-      : `<button class="sa-btn secondary sm" data-import-open>${icon("upload", "sm")} ${V14.ADD_STATEMENTS}</button>`)
+  // Where the rates for converted records came from: the person's rate file, used exactly, or ECB
+  // reference rates for a currency without one.
+  const converted = L.rows.filter(r => r.issue || conversions(r).length);
+  const withFile = L.rows.some(r => conversions(r).some(x => /rate file/.test(x.source ?? ""))) || L.issues.some(i => i.reason === "not_in_rate_file")
+    || ctx.data.files.some(f => f.kind === "rates");
+  const note = converted.length ? `<div class="sa-note info" style="margin-bottom:14px">${icon("info", "sm")}<span>${withFile ? YOURS.LEDGER_FILE_NOTE : YOURS.LEDGER_ECB_NOTE}</span></div>` : "";
+  const actions = `<a class="sa-btn secondary sm" href="#mydata">${icon("upload", "sm")} ${V14.ADD_STATEMENTS}</a>`
     + `<button class="sa-btn primary sm" data-entry-new>${icon("plus", "sm")} Add entry</button>` + csvBtn + ctx.currencySeg(ctx);
-  const cols = th("fx", "Original") + th("coins", ctx.yours ? `Gross (${ctx.cur})` : "Gross", "money") + th("percent", "Fees", "money")
-    + th("bank", "Withheld", "money") + th("wallet", ctx.yours ? `Net (${ctx.cur})` : "Net", "money");
+  // The display currency is in the header switch, so the columns don't repeat it.
+  const cols = th("fx", "Original") + th("coins", "Gross", "money") + th("percent", "Fees", "money")
+    + th("bank", "Withheld", "money") + th("wallet", "Net", "money");
 
   return top(ctx, "Ledger", "", { actions }) + `
   ${L.issues.length ? `<div class="sa-grid" style="margin-bottom:16px">${warnCard(ctx, L.issues)}</div>` : ""}
@@ -199,7 +187,7 @@ export function mount(ctx, root) {
     const q = { f: ctx.query.get("f"), t: ctx.query.get("t"), s: ctx.query.get("s") };
     q[col] = v && !(col === "s" && v === "old") ? v : null;
     if (col === "f") q.t = null; // types differ per source
-    location.hash = ctx.href("ledger", { c: ctx.yours ? null : ctx.creator, p: ctx.period, ...q });
+    location.hash = ctx.href("ledger", { p: ctx.period, ...q });
   };
   bindDropdowns(root, { s: by("s"), f: by("f"), t: by("t") });
   root.querySelector("[data-csv]")?.addEventListener("click", () => downloadCsv(ctx));
@@ -209,11 +197,6 @@ export function mount(ctx, root) {
     tr.addEventListener("click", edit);
     tr.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); edit(); } });
   });
-  const open = () => openPanel(ctx, root, () => {
-    if (ctx.query.get("import")) history.replaceState(null, "", ctx.href("ledger", { c: ctx.creator, p: ctx.period, f: ctx.query.get("f"), t: ctx.query.get("t") }));
-  });
-  root.querySelector("[data-import-open]")?.addEventListener("click", open);
-  if (ctx.query.get("import") && !ctx.yours) open();
   if (ctx.query.get("entry") === "new") openEntry(ctx);
 }
 
@@ -224,9 +207,9 @@ export async function downloadCsv(ctx) {
   const k = ctx.cur.toLowerCase();
   const amounts = ["gross", "platform_fee", "payout_fee", "withheld", "net"].map(x => `${x}_${k}`);
   const cols = ["date", "source", "type", "ref", "original_currency", "original_amount", "fx_rate", "fx_date",
-                ...(ctx.yours ? ["fx_source", "cny_rate", "cny_rate_date", "cny_rate_source"] : []), ...amounts];
+                "fx_source", "cny_rate", "cny_rate_date", "cny_rate_source", ...amounts];
   const val = r => {
-    const fx = [r.fx?.rate ?? "", r.fx?.rate_date ?? "", ...(ctx.yours ? [r.fx?.source ?? "", r.fx_cny?.rate ?? "", r.fx_cny?.rate_date ?? "", r.fx_cny?.source ?? ""] : [])];
+    const fx = [r.fx?.rate ?? "", r.fx?.rate_date ?? "", r.fx?.source ?? "", r.fx_cny?.rate ?? "", r.fx_cny?.rate_date ?? "", r.fx_cny?.source ?? ""];
     if (r.entry) {
       const a = r[`amount_${k}`] ?? "", income = r.kind === "income";
       return [r.date, income ? r.source : r.category, income ? "Income (added by you)" : "Expense (added by you)", income ? "" : r.source ?? "",
@@ -237,7 +220,7 @@ export async function downloadCsv(ctx) {
   const csv = [cols, ...rows.map(val)].map(line => line.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
   const a = Object.assign(document.createElement("a"), {
     href: URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv" })),
-    download: ctx.yours ? `side-pocket-ledger-${ctx.period}.csv` : `side-pocket-ledger-${ctx.creator}-${ctx.period}.csv`,
+    download: `side-pocket-ledger-${ctx.period}.csv`,
   });
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);

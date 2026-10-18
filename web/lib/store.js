@@ -1,11 +1,11 @@
-// "Your data": the statements a person uploads and their settings, kept in this browser only
+// The account's data: the statements in this browser and their settings, kept in this browser only
 // (IndexedDB). Files are stored after the browser has replaced every account ID with a short label
 // (lib/statements.js), so real account IDs are never stored or sent. When IndexedDB is unavailable
 // (private window, blocked site data) everything lives in memory for this tab and `persistent` is
 // false, so the UI can say so. Every storage call is wrapped; the app works without it.
 
 const DB = "side-atlas", STORE = "kv", KEYS = ["files", "settings", "salt", "labels", "summary", "entries"];
-export const DEFAULT_SETTINGS = { tax_home: "US", currency: "USD", set_aside_rate: 0.25, monthly_goal: null };
+export const DEFAULT_SETTINGS = { tax_home: "US", currency: "USD", set_aside_rate: 0.25, monthly_goal: null, payout_methods: {} };
 
 let state = null;      // { files, settings, salt, labels, summary, entries, persistent }
 let dbPromise = null;
@@ -83,27 +83,9 @@ export async function clear() {
   }
   const persistent = state?.persistent ?? false;
   state = { files: [], settings: { ...DEFAULT_SETTINGS }, salt: randomHex(16), labels: {}, summary: null, entries: [], persistent };
-  extra.clear();
 }
 
 // Files the server can read: statements and rate files (unreadable ones are kept by name only).
 export const sendable = s => s.files.filter(f => f.content);
 export const hasData = s => s.files.some(f => f.kind === "statement") || (s.entries ?? []).length > 0;
 export const newId = () => randomHex(6);
-
-// Other per-browser values under their own key (the sample account's entries and goal). In memory when
-// IndexedDB is unavailable; cleared with everything else by Delete all data.
-const extra = new Map();
-export async function getKey(key) {
-  if (extra.has(key)) return extra.get(key);
-  const db = await openDb();
-  let value = null;
-  if (db) { try { value = (await tx(db, "readonly", st => st.get(key))) ?? null; } catch { /* unreadable */ } }
-  extra.set(key, value);
-  return value;
-}
-export async function putKey(key, value) {
-  extra.set(key, value);
-  const db = await openDb();
-  if (db) { try { await tx(db, "readwrite", st => st.put(value, key)); } catch { /* kept in memory */ } }
-}

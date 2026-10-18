@@ -43,7 +43,7 @@ export async function openGoal(ctx) {
     <div data-months>${months(list, +start || 0, c)}</div>
     <p class="sa-form-err" data-err role="alert" hidden></p>
     <div class="foot">
-      <button type="button" class="sa-btn primary" data-save>${icon("target", "sm")} ${V14.SAVE_GOAL}</button>
+      <button type="button" class="sa-btn primary" data-save>${icon("flag", "sm")} ${V14.SAVE_GOAL}</button>
       ${goal ? `<button type="button" class="sa-btn danger" data-remove>${V14.REMOVE_GOAL}</button>` : ""}
       <button type="button" class="sa-btn ghost" data-close>Cancel</button>
     </div>

@@ -15,7 +15,7 @@ function progressText(b, money) {
 }
 
 export async function render(ctx) {
-  if (ctx.yours && !ctx.has) return emptyScreen(ctx, V14.MILESTONES_TITLE, YOURS.EMPTY_OVERVIEW);
+  if (!ctx.has) return emptyScreen(ctx, V14.MILESTONES_TITLE, YOURS.EMPTY_OVERVIEW);
   const month = ctx.latestMonth;
   const o = await ctx.load("overview", { month });
   const badges = o.badges ?? [];

@@ -171,17 +171,6 @@ a.sa-prism { text-decoration: none; }
 .sa-drop .ico { width: 40px; height: 40px; border-radius: 12px; background: var(--sa-surface); display: grid; place-items: center; color: var(--sa-forest); }
 .sa-drop b { font: 800 16px/1.3 var(--sa-font); color: var(--sa-ink); }
 .sa-drop p { margin: 0; color: var(--sa-text-mid); font: var(--sa-small); }
-.sa-importlist { list-style: none; margin: 0; padding: 4px 14px; background: var(--sa-surface); border: 1px solid var(--sa-line); border-radius: var(--sa-r-inner); }
-.sa-importlist li { display: grid; grid-template-columns: 12px 1fr auto; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid var(--sa-line); font: 600 13.5px/1.35 var(--sa-font); color: var(--sa-ink); }
-.sa-importlist li:first-child { border-top: 0; }
-.sa-importlist li .mono { font: 500 11.5px/1 var(--sa-mono); color: var(--sa-meta); margin-left: 4px; }
-.sa-importlist li .r { display: block; font: 500 12.5px/1.35 var(--sa-font); color: var(--sa-text-mid); margin-top: 2px; }
-.sa-importlist li.off b { color: var(--sa-text-mid); }
-.sa-importlist li .ok { color: var(--sa-ok-text); }
-.sa-importlist li.bad { color: var(--sa-warn-text); }
-.sa-importlist li.bad .sa-pdot { background: var(--sa-line-strong); }
-.sa-importlist .add { font: 700 12.5px/1 var(--sa-font); color: var(--sa-forest); cursor: pointer; }
-.sa-importlist.files { margin-top: 2px; }
 .sa-drawer .soon { display: flex; flex-wrap: wrap; gap: 8px; }
 .sa-drawer .soon .sa-btn:disabled { opacity: .55; }
 [data-dropped]:empty { display: none; }
@@ -258,7 +247,6 @@ a.sa-prism { text-decoration: none; }
 .sa-dataact .btns { grid-row: 1 / span 2; grid-column: 2; display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
 .sa-dataact > div > input[hidden] { display: none; }
 .sa-files td .acct + .acct { margin-left: 4px; }
-.sa-mode a { cursor: pointer; }
 .sa-files td.msg { white-space: normal; }
 .sa-prism i { flex: none; }
 
@@ -349,7 +337,6 @@ button.sa-who { font: inherit; color: inherit; text-align: left; cursor: pointer
 /* Settings: Tilly with the globe in the card's empty corner */
 .sa-settings { position: relative; }
 .sa-settings .settings-mascot.ok { position: absolute; right: 22px; bottom: 18px; height: var(--sa-mascot-card); pointer-events: none; }
-.sa-mode .av-mini { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; background: var(--sa-forest-100); color: var(--sa-forest); font: 800 10px/1 var(--sa-font); }
 
 /* ---------- v1.4 · entries, expenses, goal, milestones (from the design kit, 05-css) ---------- */
 /* ---------- v1.4 · all side income: entries, expenses, goal, milestones ---------- */
@@ -468,3 +455,9 @@ a.sa-latest { text-decoration: none; color: inherit; }
 .sa-goal.reached .sa-mascot.ok { height: var(--sa-mascot-card); }
 .sa-field .ctl.big .end { font: 600 14px/1 var(--sa-font); letter-spacing: 0; }
 .sa-tablewrap { overflow-x: auto; }
+/* A long rate line (rate · date · source) wraps under the amount instead of widening the table */
+.ledger-v14 td.money:has(.rate) { white-space: normal; min-width: 150px; }
+.ledger-v14 td .rate { white-space: normal; }
+/* Goal card: a small Tilly with the flag instead of the target icon */
+.sa-goal .label { display: flex; align-items: center; gap: 8px; }
+.sa-goal .goal-tilly { width: 28px; height: 28px; object-fit: contain; flex: none; margin: -6px 0; }

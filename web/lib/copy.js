@@ -26,7 +26,7 @@ export const COPY = {
   DISCLAIMER: "Estimate only. Not tax, legal, or financial advice.",
 };
 
-// Your data mode.
+// The account in this browser: My data, Settings & privacy, empty states, tax homes.
 export const YOURS = {
   MYDATA_HEADLINE: "Upload platform statements",
   EMPTY_MASCOT: "Drop a CSV here to start.",
@@ -88,10 +88,10 @@ export const YOURS = {
   NOT_READ: "Could not read {file}",
   BACKUP_BAD: "This is not a Side Pocket backup.",
   BACKUP_LOADED: "Backup loaded with {n} statements added.",
-  ASK_OFF_TITLE: "Tilly unavailable for uploads",
-  ASK_EXAMPLE_1: "What was my net income across platforms last month?",
-  ASK_EXAMPLE_2: "Which platform charged the highest percentage in fees?",
-  ASK_EXAMPLE_3: "What tax items need review this quarter?",
+  ASK_OFF_TITLE: "Live answers unavailable",
+  ASK_EXAMPLE_1: "What was my September net income across all platforms?",
+  ASK_EXAMPLE_2: "Were Q3 platform fees higher than tax withheld?",
+  ASK_EXAMPLE_3: "What tax items need review for Q3?",
 };
 
 // v1.4: manual income and expenses, the monthly goal and milestones (GPT-6 Astra under docs/copy_style.md,

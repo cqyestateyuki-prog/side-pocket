@@ -27,6 +27,7 @@ function body(data, params) {
     files: sendable(data).map(f => ({ name: f.name, content: f.content })),
     entries: (data.entries ?? []).map(sendableEntry), // notes stay in the browser
     monthly_goal: s.monthly_goal ?? null,
+    payout_methods: s.payout_methods ?? {},
     tax_home: s.tax_home, currency: s.currency, set_aside_rate: Math.min(0.6, Math.max(0, s.set_aside_rate)),
     after: localDay(), // deadlines count from the viewer's today, not the server's
     ...params,

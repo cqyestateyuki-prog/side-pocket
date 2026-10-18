@@ -1,0 +1,20 @@
+{
+ "note": "Recorded Ask Tilly runs on Moon Spirit's account as loaded (fictional data). Played only when the account and question match; see web/lib/replay.js.",
+ "runs": [
+  {
+   "question": "What was my September net income across all platforms?",
+   "fingerprint": "4ba47dcd790a0c40ab8fe7f48977d7808d18cf473cb39eb9fc8d5dfd18e4cd2c",
+   "file": "ask-1.json"
+  },
+  {
+   "question": "Were Q3 platform fees higher than tax withheld?",
+   "fingerprint": "d0f2f607effaf86aa642000ab32f4c2257f98ee6fac2031e6a2adb40bf6dad30",
+   "file": "ask-2.json"
+  },
+  {
+   "question": "What tax items need review for Q3?",
+   "fingerprint": "8efbb363fed7c402b7755bdd4084d60395b62fd628cc6896da994e6f3823b82f",
+   "file": "ask-3.json"
+  }
+ ]
+}

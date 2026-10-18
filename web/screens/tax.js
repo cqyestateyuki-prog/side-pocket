@@ -2,7 +2,7 @@ import { COPY, YOURS } from "../lib/copy.js";
 import { cur, dateLong, daysBetween, esc, icon, localDay, periodLabel, picon, usd } from "../lib/format.js";
 import { COUNTRY, emptyScreen, flag, platformKey, th, top, warnCard } from "../lib/parts.js";
 import { mascot } from "../lib/mascot.js";
-import { saveExcluded, saveRate, setAside } from "../lib/prefs.js";
+import { saveExcluded, setAside } from "../lib/prefs.js";
 import { saveSettings } from "../lib/store.js";
 
 const STATUS = {
@@ -35,8 +35,8 @@ function formsTable(F) {
 }
 
 const PRESETS = [20, 25, 30];
-let ed = null; // the open set-aside editor: { creator, rate (whole %), out: Set<platform>, totalNet, byPlatform, api, yours }
-let fmt = usd;  // money in the display currency (Your data can show CNY)
+let ed = null; // the open set-aside editor: { rate (whole %), out: Set<platform>, totalNet, byPlatform, api }
+let fmt = usd;  // money in the display currency (USD or CNY)
 
 function heroBase(sa, qLabel) {
   return `<div class="sub" data-sa-base><button class="rate-chip" data-rate-edit aria-expanded="false">${Math.round(sa.rate * 100)}% ${icon("sliders", "sm")}</button>
@@ -70,16 +70,14 @@ export async function render(ctx) {
 
 async function page(ctx) {
   fmt = ctx.money ?? usd;
-  if (ctx.yours && !ctx.has) return emptyScreen(ctx, "Tax", YOURS.EMPTY_TAX);
-  // Your data: the report carries the tax items, so one request covers the page.
-  const [T, R] = ctx.yours
-    ? await ctx.load("report", { period: ctx.period }).then(r => [r.tax, r])
-    : await Promise.all([ctx.load("tax-items", { period: ctx.period }), ctx.load("report", { period: ctx.period })]);
-  const home = ctx.yours ? (ctx.query.get("view") ?? ctx.data.settings.tax_home) : null;
+  if (!ctx.has) return emptyScreen(ctx, "Tax", YOURS.EMPTY_TAX);
+  // The report carries the tax items, so one request covers the page.
+  const R = await ctx.load("report", { period: ctx.period }), T = R.tax;
+  const home = ctx.query.get("view") ?? ctx.data.settings.tax_home;
   if (home === "CN" || home === "cn") return china(ctx, T, R);
   if (home === "BOTH") return both(ctx, T, R);
-  const k = ctx.yours ? ctx.cur.toLowerCase() : "usd";
-  const country = ctx.yours ? "US" : ctx.me.tax_country;
+  const k = ctx.cur.toLowerCase();
+  const country = "US";
   const F = T.forms;
   const due = T.next_us_estimated_tax_due;
   const label = periodLabel(ctx.period);
@@ -87,9 +85,8 @@ async function page(ctx) {
   const dups = F.platforms.filter(p => p.possible_duplicate_report);
   const withheld = T.tax_withheld_by_platform;
   const noneNote = T.items_for_accountant.find(x => x.startsWith("No tax was withheld"));
-  // Your data lists the US items as the API words them for the tax home; the demo keeps its list.
-  const items = ctx.yours ? (T.by_country.find(c => c.country === "US")?.items ?? []).map(x => x.text).filter(x => !x.startsWith("No tax was withheld"))
-    : T.items_for_accountant.filter(x => x !== noneNote);
+  // The US items as the API words them for the tax home.
+  const items = (T.by_country.find(c => c.country === "US")?.items ?? []).map(x => x.text).filter(x => !x.startsWith("No tax was withheld"));
   const accountant = [
     ...items,
     ...dups.map(p => `${p.label} pays out through ${p.payout_method}: the same money may appear on two 1099-Ks.`),
@@ -98,10 +95,9 @@ async function page(ctx) {
   const T4 = F.totals_for_platforms_with_forms;
   const plats = [...R.by_platform].sort((a, b) => b.net - a.net);
   const totalNet = T[`total_net_${k}`];
-  const who = ctx.yours ? "yours" : ctx.creator;
-  const sa = setAside(who, { totalNet, byPlatform: plats, api: T.set_aside, rate: ctx.yours ? ctx.data.settings.set_aside_rate : null });
+  const sa = setAside("yours", { totalNet, byPlatform: plats, api: T.set_aside, rate: ctx.data.settings.set_aside_rate });
   const qLabel = ctx.period.includes("Q") ? `Q${ctx.period.slice(-1)} ` : "";
-  ed = { creator: who, rate: Math.round(sa.rate * 100), out: new Set(sa.excluded), totalNet, byPlatform: plats, api: T.set_aside, qLabel, yours: ctx.yours };
+  ed = { rate: Math.round(sa.rate * 100), out: new Set(sa.excluded), totalNet, byPlatform: plats, api: T.set_aside, qLabel };
 
   return top(ctx, "Tax", "") + `
   <div class="sa-grid">
@@ -142,12 +138,12 @@ async function page(ctx) {
     <section class="sa-card c12 accountant">
       <div><div class="head"><h2>Accountant checklist</h2></div>
         <ul class="sa-check" data-checklist>${accountant.map(x => `<li><button class="box" aria-label="Mark done"></button><span>${esc(x)}</span></li>`).join("")}</ul></div>
-      <a class="sa-btn primary" href="${ctx.href("report", { c: ctx.yours ? null : ctx.creator, p: ctx.period })}">${icon("download", "sm")} Export for my accountant</a>
+      <a class="sa-btn primary" href="${ctx.href("report", { p: ctx.period })}">${icon("download", "sm")} Export for my accountant</a>
     </section>
   </div>`;
 }
 
-// ---------------------------------------------------------------- Your data: China and Both (kit 13, 15)
+// ---------------------------------------------------------------- China and Both (kit 13, 15)
 
 const INSIDE_CHINA = new Set(["bilibili"]);
 const monthDay = d => new Date(d + "T12:00:00").toLocaleString("en-US", { month: "long", day: "numeric" });
@@ -307,12 +303,11 @@ function both(ctx, T, R) {
 
 // Live recompute of the hero while the rate or the included platforms change; saved per browser.
 function update(root) {
-  // Your data keeps the rate in its settings (the API takes 0 to 60%); the demo keeps one per creator.
-  ed.rate = Math.max(0, Math.min(ed.yours ? 60 : 100, Math.round(ed.rate)));
-  if (ed.yours) saveSettings({ set_aside_rate: ed.rate / 100 });
-  else saveRate(ed.creator, ed.rate === Math.round(ed.api.rate * 100) ? null : ed.rate / 100);
-  saveExcluded(ed.creator, ed.out);
-  const sa = setAside(ed.creator, { totalNet: ed.totalNet, byPlatform: ed.byPlatform, api: ed.api, rate: ed.yours ? ed.rate / 100 : null });
+  // The rate lives in the settings (the API takes 0 to 60%).
+  ed.rate = Math.max(0, Math.min(60, Math.round(ed.rate)));
+  saveSettings({ set_aside_rate: ed.rate / 100 });
+  saveExcluded("yours", ed.out);
+  const sa = setAside("yours", { totalNet: ed.totalNet, byPlatform: ed.byPlatform, api: ed.api, rate: ed.rate / 100 });
   const amt = root.querySelector(".tax-hero .amount");
   amt.querySelector("[data-sa-amt]").textContent = fmt(sa.amount);
   amt.querySelector("[data-sa-base]").outerHTML = heroBase(sa, ed.qLabel);

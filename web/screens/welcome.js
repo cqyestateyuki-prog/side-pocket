@@ -1,8 +1,10 @@
-// Welcome: the demo entry screen. There is no real sign-in — no email or password is ever asked
-// for; "Continue with the demo account" opens the fictional Moon Spirit ledger.
+// Welcome: the entry screen. There is no real sign-in: no email or password is ever asked for;
+// "Continue as Moon Spirit" opens her (fictional) account, loading it into this browser if it is empty.
 import { icon } from "../lib/format.js";
 import { mascot } from "../lib/mascot.js";
 import { setEntered } from "../lib/prefs.js";
+import * as store from "../lib/store.js";
+import { seed } from "../lib/seed.js";
 
 // Copy from GPT-6 Astra (welcome rewrite after the rename to Side Pocket, 2026-10-17).
 const TAGLINE = "Side Pocket tracks your global side income.";
@@ -34,7 +36,14 @@ export async function render() {
 }
 
 export function mount(ctx, el) {
-  el.querySelector("[data-enter]").addEventListener("click", () => {
+  const go = el.querySelector("[data-enter]");
+  go.addEventListener("click", async () => {
+    go.disabled = true;
+    // Continue loads her account again if this browser has nothing (after Delete all data).
+    try {
+      const data = await store.load();
+      if (!data.files.length && !store.hasData(data)) await seed();
+    } catch { /* the screens then show their empty states */ }
     setEntered(true);
     location.hash = "#overview";
   });

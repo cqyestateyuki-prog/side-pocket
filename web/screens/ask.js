@@ -1,21 +1,18 @@
-// Ask: the v2 agent answers live. Each step streams in from POST /api/ask; the answer's
-// numbers point back to the step that produced them. #ask?replay=1 replays a recorded real run
-// (web/demo/ask-c01-sep.json) for offline demos and static captures.
-// In Your data mode the question goes to POST /api/personal/ask with the stored (relabelled) files;
-// that agent's tools return totals only and its PRISM trace is content-free.
-import { ask } from "../lib/api.js";
-import { ask as askYours } from "../lib/personal.js";
+// Ask: the agent answers live. The question goes to POST /api/personal/ask with the stored (relabelled)
+// files; its tools return totals only and its trace is content-free. Each step streams in, and the
+// answer's numbers point back to the step that produced them. Without a model key on the server, a
+// recorded run is played when the account and question match one (lib/replay.js).
+import { ask } from "../lib/personal.js";
+import { findReplay } from "../lib/replay.js";
 import { COPY, YOURS } from "../lib/copy.js";
 import { PLATFORM_KEY, cur, dateLong, esc, icon, monthName, picon, usd } from "../lib/format.js";
 import { mascot } from "../lib/mascot.js";
-import { english } from "../lib/display.js";
 import { emptyScreen } from "../lib/parts.js";
 
 const LABEL = { bilibili: "Bilibili", youtube: "YouTube", twitch: "Twitch", patreon: "Patreon", upwork: "Upwork", fiverr: "Fiverr", freelancer: "Freelancer.com", contra: "Contra" };
 // UI labels. The UI is English-only (user decision); a language switch is deferred.
 const T = {
   en: {
-    examples: ["What was my September net income across all platforms?", "Were Q3 platform fees higher than tax withheld?", "What tax items need review this quarter?"],
     placeholder: COPY.ASK_PLACEHOLDER, promise: COPY.ASK_PROMISE, button: "Ask", tryAsking: "Example questions", answer: "Answer",
     steps: "Agent steps", calls: n => `${n} tool calls`, running: "running", choosing: "Choosing the next step…",
     stepsEmpty: "Lookups and calculations appear here as they run.",
@@ -25,17 +22,16 @@ const T = {
     fees: "Fees by platform",
   },
 };
-const REPLAY = "demo/ask-c01-sep.json";
 const t = () => T.en;
 
-let run = null;      // { question, creator, mode, steps, answer, done, error, offline, replay }
+let run = null;      // { question, currency, steps, answer, done, error, offline, replay }
 let root = null, ctxRef = null;
 
-// Your data's tools name amounts by display currency (net_usd, net_cny); the demo's are plain or USD.
+// The tools name amounts by display currency (net_usd, net_cny).
 const k = () => (run?.currency ?? "USD").toLowerCase();
 const amt = (r, f) => r?.[`${f}_${k()}`] ?? r?.[f];
 const money = v => cur(v, run?.currency ?? "USD");
-const examples = () => ctxRef?.yours ? [YOURS.ASK_EXAMPLE_1, YOURS.ASK_EXAMPLE_2, YOURS.ASK_EXAMPLE_3] : t().examples;
+const examples = () => [YOURS.ASK_EXAMPLE_1, YOURS.ASK_EXAMPLE_2, YOURS.ASK_EXAMPLE_3];
 
 // ---------------------------------------------------------------- step text
 
@@ -146,7 +142,7 @@ function figure(a) {
 // An outline icon per tool, so the steps read at a glance.
 const TOOL_ICON = { find_creator: "search", get_summary: "overview", load_platform: "file", convert_currency: "fx", compute_breakdown: "coins",
   compare_months: "up", compute_set_aside: "sliders", simulate_patreon_ios: "monitor", get_upwork_contract_fees: "percent", get_fee_details: "percent",
-  tax_items: "tax", form_check: "duplicate", get_manual_income: "pencil", get_expenses: "wallet", get_goal_progress: "target", submit_answer: "send" };
+  tax_items: "tax", form_check: "duplicate", get_manual_income: "pencil", get_expenses: "wallet", get_goal_progress: "flag", submit_answer: "send" };
 
 function stepsCard() {
   const steps = toolSteps();
@@ -241,38 +237,36 @@ function onEvent(name, data) {
   if (name === "step") run.steps.push(data);
   else if (name === "answer") run.answer = data;
   else if (name === "error") run.error = data.message;
-  else if (name === "done") {
-    run.done = data;
-    // The public deployment has no model key, so the server streams a recorded real run.
-    if (data.replay) { run.replay = true; if (data.recorded_question) run.question = data.recorded_question; }
-  }
+  else if (name === "done") run.done = data;
   paint();
 }
 
 async function start(question, ctx) {
-  run = { question, creator: ctx.creator, mode: ctx.mode, currency: ctx.cur, steps: [], answer: null, done: null, error: null };
+  run = { question, currency: ctx.cur, steps: [], answer: null, done: null, error: null };
   paint();
   try {
-    if (ctx.yours) await askYours(question, ctx.data, onEvent);
-    else await ask(question, ctx.creator, onEvent);
+    await ask(question, ctx.data, onEvent);
     if (!run.done) run.done = { failed: true };
   } catch (e) {
-    // The public deployment has no model key: say so plainly instead of replaying a demo answer.
-    if (ctx.yours && e.status === 503) run.offline = e.message;
+    // No model key on this server: play the recorded run if this account and question have one,
+    // otherwise say plainly that live questions need the hosted model.
+    const rec = e.status === 503 ? await findReplay(ctx.data, question) : null;
+    if (rec) return replay(rec);
+    if (e.status === 503) run.offline = e.message;
     else run.error = e.message;
     run.done = { failed: true };
   }
   paint();
 }
 
-async function replay() {
-  const rec = english(await (await fetch(REPLAY)).json());
-  run = { question: rec.question, creator: rec.creator, mode: "demo", currency: "USD", steps: [], answer: null, done: null, error: null, replay: true };
+async function replay(rec) {
+  run.replay = true;
   paint();
   for (const [name, data] of rec.events) {
     await new Promise(r => setTimeout(r, 140));
     onEvent(name, data);
   }
+  if (!run.done) { run.done = { failed: true }; paint(); }
 }
 
 function bind() {
@@ -293,8 +287,7 @@ function bind() {
 }
 
 export async function render(ctx) {
-  if (ctx.yours && !ctx.has) return emptyScreen(ctx, "Ask Tilly", YOURS.EMPTY_ASK);
-  if (run && run.mode !== ctx.mode) run = null; // a run belongs to the ledger it was asked about
+  if (!ctx.has) return emptyScreen(ctx, "Ask Tilly", YOURS.EMPTY_ASK);
   ctxRef = ctx;
   return view(ctx);
 }
@@ -303,6 +296,5 @@ export function mount(ctx, el) {
   root = el;
   ctxRef = ctx;
   bind();
-  if (ctx.query.get("replay") && !run?.replay && !ctx.yours) replay();
-  else if (ctx.query.get("go") && ctx.query.get("q") && !run) start(ctx.query.get("q"), ctx);
+  if (ctx.query.get("go") && ctx.query.get("q") && !run) start(ctx.query.get("q"), ctx);
 }
