@@ -147,6 +147,7 @@ function figure(a) {
 function stepsCard() {
   const steps = toolSteps();
   const running = run && !run.done;
+  if (run?.offline) return `<section class="sa-card c5 steps-card"><div class="head"><h2>${t().steps}</h2></div><div class="steps-empty">${icon("steps")}<div>${t().stepsEmpty}</div></div></section>`;
   const badge = !run ? "" : running ? `<span class="sa-badge sim"><i class="spin"></i> ${t().running}</span>` : `<span class="sa-badge ok">${t().calls(steps.length)}</span>`;
   const groups = [];
   steps.forEach((s, i) => {
