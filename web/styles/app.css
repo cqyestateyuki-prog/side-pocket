@@ -242,3 +242,23 @@ a.sa-prism { text-decoration: none; }
 .wl-built { align-self: flex-start; }
 
 .wl-about { display: block; margin-top: 14px; font: var(--sa-small); color: var(--sa-meta); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- Your data (kit v1.3 / v1.3.1 components live in ui-reference.css) ---------- */
+.tax-hero .title { margin: 0; max-width: none; }   /* the kit's .sa-hero .title is for the upload hero */
+.tax-hero.cn { grid-template-columns: 1fr 230px; }
+.tax-hero.both { grid-template-columns: 1fr auto; gap: 32px; min-height: 0; align-items: end; }
+.tax-hero .sa-count .tag { font: var(--sa-label); letter-spacing: var(--sa-tracking-label); text-transform: uppercase; color: var(--sa-on-forest-mid); margin-bottom: 8px; }
+.sa-facts b.tax { color: var(--sa-tax-text); }
+.sa-kpi .meta b.ink { color: var(--sa-ink); }
+.sa-kpi .meta b.warn { color: var(--sa-warn-text); }
+.sa-who .av .sa-icon { color: var(--sa-forest); }
+.sa-hero .mydata-speech { right: 150px; bottom: 138px; }
+.sa-hero .hero-link { background: none; border: 0; padding: 0; color: var(--sa-on-forest); font: 700 13px/1.4 var(--sa-font); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.sa-hero.drop.over::before { border-color: var(--sa-on-forest); }
+.sa-grid.over { outline: 2px dashed var(--sa-forest); outline-offset: 8px; border-radius: var(--sa-r-card); }
+.sa-dataact .btns { grid-row: 1 / span 2; grid-column: 2; display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+.sa-dataact > div > input[hidden] { display: none; }
+.sa-files td .acct + .acct { margin-left: 4px; }
+.sa-mode a { cursor: pointer; }
+.sa-files td.msg { white-space: normal; }
+.sa-prism i { flex: none; }

@@ -1,11 +1,15 @@
 // Ask: the v2 agent answers live. Each step streams in from POST /api/ask; the answer's
 // numbers point back to the step that produced them. #ask?replay=1 replays a recorded real run
 // (web/demo/ask-c01-sep.json) for offline demos and static captures.
+// In Your data mode the question goes to POST /api/personal/ask with the stored (relabelled) files;
+// that agent's tools return totals only and its PRISM trace is content-free.
 import { ask } from "../lib/api.js";
-import { COPY } from "../lib/copy.js";
+import { ask as askYours } from "../lib/personal.js";
+import { COPY, YOURS } from "../lib/copy.js";
 import { PLATFORM_KEY, cur, dateLong, esc, icon, monthName, usd } from "../lib/format.js";
 import { mascot } from "../lib/mascot.js";
 import { english } from "../lib/display.js";
+import { emptyScreen } from "../lib/parts.js";
 
 const LABEL = { bilibili: "Bilibili", youtube: "YouTube", twitch: "Twitch", patreon: "Patreon", upwork: "Upwork", fiverr: "Fiverr", freelancer: "Freelancer.com", contra: "Contra" };
 // UI labels. The UI is English-only (user decision); a language switch is deferred.
@@ -25,8 +29,14 @@ const REPLAY = "demo/ask-c01-sep.json";
 const t = () => T.en;
 const PRISM_SESSIONS = "https://prism.blockconvey.com/sessions";
 
-let run = null;      // { question, creator, steps, answer, done, error, replay }
+let run = null;      // { question, creator, mode, steps, answer, done, error, offline, replay }
 let root = null, ctxRef = null;
+
+// Your data's tools name amounts by display currency (net_usd, net_cny); the demo's are plain or USD.
+const k = () => (run?.currency ?? "USD").toLowerCase();
+const amt = (r, f) => r?.[`${f}_${k()}`] ?? r?.[f];
+const money = v => cur(v, run?.currency ?? "USD");
+const examples = () => ctxRef?.yours ? [YOURS.ASK_EXAMPLE_1, YOURS.ASK_EXAMPLE_2, YOURS.ASK_EXAMPLE_3] : t().examples;
 
 // ---------------------------------------------------------------- step text
 
@@ -45,9 +55,11 @@ function resultText(s) {
     case "find_creator": return `${r.creator_id} · ${Object.keys(r.accounts ?? {}).length} platforms · ${r.tax_country} tax home · set-aside ${Math.round((r.set_aside_rate ?? 0) * 100)}%`;
     case "load_platform": return `${r.records} record${r.records === 1 ? "" : "s"} · ${(r.currencies ?? []).join(", ")}${r.has_withheld_tax ? " · tax withheld" : ""}`;
     case "convert_currency": return `${r.non_usd_records} non-USD record${r.non_usd_records === 1 ? "" : "s"} converted at their own dates’ rates`;
-    case "compute_breakdown": return r.total ? `gross ${usd(r.total.gross)} → net ${usd(r.total.net)}` : "breakdown computed";
+    case "get_summary": return `${(r.platforms ?? []).length} platforms · ${(r.months ?? []).length} months · ${r.tax_home} tax home`;
+    case "compute_breakdown": return r.total ? `gross ${money(amt(r.total, "gross"))} → net ${money(amt(r.total, "net"))}` : "breakdown computed";
+    case "compare_months": return `${r.later_month} vs ${r.earlier_month}: ${money(amt(r, "change"))}`;
     case "compute_set_aside": return `set aside ${usd(r.set_aside_usd)} at ${Math.round(r.set_aside_rate * 100)}%`;
-    case "tax_items": return `set aside ${usd(r.set_aside_usd)} · next due ${r.next_us_estimated_tax_due?.due_date ?? "—"}`;
+    case "tax_items": return `set aside ${money(amt(r, "set_aside"))}${r.next_us_estimated_tax_due ? ` · next due ${r.next_us_estimated_tax_due.due_date ?? "—"}` : ""}`;
     case "form_check": return `${(r.platforms ?? []).length} platforms checked${r.possible_duplicate_reports?.length ? ` · possible duplicate: ${r.possible_duplicate_reports.join(", ")}` : ""}`;
     case "submit_answer": return "recorded";
     default: return (s.result_summary ?? "").slice(0, 120);
@@ -88,11 +100,11 @@ function feeChips() {
   const bi = breakdownIndex();
   const plats = bi >= 0 ? toolSteps()[bi].result.platforms : null;
   if (!plats || typeof plats !== "object") return "";
-  const rows = Object.entries(plats).map(([k, v]) => [k, v?.usd?.platform_fee ?? v?.platform_fee]).filter(([, f]) => Number(f) > 0)
+  const rows = Object.entries(plats).map(([p, v]) => [p, v?.usd?.platform_fee ?? amt(v, "platform_fee")]).filter(([, f]) => Number(f) > 0)
     .sort((a, b) => b[1] - a[1]);
   if (!rows.length) return "";
-  return `<div class="label" style="margin-top:14px">${t().fees}</div><div class="sa-platchips">${rows.map(([k, f]) =>
-    `<span class="sa-chip"><i class="dot" style="background:var(--sa-p-${PLATFORM_KEY[k] ?? k})"></i>${esc(LABEL[k] ?? k)} <span class="num">${usd(Number(f))}</span></span>`).join("")}</div>`;
+  return `<div class="label" style="margin-top:14px">${t().fees}</div><div class="sa-platchips">${rows.map(([p, f]) =>
+    `<span class="sa-chip"><i class="dot" style="background:var(--sa-p-${PLATFORM_KEY[p] ?? p})"></i>${esc(LABEL[p] ?? p)} <span class="num">${money(Number(f))}</span></span>`).join("")}</div>`;
 }
 
 function lines() {
@@ -102,13 +114,13 @@ function lines() {
   if (bi >= 0) {
     const tot = steps[bi].result.total;
     const L = t().lines;
-    out.push([L[0], tot.gross, bi + 1], [L[1], -tot.platform_fee, bi + 1],
-             [L[2], -tot.payment_fee, bi + 1], [L[3], -tot.withheld, bi + 1], [L[4], tot.net, bi + 1]);
+    out.push([L[0], amt(tot, "gross"), bi + 1], [L[1], -amt(tot, "platform_fee"), bi + 1],
+             [L[2], -(amt(tot, "payment_fee") ?? amt(tot, "payout_fee")), bi + 1], [L[3], -amt(tot, "withheld"), bi + 1], [L[4], amt(tot, "net"), bi + 1]);
   }
   const si = steps.findLastIndex(s => (s.name === "compute_set_aside" || s.name === "tax_items") && s.result);
   if (si >= 0) {
     const r = steps[si].result;
-    out.push([t().setAside(Math.round(r.set_aside_rate * 100)), r.set_aside_usd, si + 1]);
+    out.push([t().setAside(Math.round(r.set_aside_rate * 100)), amt(r, "set_aside") ?? r.set_aside_usd, si + 1]);
     if (r.next_us_estimated_tax_due?.due_date) out.push([t().nextDue, dateLong(r.next_us_estimated_tax_due.due_date), si + 1]);
   }
   return out;
@@ -117,7 +129,8 @@ function lines() {
 // The agent's reply, lightly formatted: **bold** kept, the first two paragraphs, one line.
 function prose(text) {
   if (!text) return "";
-  return text.split(/\n\s*\n/).slice(0, 2).join(" ").replace(/^#+\s*/gm, "").replace(/\n/g, " ")
+  // Markdown tables repeat the lines below the answer, so they are left out of the summary.
+  return text.split("\n").filter(l => !l.trim().startsWith("|")).join("\n").split(/\n\s*\n/).filter(p => p.trim()).slice(0, 2).join(" ").replace(/^#+\s*/gm, "").replace(/\n/g, " ")
     .split(/(\*\*[^*]+\*\*)/).map(part => part.startsWith("**") ? `<b>${esc(part.slice(2, -2))}</b>` : esc(part.replace(/[*_`]/g, ""))).join("");
 }
 
@@ -148,7 +161,7 @@ function stepsCard() {
     const res = many ? (s.name === "load_platform" ? `${g.items.reduce((n, x) => n + (x.result?.records ?? 0), 0)} records across ${g.items.length} loads` : `${g.items.length} conversions`) : resultText(s);
     return `<li data-from="${g.from}" data-to="${g.to}" class="${s.status === "error" ? "err" : ""} ${s.name === "submit_answer" ? "final" : ""}">
       <span class="n ${many ? "range" : ""}">${many ? `${g.from}–${g.to}` : g.from}</span>
-      <div><div class="t">${esc(s.name)}${many ? ` ×${g.items.length}` : ""}<span class="args"> · ${esc(args)}</span></div><div class="s">${esc(res)}</div></div>
+      <div><div class="t">${esc(s.name)}${many ? ` ×${g.items.length}` : ""}${args ? `<span class="args"> · ${esc(args)}</span>` : ""}</div><div class="s">${esc(res)}</div></div>
       ${s.status === "error" ? icon("alert", "sm warnicon") : icon("check", "sm")}</li>`;
   }).join("");
   const pending = running ? `<li class="pending"><span class="n"><i class="spin"></i></span><div><div class="s">${t().choosing}</div></div></li>` : "";
@@ -161,10 +174,11 @@ function stepsCard() {
 function answerBlock() {
   if (!run) {
     return `<section class="sa-card sage examples"><div class="label">${t().tryAsking}</div>
-      <div class="example-list">${t().examples.map(q => `<button class="sa-chip" data-example="${esc(q)}">${esc(q)}</button>`).join("")}</div></section>`;
+      <div class="example-list">${examples().map(q => `<button class="sa-chip" data-example="${esc(q)}">${esc(q)}</button>`).join("")}</div></section>`;
   }
   const a = run.answer;
   const bubble = `<div class="sa-bubble">${esc(run.question)}</div>`;
+  if (run.offline) return bubble + `<section class="sa-emptycard">${mascot("think")}<div><b>${YOURS.ASK_OFF_TITLE}</b><p>${esc(run.offline)}</p></div></section>`;
   if (run.error) return bubble + `<section class="sa-warncard">${icon("alert")}<div class="wc-body"><h2>The run didn’t finish.</h2><p>${esc(run.error)}</p></div></section>`;
   if (!a) return bubble + `<section class="sa-card thinking">${mascot("think", "think-mascot")}<div class="meta">${t().thinking}</div></section>`;
   const fig = figure(a);
@@ -184,7 +198,7 @@ function answerBlock() {
       <div class="sa-fig num">${fig}${refFor(a.answer) ? `<a class="sa-ref" href="#step-${refFor(a.answer)}">${refFor(a.answer)}</a>` : ""}</div>
       <div class="sub clamp">${prose(a.text) || esc(a.explanation ?? "")}</div>
     </section>
-    ${ls.length ? `<section class="sa-card answer-lines">${breakdownIndex() >= 0 && toolSteps()[breakdownIndex()].args?.month ? `<div class="head" style="margin-bottom:4px"><h2>${t().where(toolSteps()[breakdownIndex()].args.month)}</h2></div>` : ""}<ul class="sa-lines">${ls.map(([l, v, s]) => `<li><span>${l}</span><span class="amt">${typeof v === "number" ? usd(v) : esc(v)}<span class="sa-ref light">${s}</span></span></li>`).join("")}</ul>${feeChips()}${footer()}</section>` : `<section class="sa-card answer-lines">${footer()}</section>`}`;
+    ${ls.length ? `<section class="sa-card answer-lines">${breakdownIndex() >= 0 && toolSteps()[breakdownIndex()].args?.month ? `<div class="head" style="margin-bottom:4px"><h2>${t().where(toolSteps()[breakdownIndex()].args.month)}</h2></div>` : ""}<ul class="sa-lines">${ls.map(([l, v, s]) => `<li><span>${l}</span><span class="amt">${typeof v === "number" ? money(v) : esc(v)}<span class="sa-ref light">${s}</span></span></li>`).join("")}</ul>${feeChips()}${footer()}</section>` : `<section class="sa-card answer-lines">${footer()}</section>`}`;
 }
 
 function footer() {
@@ -192,7 +206,7 @@ function footer() {
   const d = run.done;
   return `<div class="answer-foot">
     <span class="promise">${icon("check", "sm")} ${t().promise}</span>
-    ${d.session_id ? `<a class="sa-prism" href="${PRISM_SESSIONS}" target="_blank" rel="noopener" title="trace ${esc(d.trace_id ?? "")}"><i></i>Traced in PRISM · ${esc(d.session_id)} ${icon("external", "sm")}</a>` : ""}
+    ${d.session_id ? `<a class="sa-prism" href="${PRISM_SESSIONS}" target="_blank" rel="noopener" title="trace ${esc(d.trace_id ?? "")}"><i></i>${d.content_free ? "Content-free trace in PRISM" : "Traced in PRISM"} · ${esc(d.session_id)} ${icon("external", "sm")}</a>` : ""}
   </div>`;
 }
 
@@ -232,13 +246,16 @@ function onEvent(name, data) {
 }
 
 async function start(question, ctx) {
-  run = { question, creator: ctx.creator, steps: [], answer: null, done: null, error: null };
+  run = { question, creator: ctx.creator, mode: ctx.mode, currency: ctx.cur, steps: [], answer: null, done: null, error: null };
   paint();
   try {
-    await ask(question, ctx.creator, onEvent);
+    if (ctx.yours) await askYours(question, ctx.data, onEvent);
+    else await ask(question, ctx.creator, onEvent);
     if (!run.done) run.done = { failed: true };
   } catch (e) {
-    run.error = e.message;
+    // The public deployment has no model key: say so plainly instead of replaying a demo answer.
+    if (ctx.yours && e.status === 503) run.offline = e.message;
+    else run.error = e.message;
     run.done = { failed: true };
   }
   paint();
@@ -246,7 +263,7 @@ async function start(question, ctx) {
 
 async function replay() {
   const rec = english(await (await fetch(REPLAY)).json());
-  run = { question: rec.question, creator: rec.creator, steps: [], answer: null, done: null, error: null, replay: true };
+  run = { question: rec.question, creator: rec.creator, mode: "demo", currency: "USD", steps: [], answer: null, done: null, error: null, replay: true };
   paint();
   for (const [name, data] of rec.events) {
     await new Promise(r => setTimeout(r, 140));
@@ -272,6 +289,9 @@ function bind() {
 }
 
 export async function render(ctx) {
+  if (ctx.yours && !ctx.has) return emptyScreen(ctx, "Ask", YOURS.EMPTY_ASK);
+  if (run && run.mode !== ctx.mode) run = null; // a run belongs to the ledger it was asked about
+  ctxRef = ctx;
   return view(ctx);
 }
 
@@ -279,6 +299,6 @@ export function mount(ctx, el) {
   root = el;
   ctxRef = ctx;
   bind();
-  if (ctx.query.get("replay") && !run?.replay) replay();
+  if (ctx.query.get("replay") && !run?.replay && !ctx.yours) replay();
   else if (ctx.query.get("go") && ctx.query.get("q") && !run) start(ctx.query.get("q"), ctx);
 }

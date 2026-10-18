@@ -29,10 +29,16 @@ export function periodLabel(period) {
   if (/^\d{4}-Q\d$/.test(period)) {
     const q = +period.slice(6);
     const span = [["January", "March"], ["April", "June"], ["July", "September"], ["October", "December"]][q - 1];
-    return `Q${q} ${period.slice(0, 4)} · ${span[0]}–${span[1]}`;
+    return `Q${q} ${period.slice(0, 4)} · ${span[0]} to ${span[1]}`;
   }
   return `${monthName(period)} ${period.slice(0, 4)}`;
 }
 
 export const daysBetween = (from, to) =>
   Math.round((new Date(to + "T12:00:00") - new Date(from + "T12:00:00")) / 86400000);
+
+// Quarter of a month ("2026-08" → "2026-Q3"); a quarter stays itself.
+export const quarterOf = p => /Q\d$/.test(p) ? p : `${p.slice(0, 4)}-Q${Math.floor((+p.slice(5, 7) - 1) / 3) + 1}`;
+// Today in the viewer's own time zone (deadlines count from here, not from UTC).
+export const localDay = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+export const weekday = d => new Date(d + "T12:00:00").toLocaleString("en-US", { weekday: "short" });

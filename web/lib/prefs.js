@@ -29,8 +29,8 @@ const round2 = v => Math.round(v * 100 + 1e-9) / 100;
 
 // The set-aside to display. With the defaults it is the API's own figure; otherwise the chosen
 // rate applied to the net of the included platforms, rounded half-up to cents like the ledger.
-export function setAside(creator, { totalNet, byPlatform, api }) {
-  const r = chosenRate(creator) ?? api.rate;
+export function setAside(creator, { totalNet, byPlatform, api, rate = null }) {
+  const r = rate ?? chosenRate(creator) ?? api.rate;
   const out = excluded(creator);
   const left = byPlatform.filter(p => out.has(p.platform));
   const base = left.length ? round2(byPlatform.filter(p => !out.has(p.platform)).reduce((s, p) => s + p.net, 0)) : totalNet;
@@ -42,3 +42,16 @@ export function setAside(creator, { totalNet, byPlatform, api }) {
 const ENTERED = "sa_entered";
 export const entered = () => read(ENTERED) === "1";
 export const setEntered = on => write(ENTERED, on ? "1" : null);
+
+// Which ledger the app shows: "demo" (the fictional creators) or "yours" (statements uploaded in this
+// browser, lib/store.js). Remembered per viewer.
+const MODE = "sideatlas.mode";
+export const mode = () => (read(MODE) === "yours" ? "yours" : "demo");
+export const setMode = m => write(MODE, m === "yours" ? "yours" : null);
+
+// Delete all my data also clears this viewer's Side Atlas preferences (set-aside choices, mode).
+export function clearPrefs() {
+  try {
+    Object.keys(localStorage).filter(k => k.startsWith("sideatlas.")).forEach(k => localStorage.removeItem(k));
+  } catch { /* nothing stored */ }
+}

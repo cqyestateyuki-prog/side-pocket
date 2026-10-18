@@ -1,0 +1,11 @@
+{
+ "files": [
+  "bilibili_income.csv",
+  "youtube_revenue.csv",
+  "twitch_payouts.csv",
+  "patreon_earnings.csv",
+  "upwork_transactions.csv",
+  "fiverr_earnings.csv",
+  "contra_payments.csv"
+ ]
+}

@@ -1,4 +1,4 @@
-/* Side Atlas · UI reference styles · v1 · 2026-10-17 (copied from the design kit; literal colours swapped for tokens)
+/* Side Atlas · UI reference styles · v1.3.1 · 2026-10-17 (copied from the design kit; colours only through --sa-* tokens)
    The component styles the prototype (07-mockups/app.html) uses. Copy these when building components.
    Rules that keep big colour + money from looking like a toy:
    1. One bold colour field per screen (.sa-hero). Lime and the semantic colours never fill a whole card.
@@ -193,3 +193,133 @@ body { background: var(--sa-page); color: var(--sa-ink); font: var(--sa-body); -
 .sa-kpirow .sa-card { padding: 16px 20px; }
 .sa-kpirow .sa-fig { font: 800 24px/1.1 var(--sa-font); letter-spacing: -0.02em; margin-top: 8px; }
 .sa-hero .chips { position: relative; display: flex; flex-wrap: wrap; gap: 10px; max-width: 62%; margin-top: 22px; }
+
+/* ---------- From kit v1.1: import check list (used by My data) ---------- */
+.sa-checklist { list-style: none; margin: 0; padding: 0; }
+.sa-checklist li { display: grid; grid-template-columns: 20px 1fr auto; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--sa-line); font: 500 13.5px/1.35 var(--sa-font); color: var(--sa-ink); }
+.sa-checklist li:first-child { border-top: 0; }
+.sa-checklist li .ok { color: var(--sa-ok-text); }
+.sa-checklist li .bad { color: var(--sa-warn); }
+.sa-checklist li .r { color: var(--sa-meta); font-size: 12.5px; }
+
+/* ---------- v1.3 · Your data, privacy, tax home, display currency ---------- */
+/* Data-mode switch (sidebar, under the logo): which ledger the whole app shows. */
+.sa-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: var(--sa-sage); border-radius: var(--sa-r-pill); padding: 4px; }
+.sa-mode a { display: flex; align-items: center; justify-content: center; gap: 6px; height: 32px; border-radius: var(--sa-r-pill); font: 700 13px/1 var(--sa-font); color: var(--sa-text-mid); text-decoration: none; white-space: nowrap; }
+.sa-mode a.on { background: var(--sa-surface); color: var(--sa-forest); box-shadow: var(--sa-shadow-card); }
+/* Utility links in the sidebar foot (My data, Settings & privacy). Not nav items: the nav stays at four. */
+.sa-util { display: flex; flex-direction: column; gap: 2px; padding-bottom: 12px; border-bottom: 1px solid var(--sa-line); margin: 0 -8px; }
+.sa-util a { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; border-radius: var(--sa-r-pill); color: var(--sa-text-mid); font: 600 14px/1 var(--sa-font); text-decoration: none; }
+.sa-util a:hover { background: var(--sa-sage); color: var(--sa-ink); }
+.sa-util a.on { background: var(--sa-forest-100); color: var(--sa-forest); }
+.sa-util a .r { margin-left: auto; font: 600 12px/1 var(--sa-font); color: var(--sa-meta); }
+.sa-util .sa-icon { width: 18px; height: 18px; }
+
+/* Upload hero: the screen's one bold field doubles as the drop zone (dashed inner rule). */
+.sa-hero.drop { min-height: 262px; padding: 36px 40px; }
+.sa-hero.drop::before { content: ""; position: absolute; inset: 12px; border: 2px dashed var(--sa-on-forest-ghost-line); border-radius: calc(var(--sa-r-card) - 10px); pointer-events: none; }
+.sa-hero .title { position: relative; font: 800 34px/1.12 var(--sa-font); letter-spacing: var(--sa-tracking-tight); color: var(--sa-on-forest); margin: 10px 0 8px; max-width: 620px; }
+.sa-hero .actions { position: relative; display: flex; gap: 12px; align-items: center; margin-top: 22px; flex-wrap: wrap; }
+.sa-hero .hint { position: relative; margin-top: 14px; font: 500 13px/1.4 var(--sa-font); color: var(--sa-on-forest-mid); }
+/* Atlas speech bubble (empty states only; one short line). */
+.sa-speech { position: absolute; z-index: 2; background: var(--sa-surface); color: var(--sa-ink); border-radius: 18px 18px 4px 18px; padding: 10px 14px; font: 700 13px/1.35 var(--sa-font); max-width: 230px; box-shadow: var(--sa-shadow-float); }
+
+/* Privacy promise strip: three facts with an icon each. Same words everywhere it appears. */
+.sa-promise { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); background: var(--sa-surface); border: 1px solid var(--sa-line); border-radius: var(--sa-r-card); }
+.sa-promise li { display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: center; padding: 18px 20px; border-left: 1px solid var(--sa-line); font: 700 14px/1.35 var(--sa-font); color: var(--sa-ink); }
+.sa-promise li:first-child { border-left: 0; }
+.sa-promise .ic { width: 40px; height: 40px; border-radius: 12px; background: var(--sa-forest-100); color: var(--sa-forest); display: grid; place-items: center; }
+.sa-promise small { display: block; font: 500 12.5px/1.35 var(--sa-font); color: var(--sa-meta); margin-top: 3px; }
+
+/* Where each export lives: 4 × 2 grid of small panels. */
+.sa-where { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.sa-where > div { border: 1px solid var(--sa-line); border-radius: var(--sa-r-inner); padding: 12px 14px; background: var(--sa-page); }
+.sa-where b { display: flex; align-items: center; font: 800 14px/1.2 var(--sa-font); color: var(--sa-ink); }
+.sa-where .path { font: 500 12.5px/1.4 var(--sa-font); color: var(--sa-text-mid); margin-top: 6px; }
+.sa-where .mono { display: block; font: 500 11.5px/1.2 var(--sa-mono); color: var(--sa-meta); margin-top: 5px; }
+
+/* Upload list: one row per imported statement; account IDs only as pseudonymised labels. */
+.sa-files td { padding-top: 7px; padding-bottom: 7px; }
+.sa-files td .acct { font: 500 12px/1 var(--sa-mono); color: var(--sa-meta); margin-left: 6px; }
+.sa-files td .file { font: 500 12.5px/1 var(--sa-mono); color: var(--sa-text-mid); }
+.sa-files tr.bad td { background: var(--sa-warn-tint); color: var(--sa-warn-text); }
+.sa-files tr.bad td .file { color: var(--sa-warn-text); }
+.sa-linkbtn { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; padding: 6px 10px; border-radius: var(--sa-r-pill); font: 700 13px/1 var(--sa-font); color: var(--sa-text-mid); cursor: pointer; text-decoration: none; }
+.sa-linkbtn:hover { background: var(--sa-warn-tint); color: var(--sa-warn-text); }
+
+/* Settings sheet: label + control on one line, help text under it. */
+.sa-settings { padding-top: 8px; padding-bottom: 8px; }
+.sa-settings .row { display: grid; grid-template-columns: 1fr auto; gap: 8px 24px; align-items: center; padding: 18px 0; border-top: 1px solid var(--sa-line); }
+.sa-settings .head + .row { border-top: 0; }
+.sa-settings .row h3 { margin: 0; font: 800 16px/1.3 var(--sa-font); color: var(--sa-ink); display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.sa-settings .row p { grid-column: 1 / -1; margin: 0; font: var(--sa-small); color: var(--sa-text-mid); max-width: 560px; }
+.sa-settings .row .ctl { display: flex; align-items: center; gap: 10px; }
+/* Currency switch: the segmented control with a currency glyph per option. */
+.sa-seg.cur button { min-width: 64px; }
+.sa-seg.cur button span { opacity: .7; margin-right: 4px; }
+
+/* Privacy center map (on the hero): where each kind of data goes. */
+.sa-datamap { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; position: relative; }
+.sa-datamap li { display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: center; background: var(--sa-on-forest-glass); border: 1px solid var(--sa-on-forest-glass-line); border-radius: var(--sa-r-inner); padding: 10px 14px; }
+.sa-datamap .ic { width: 36px; height: 36px; border-radius: 10px; background: var(--sa-on-forest-ref); color: var(--sa-on-forest); display: grid; place-items: center; }
+.sa-datamap b { display: block; font: 700 14px/1.3 var(--sa-font); color: var(--sa-on-forest); }
+.sa-datamap span { font: 500 13px/1.4 var(--sa-font); color: var(--sa-on-forest-mid); }
+
+/* Danger button: delete actions only. White pill, warn text and line; never filled. */
+.sa-btn.danger { background: var(--sa-surface); color: var(--sa-warn-text); border-color: var(--sa-warn-line); }
+.sa-btn.danger:hover { background: var(--sa-warn-tint); border-color: var(--sa-warn); }
+.sa-dataact { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.sa-dataact > div { display: grid; grid-template-columns: 1fr auto; gap: 6px 20px; align-items: center; align-content: center; padding: 4px 24px; }
+.sa-dataact > div + div { border-left: 1px solid var(--sa-line); }
+.sa-dataact h3 { margin: 0; font: 800 16px/1.3 var(--sa-font); }
+.sa-dataact p { margin: 0; grid-column: 1; font: var(--sa-small); color: var(--sa-text-mid); }
+.sa-dataact .sa-btn { grid-row: 1 / span 2; grid-column: 2; }
+
+/* Grouped table rows (China tax home: inside / outside China). */
+.sa-table tr.group td { background: var(--sa-page); font: var(--sa-label); letter-spacing: var(--sa-tracking-label); text-transform: uppercase; color: var(--sa-text-mid); padding-top: 9px; padding-bottom: 9px; }
+.sa-table tr.group td .sa-badge { text-transform: none; letter-spacing: 0; margin-left: 8px; }
+
+/* ---------- v1.3.1 · empty card, Both hero, facts rows, rate line, dialog ---------- */
+/* Empty-state card (Your data mode, before any import): Atlas thinking, one title, one sentence, one link. */
+.sa-emptycard { display: grid; grid-template-columns: var(--sa-mascot-inline) 1fr auto; gap: 18px; align-items: center; background: var(--sa-surface); border: 1px solid var(--sa-line); border-radius: var(--sa-r-card); padding: 20px 24px; }
+.sa-emptycard img { height: var(--sa-mascot-inline); width: auto; }
+.sa-emptycard b { display: block; font: 800 18px/1.3 var(--sa-font); color: var(--sa-ink); }
+.sa-emptycard p { margin: 4px 0 0; font: var(--sa-small); font-size: 14px; color: var(--sa-text-mid); }
+.sa-emptycard.ghost { background: transparent; border-style: dashed; border-color: var(--sa-line-strong); }
+.sa-skeleton { border-radius: var(--sa-r-card); background: var(--sa-sage); opacity: .55; }
+/* Two countdowns on one hero (tax home Both). */
+.sa-counts { display: flex; gap: 28px; align-items: flex-end; position: relative; }
+.sa-counts .sa-count { text-align: left; }
+.sa-counts .sa-count + .sa-count { padding-left: 28px; border-left: 1px solid var(--sa-on-forest-glass-line); }
+.sa-counts .tag { font: var(--sa-label); letter-spacing: var(--sa-tracking-label); text-transform: uppercase; color: var(--sa-on-forest-mid); margin-bottom: 8px; }
+/* Facts row: one country section as label/value cells. */
+.sa-facts { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--sa-line); border-radius: var(--sa-r-inner); overflow: hidden; }
+.sa-facts > div { padding: 14px 16px; border-left: 1px solid var(--sa-line); }
+.sa-facts > div:first-child { border-left: 0; }
+.sa-facts .label { font-size: 11px; }
+.sa-facts b { display: block; margin-top: 6px; font: 800 20px/1.15 var(--sa-font); color: var(--sa-ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sa-facts span.s { display: block; margin-top: 4px; font: var(--sa-small); color: var(--sa-text-mid); }
+.sa-section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.sa-section-head h2 { margin: 0; }
+.sa-section-head a { margin-left: auto; }
+/* Rate line under a converted amount: rate · rate date · source. */
+.sa-table td .rate { display: block; font: 500 11.5px/1.25 var(--sa-mono); color: var(--sa-fx-text); margin-top: 3px; white-space: nowrap; }
+.sa-table td .rate .src { font-family: var(--sa-font); font-weight: 700; }
+.sa-table td .rate.miss { color: var(--sa-warn-text); }
+/* Confirmation dialog (delete only). Scrim over the page; the filled danger button lives only here. */
+.sa-scrim { position: fixed; inset: 0; background: var(--sa-scrim); z-index: 40; }
+.sa-dialog { position: fixed; z-index: 41; left: calc(50% + var(--sa-sidebar-w) / 2); top: 50%; transform: translate(-50%, -50%); width: 580px; background: var(--sa-surface); border-radius: var(--sa-r-card); box-shadow: var(--sa-shadow-float); padding: 28px 28px 24px; }
+.sa-dialog .ic { width: 48px; height: 48px; border-radius: 14px; background: var(--sa-warn-tint); color: var(--sa-warn); display: grid; place-items: center; }
+.sa-dialog h2 { font: 800 24px/1.2 var(--sa-font); letter-spacing: var(--sa-tracking-tight); margin: 16px 0 8px; }
+.sa-dialog p { margin: 0; font: 500 14.5px/1.5 var(--sa-font); color: var(--sa-text-mid); }
+.sa-dialog ul { list-style: none; margin: 16px 0 0; padding: 4px 16px; background: var(--sa-page); border-radius: var(--sa-r-inner); }
+.sa-dialog li { display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--sa-line); font: 600 13.5px/1.3 var(--sa-font); }
+.sa-dialog li:first-child { border-top: 0; }
+.sa-dialog li span:last-child { color: var(--sa-text-mid); font-weight: 500; }
+.sa-dialog .actions { display: flex; gap: 10px; align-items: center; margin-top: 22px; }
+.sa-dialog .actions .sa-btn { white-space: nowrap; }
+.sa-dialog .actions .cancel { margin-left: auto; }
+.sa-btn.danger.solid { background: var(--sa-warn); border-color: var(--sa-warn); color: var(--sa-surface); }
+.sa-btn.danger.solid:hover { box-shadow: inset 0 0 0 999px var(--sa-scrim); }
+.sa-btn.ghost { background: transparent; border-color: transparent; color: var(--sa-text-mid); }
+.sa-btn.ghost:hover { color: var(--sa-ink); }
