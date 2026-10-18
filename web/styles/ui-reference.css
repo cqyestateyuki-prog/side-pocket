@@ -323,3 +323,16 @@ body { background: var(--sa-page); color: var(--sa-ink); font: var(--sa-body); -
 .sa-btn.danger.solid:hover { box-shadow: inset 0 0 0 999px var(--sa-scrim); }
 .sa-btn.ghost { background: transparent; border-color: transparent; color: var(--sa-text-mid); }
 .sa-btn.ghost:hover { color: var(--sa-ink); }
+
+/* v1.4.1 · My data empty state, trimmed */
+.sa-hero.drop.slim { display: flex; flex-direction: column; justify-content: center; min-height: 240px; }
+.sa-promise.short { grid-template-columns: repeat(3, 1fr) auto; }
+.sa-promise.short li { padding: 14px 20px; }
+.sa-promise.short li.more { display: flex; font: 700 13px/1.2 var(--sa-font); }
+.sa-promise.short li.more a { color: var(--sa-forest); text-decoration: none; white-space: nowrap; }
+.sa-howto { padding: 0; }
+.sa-howto > summary { list-style: none; cursor: pointer; padding: 18px 24px; font: 700 15px/1.2 var(--sa-font); color: var(--sa-ink); display: flex; justify-content: space-between; align-items: center; }
+.sa-howto > summary::-webkit-details-marker { display: none; }
+.sa-howto > summary::after { content: "+"; font: 600 20px/1 var(--sa-font); color: var(--sa-meta); }
+.sa-howto[open] > summary::after { content: "\2212"; }
+.sa-howto .sa-where { padding: 0 24px 20px; }

@@ -438,26 +438,25 @@ const WHERE = [
 const promise = () => [["monitor", X.PROMISE_BROWSER, X.PROMISE_BROWSER_SMALL], ["server", X.PROMISE_SERVER, X.PROMISE_SERVER_SMALL], ["ask", X.PROMISE_AI, X.PROMISE_AI_SMALL]]
   .map(([ic, t, sm]) => `<li><span class="ic">${icon(ic)}</span><span>${t}<small>${sm}</small></span></li>`).join("");
 
-/* ---------------- 10 · My data, empty ---------------- */
+/* ---------------- 10 · My data, empty (v1.4.1: one headline, one button, three short promises) ---------------- */
+const promiseShort = () => [["monitor", "Saved only in this browser"], ["server", "Server keeps no copy"], ["ask", "AI sees totals, not rows"]]
+  .map(([ic, t]) => `<li><span class="ic">${icon(ic)}</span><span>${t}</span></li>`).join("");
 function mydataEmpty() {
   return `
   <div class="sa-top"><div><h1>My data</h1><p>Nothing imported yet</p></div><div class="right">${you()}</div></div>
   <div class="sa-grid">
-    <section class="sa-hero drop c12">
+    <section class="sa-hero drop slim c12">
       <div class="orb"></div>
       <img class="sa-mascot hero-mascot" src="../02-logos/mascot/wave.png" alt="">
       <div class="sa-speech" style="right:150px;bottom:138px">${X.EMPTY_MASCOT}</div>
-      <div class="lead" style="display:flex;gap:8px;align-items:center">${icon("upload", "sm")} Upload statements</div>
       <div class="title">${X.MYDATA_HEADLINE}</div>
-      <div class="sub" style="max-width:560px">${X.MYDATA_SUB}</div>
-      <div class="actions"><a class="sa-btn on-dark">${icon("upload", "sm")} Choose CSV files</a><a class="sa-btn ghost-dark" href="#overview">Explore demo data</a></div>
-      <div class="hint">${X.DROP_HINT}</div>
+      <div class="actions"><a class="sa-btn on-dark">${icon("upload", "sm")} Choose CSV files</a></div>
     </section>
-    <ul class="sa-promise c12">${promise()}</ul>
-    <section class="sa-card c12">
-      <div class="head"><h2>Where to download each statement</h2><span class="meta">Paths may change</span></div>
-      <div class="sa-where">${WHERE.map(([k, l, f, w]) => `<div><b><i class="sa-pdot" style="background:${PCOL(k).fill}"></i>${l}</b><div class="path">${w}</div><span class="mono">${f}</span></div>`).join("")}</div>
-    </section>
+    <ul class="sa-promise short c12">${promiseShort()}<li class="more"><a href="#privacy">How your data is handled</a></li></ul>
+    <details class="sa-card sa-howto c12">
+      <summary>Where do I find my CSV files?</summary>
+      <div class="sa-where">${WHERE.map(([k, l, f, w]) => `<div><b><i class="sa-pdot" style="background:${PCOL(k).fill}"></i>${l}</b><div class="path">${w}</div></div>`).join("")}</div>
+    </details>
   </div>`;
 }
 

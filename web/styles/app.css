@@ -253,7 +253,6 @@ a.sa-prism { text-decoration: none; }
 .sa-kpi .meta b.warn { color: var(--sa-warn-text); }
 .sa-who .av .sa-icon { color: var(--sa-forest); }
 .sa-hero .mydata-speech { right: 150px; bottom: 138px; }
-.sa-hero .hero-link { background: none; border: 0; padding: 0; color: var(--sa-on-forest); font: 700 13px/1.4 var(--sa-font); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .sa-hero.drop.over::before { border-color: var(--sa-on-forest); }
 .sa-grid.over { outline: 2px dashed var(--sa-forest); outline-offset: 8px; border-radius: var(--sa-r-card); }
 .sa-dataact .btns { grid-row: 1 / span 2; grid-column: 2; display: flex; flex-direction: column; gap: 6px; align-items: stretch; }

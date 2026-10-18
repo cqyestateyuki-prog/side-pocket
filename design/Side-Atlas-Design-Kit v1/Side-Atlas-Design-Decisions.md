@@ -2,6 +2,14 @@
 
 The single place where visual rulings live. Changing a ruling means a new kit version, not an edit to one component.
 
+## v1.4.1 · 17 October 2026 · My data empty state (signed off in chat)
+
+| # | Decision | Why |
+|---|---|---|
+| 56 | **My data, nothing imported:** title with "Nothing imported yet", one hero headline, the mascot speech bubble and one button (Choose CSV files). Removed: the hero eyebrow, the 8-platform sentence, the drop hint, "Explore demo data" (the sidebar switch does this) and "Try sample statements". | User: the page had too much text; asked to keep the subtitle and the speech bubble and to drop the hint and the sample button. |
+| 57 | **Privacy strip, short form:** three short promises (Saved only in this browser · Server keeps no copy · AI sees totals, not rows) plus a "How your data is handled" link to Settings & privacy, where the full privacy map lives. | Details moved one click away instead of under every promise. |
+| 58 | **Where to download** is a collapsed `details` card ("Where do I find my CSV files?"); file names are dropped, the menu paths stay. | Most visits don't need it. |
+
 ## v1.4 · 17 October 2026 · current standard (drawn; waiting for sign-off before build)
 
 | # | Decision | Why |

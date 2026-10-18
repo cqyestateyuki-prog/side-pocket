@@ -4,7 +4,6 @@
 import { YOURS } from "../lib/copy.js";
 import { dateShort, esc, icon, monthShort, pcol, quarterOf } from "../lib/format.js";
 import { mascot } from "../lib/mascot.js";
-import { setMode } from "../lib/prefs.js";
 import * as store from "../lib/store.js";
 import { bodyBytes, labeler, prepare, shortLabel } from "../lib/statements.js";
 import { formats, invalidate, post } from "../lib/personal.js";
@@ -31,8 +30,9 @@ const MARGIN = 20_000; // room for the settings and the rest of a request body
 
 let notes = []; // [{ kind: "info" | "warn", text }] from the last import, shown until the next one
 
-export const promiseStrip = () => `<ul class="sa-promise c12">${[["monitor", X.PROMISE_BROWSER, X.PROMISE_BROWSER_SMALL], ["server", X.PROMISE_SERVER, X.PROMISE_SERVER_SMALL], ["ask", X.PROMISE_AI, X.PROMISE_AI_SMALL]]
-  .map(([ic, t, sm]) => `<li><span class="ic">${icon(ic)}</span><span>${t}<small>${sm}</small></span></li>`).join("")}</ul>`;
+// Kit v1.4.1: three short promises; the details live in Settings & privacy.
+const promiseStrip = () => `<ul class="sa-promise short c12">${[["monitor", X.PROMISE_BROWSER], ["server", X.PROMISE_SERVER], ["ask", X.PROMISE_AI]]
+  .map(([ic, t]) => `<li><span class="ic">${icon(ic)}</span><span>${t}</span></li>`).join("")}<li class="more"><a href="#settings">${X.PROMISE_MORE}</a></li></ul>`;
 
 const fileInput = `<input type="file" data-files accept=".csv,text/csv,.txt,.json,application/json" multiple hidden>`;
 
@@ -49,24 +49,20 @@ function emptyView(ctx) {
   <div class="sa-grid">
     ${ctx.data.persistent ? "" : `<div class="c12 sa-note warn">${icon("alert", "sm")}<span>${X.STORAGE_OFF}</span></div>`}
     ${noteList()}
-    <section class="sa-hero drop c12" data-drop>
+    <section class="sa-hero drop slim c12" data-drop>
       <div class="orb"></div>
       ${mascot("wave", "hero-mascot")}
       <div class="sa-speech mydata-speech">${X.EMPTY_MASCOT}</div>
-      <div class="lead" style="display:flex;gap:8px;align-items:center">${icon("upload", "sm")} Upload statements</div>
       <div class="title">${X.MYDATA_HEADLINE}</div>
-      <div class="sub" style="max-width:560px">${X.MYDATA_SUB}</div>
-      <div class="actions"><button type="button" class="sa-btn on-dark" data-choose>${icon("upload", "sm")} Choose CSV files</button><button type="button" class="sa-btn ghost-dark" data-demo>Explore demo data</button></div>
-      <div class="hint">${X.DROP_HINT}</div>
-      <div class="hint"><button type="button" class="hero-link" data-samples>Try sample statements</button> · ${X.SAMPLES_HINT}</div>
+      <div class="actions"><button type="button" class="sa-btn on-dark" data-choose>${icon("upload", "sm")} Choose CSV files</button></div>
       ${fileInput}
     </section>
     ${promiseStrip()}
     ${unread.length ? filesCard(ctx, null, null) : ""}
-    <section class="sa-card c12">
-      <div class="head"><h2>Where to download each statement</h2><span class="meta">Paths may change</span></div>
-      <div class="sa-where">${WHERE.map(([k, f, w]) => `<div><b><i class="sa-pdot" style="background:${pcol(k).fill}"></i>${LABEL[k]}</b><div class="path">${w}</div><span class="mono">${f}</span></div>`).join("")}</div>
-    </section>
+    <details class="sa-card sa-howto c12">
+      <summary>${X.WHERE_TITLE}</summary>
+      <div class="sa-where">${WHERE.map(([k, , w]) => `<div><b><i class="sa-pdot" style="background:${pcol(k).fill}"></i>${LABEL[k]}</b><div class="path">${w}</div></div>`).join("")}</div>
+    </details>
   </div>`;
 }
 
@@ -264,21 +260,10 @@ export async function loadBackup(file) {
   await check(next);
 }
 
-async function samples(ctx) {
-  const idx = await (await fetch("demo/samples/index.json", { cache: "no-store" })).json();
-  const files = await Promise.all(idx.files.map(async name => {
-    const blob = await (await fetch(`demo/samples/${name}`, { cache: "no-store" })).blob();
-    return new File([blob], name, { type: "text/csv" });
-  }));
-  await importAll(files, ctx);
-}
-
 export function mount(ctx, root) {
   const input = root.querySelector("[data-files]");
   root.querySelectorAll("[data-choose]").forEach(b => b.addEventListener("click", () => input?.click()));
   input?.addEventListener("change", () => importAll(input.files, ctx));
-  root.querySelector("[data-samples]")?.addEventListener("click", () => samples(ctx));
-  root.querySelector("[data-demo]")?.addEventListener("click", () => { setMode("demo"); location.hash = "#overview"; });
   const zone = root.querySelector("[data-drop]");
   if (zone) {
     zone.addEventListener("dragover", ev => { ev.preventDefault(); zone.classList.add("over"); });
