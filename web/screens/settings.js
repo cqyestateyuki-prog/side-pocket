@@ -65,7 +65,7 @@ export async function render(ctx) {
         <li><span class="ic">${icon("monitor", "sm")}</span><div><b>This browser</b><span>${X.MAP_BROWSER}</span></div></li>
         <li><span class="ic">${icon("server", "sm")}</span><div><b>Side Pocket server</b><span>${X.MAP_SERVER}</span></div></li>
         <li><span class="ic">${icon("ask", "sm")}</span><div><b>Ask Tilly</b><span>${X.MAP_AI.replace("{label}", nowrap(label ?? "Upwork · acct ••4821"))}</span></div></li>
-        <li><span class="ic">${icon("steps", "sm")}</span><div><b>PRISM traces</b><span>${X.MAP_PRISM}</span></div></li>
+        <li><span class="ic">${icon("steps", "sm")}</span><div><b>Run logs</b><span>${X.MAP_PRISM}</span></div></li>
         <li><span class="ic">${icon("fx", "sm")}</span><div><b>Exchange rates</b><span>${X.MAP_FX}</span></div></li>
       </ul>
     </section>

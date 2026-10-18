@@ -18,7 +18,7 @@ const T = {
     examples: ["What was my September net income across all platforms?", "Were Q3 platform fees higher than tax withheld?", "What tax items need review this quarter?"],
     placeholder: COPY.ASK_PLACEHOLDER, promise: COPY.ASK_PROMISE, button: "Ask", tryAsking: "Example questions", answer: "Answer",
     steps: "Agent steps", calls: n => `${n} tool calls`, running: "running", choosing: "Choosing the next step…",
-    stepsEmpty: "Lookups and calculations appear here as they run, with traces in PRISM.",
+    stepsEmpty: "Lookups and calculations appear here as they run.",
     thinking: "Tilly is working…", replay: "Recorded run replay",
     lines: ["Gross income", "Platform fees", "Payout & payment fees", "Tax withheld by platforms", "Net (what landed)"],
     setAside: r => `Set aside (${r}%)`, nextDue: "Next US estimated tax", where: m => `${monthName(m)} gross income breakdown`,
@@ -27,7 +27,6 @@ const T = {
 };
 const REPLAY = "demo/ask-c01-sep.json";
 const t = () => T.en;
-const PRISM_SESSIONS = "https://prism.blockconvey.com/sessions";
 
 let run = null;      // { question, creator, mode, steps, answer, done, error, offline, replay }
 let root = null, ctxRef = null;
@@ -210,10 +209,8 @@ function answerBlock() {
 
 function footer() {
   if (!run?.done) return "";
-  const d = run.done;
   return `<div class="answer-foot">
     <span class="promise">${icon("check", "sm")} ${t().promise}</span>
-    ${d.session_id ? `<a class="sa-prism" href="${PRISM_SESSIONS}" target="_blank" rel="noopener" title="trace ${esc(d.trace_id ?? "")}"><i></i>${d.content_free ? "Content-free trace in PRISM" : "Traced in PRISM"} · ${esc(d.session_id)} ${icon("external", "sm")}</a>` : ""}
   </div>`;
 }
 

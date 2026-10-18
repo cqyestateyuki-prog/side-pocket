@@ -47,7 +47,7 @@ export const YOURS = {
   MAP_BROWSER: "Records and settings are stored in this browser.",
   MAP_SERVER: "Labelled statement rows reach the server for in-memory calculations; no copy is kept.",
   MAP_AI: "Tilly receives your question unchanged, with totals and fresh account codes, but no statement rows.",
-  MAP_PRISM: "PRISM traces include step and tool names, timings, token counts and status, excluding questions, answers, tool data and amounts.",
+  MAP_PRISM: "Run logs include step and tool names, timings, token counts and status, excluding questions, answers, tool data and amounts.",
   TAXHOME_HELP_CN: "Shows China's annual filing window and Bilibili withholding; choose Both for US filing too.",
   CURRENCY_HELP: "Choose USD or CNY without changing record currencies; CNY display converts USD using your rate file, or ECB rates if no file covers that currency.",
   FILES_NOTE: "Removing a file also removes its records from this browser.",

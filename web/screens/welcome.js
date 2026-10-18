@@ -27,7 +27,6 @@ export async function render() {
         <button class="sa-btn primary wl-go" type="button" data-enter>Continue as Moon Spirit</button>
         <button class="sa-btn secondary wl-alt" type="button" disabled>Sign in with Google (coming soon)</button>
         <p class="wl-foot">Estimate only. Not tax, legal, or financial advice.</p>
-        <span class="sa-prism wl-built"><i></i>Built on PRISM · Models via Nicrron</span>
         <a class="wl-about" href="landing.html">About Side Pocket</a>
       </div>
     </section>
