@@ -15,6 +15,21 @@ export async function get(path, params = {}) {
   return cache.get(url);
 }
 
+// The sample account with this browser's own entries and goal: POST /api/{overview,ledger,report}
+// (the body replaces the fixture entries; nothing goes in the URL).
+export async function postDemo(path, body) {
+  const key = `${path}|${JSON.stringify(body)}`;
+  if (!cache.has(key)) {
+    cache.set(key, fetch(`/api/${path}`, {
+      method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    }).then(async r => {
+      if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+      return english(await r.json());
+    }).catch(e => { cache.delete(key); throw e; }));
+  }
+  return cache.get(key);
+}
+
 // POST /api/ask streams Server-Sent Events: step… answer, done (or error, done).
 export async function ask(question, creator, onEvent) {
   const res = await fetch("/api/ask", {

@@ -1,5 +1,5 @@
-import { COPY, YOURS } from "../lib/copy.js";
-import { dateLong, esc, icon, monthName, periodLabel, usd } from "../lib/format.js";
+import { COPY, V14, YOURS } from "../lib/copy.js";
+import { cur, dateLong, esc, icon, mmdd, monthName, periodLabel, usd } from "../lib/format.js";
 import { COUNTRY, emptyScreen, top, warnCard } from "../lib/parts.js";
 import { downloadCsv } from "./ledger.js";
 import { setAside } from "../lib/prefs.js";
@@ -43,6 +43,7 @@ export async function render(ctx) {
           <li><span>Landed from those platforms · gap</span><span class="amt">${usd(T4.bank_view_landed_usd)} · ${usd(-T4.gap_usd)}</span></li>` : ""}
           ${dups.length ? `<li><span>Possible duplicate reports</span><span class="amt">${dups.map(esc).join(", ")}</span></li>` : ""}
         </ul>
+        ${recorded(R, money, k)}
         <div class="meta foot">${R.fx_used.length} exchange rate${R.fx_used.length === 1 ? "" : "s"} used, each on its record’s own date.${ctx.yours ? "" : " Fees are simulated assumptions."} ${COPY.DISCLAIMER}</div>
       </div>
     </div>
@@ -53,6 +54,27 @@ export async function render(ctx) {
           <button class="sa-btn secondary" data-csv>${icon("ledger", "sm")} Ledger as CSV</button></div></section>
     </div>
   </div>`;
+}
+
+// Income and expenses the person entered by hand (v1.4): the accountant sees them apart from the
+// statements, with category totals first. No "deductible" wording: that is the accountant's call.
+function recorded(R, money, k) {
+  const rows = R.entry_rows ?? [];
+  const inc = rows.filter(r => r.kind === "income"), exp = rows.filter(r => r.kind === "expense");
+  const amt = r => (r[`amount_${k}`] == null ? `<span class="sa-badge warn">rate missing</span>` : money(r[`amount_${k}`]));
+  const orig = r => (r.fx ? ` <span class="meta">(${cur(r.original.amount, r.original.currency)})</span>` : "");
+  let html = "";
+  if (inc.length) {
+    html += `<h3>Recorded income</h3><ul class="sa-lines">${inc.map(r => `<li><span>${mmdd(r.date)} · ${esc(r.source)}${orig(r)}</span><span class="amt">${amt(r)}</span></li>`).join("")}
+      <li class="total"><span>Total</span><span class="amt">${money(R.manual_income?.total ?? 0)}</span></li></ul>`;
+  }
+  if (exp.length) {
+    html += `<h3>${V14.REPORT_EXPENSES}</h3><p class="meta">${V14.REPORT_EXPENSES_NOTE}</p>
+      <ul class="sa-lines">${(R.expenses_by_category ?? []).map(c => `<li><span>${esc(c.category)}</span><span class="amt">${money(-c.amount)}</span></li>`).join("")}
+        <li class="total"><span>Total</span><span class="amt">${money(-(R.expenses?.total ?? 0))}</span></li></ul>
+      <ul class="sa-lines small">${exp.map(r => `<li><span>${mmdd(r.date)} · ${esc(r.category)}${r.source ? ` · ${esc(r.source)}` : ""}${orig(r)}</span><span class="amt">${r[`amount_${k}`] == null ? amt(r) : money(-r[`amount_${k}`])}</span></li>`).join("")}</ul>`;
+  }
+  return html;
 }
 
 export function mount(ctx, root) {

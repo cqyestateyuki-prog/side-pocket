@@ -311,6 +311,10 @@ def _bookkeeping(c: dict, months: list[str], currency: str, bk: dict) -> tuple[d
         "kept_after_expenses": {"platform_net": ledger.cents(net), "manual_income": ledger.cents(eb["income"]),
                                 "expenses": ledger.cents(eb["expenses"]),
                                 "kept": ledger.cents(net + eb["income"] - eb["expenses"]),
+                                # income = platform net + manual income, rounded once; the goal counts the same
+                                # income, so the hero, the kept box and the goal card agree to the cent
+                                "income": ledger.cents(everything),
+                                "gross_income": ledger.cents(bk["total"]["gross"] + eb["income"]),
                                 "rule": "platform net (fees already taken out) + manual income − expenses"},
     }
     return {**fields, "_rows": eb["rows"]}, eb["issues"]
@@ -353,7 +357,21 @@ def overview(c: dict, month: str, currency: str = "USD") -> dict:
                          "base": f"net income in {currency}", "note": DISCLAIMER}}
     extra, issues = _bookkeeping(c, [month], currency, bk)
     extra.pop("_rows")
+    # Month over month for all income (platform net + manual income), next to the statements-only one.
+    prev_extra, _ = _bookkeeping(c, [prev_month], currency, prev)
+    now_income, prev_income = net_plus_manual(bk, extra), net_plus_manual(prev, prev_extra)
+    has_prev_income = has_prev or prev_extra["manual_income"]["entries"] > 0
+    extra["income_month_over_month"] = {
+        "previous_month": prev_month,
+        "previous_income": ledger.cents(prev_income) if has_prev_income else None,
+        "change": ledger.cents(now_income - prev_income) if has_prev_income else None,
+        "change_pct": ratio(now_income - prev_income, prev_income) if has_prev_income else None}
     return _with_entries({**out, **extra, **_rewards(c, [month], currency)}, issues)
+
+
+def net_plus_manual(bk: dict, extra: dict):
+    """Platform net plus manual income as shown (rounded once), so the change subtracts what is on screen."""
+    return ledger.D(extra["kept_after_expenses"]["income"])
 
 
 def ledger_view(c: dict, month: str, currency: str = "USD") -> dict:

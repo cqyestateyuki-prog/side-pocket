@@ -248,10 +248,13 @@ export async function loadBackup(file) {
     .map(f => ({ name: f.name, kind: f.kind, platform: f.platform, accounts: f.accounts, content: f.content ?? null, reason: f.reason, id: store.newId(), added: new Date().toISOString() }));
   let next;
   if (!data.files.length) {
-    next = await store.save({ files, salt: b.salt || data.salt, labels: b.labels ?? {}, settings: { ...store.DEFAULT_SETTINGS, ...b.settings } });
+    next = await store.save({ files, salt: b.salt || data.salt, labels: b.labels ?? {}, settings: { ...store.DEFAULT_SETTINGS, ...b.settings },
+      entries: Array.isArray(b.entries) ? b.entries.filter(e => e && typeof e.id === "string") : [] });
   } else {
     const have = new Set(data.files.map(f => f.content).filter(Boolean));
-    next = await store.save({ files: [...data.files, ...files.filter(f => f.content && !have.has(f.content))] });
+    const ids = new Set((data.entries ?? []).map(e => e.id));
+    next = await store.save({ files: [...data.files, ...files.filter(f => f.content && !have.has(f.content))],
+      entries: [...(data.entries ?? []), ...(Array.isArray(b.entries) ? b.entries.filter(e => e && typeof e.id === "string" && !ids.has(e.id)) : [])] });
   }
   notes.push({ kind: "info", text: X.BACKUP_LOADED.replace("{n}", files.filter(f => f.kind === "statement").length) });
   invalidate();

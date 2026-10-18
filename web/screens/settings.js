@@ -87,12 +87,12 @@ export async function exportBackup() {
   const d = await store.load();
   const backup = {
     app: "side-atlas", kind: "backup", version: 1, exported_at: new Date().toISOString(),
-    salt: d.salt, labels: d.labels, settings: d.settings,
+    salt: d.salt, labels: d.labels, settings: d.settings, entries: d.entries ?? [],
     files: d.files.map(({ name, kind, platform, accounts, content, reason }) => ({ name, kind, platform, accounts, content: content ?? null, reason })),
   };
   const a = Object.assign(document.createElement("a"), {
     href: URL.createObjectURL(new Blob([JSON.stringify(backup, null, 1)], { type: "application/json" })),
-    download: `side-atlas-backup-${localDay()}.json`,
+    download: `side-pocket-backup-${localDay()}.json`,
   });
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);

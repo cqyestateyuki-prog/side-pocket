@@ -4,10 +4,10 @@
 // (private window, blocked site data) everything lives in memory for this tab and `persistent` is
 // false, so the UI can say so. Every storage call is wrapped; the app works without it.
 
-const DB = "side-atlas", STORE = "kv", KEYS = ["files", "settings", "salt", "labels", "summary"];
-export const DEFAULT_SETTINGS = { tax_home: "US", currency: "USD", set_aside_rate: 0.25 };
+const DB = "side-atlas", STORE = "kv", KEYS = ["files", "settings", "salt", "labels", "summary", "entries"];
+export const DEFAULT_SETTINGS = { tax_home: "US", currency: "USD", set_aside_rate: 0.25, monthly_goal: null };
 
-let state = null;      // { files, settings, salt, labels, summary, persistent }
+let state = null;      // { files, settings, salt, labels, summary, entries, persistent }
 let dbPromise = null;
 
 function openDb() {
@@ -43,7 +43,7 @@ function randomHex(bytes) {
 // The stored data, loaded once per tab.
 export async function load() {
   if (state) return state;
-  const fresh = { files: [], settings: { ...DEFAULT_SETTINGS }, salt: null, labels: {}, summary: null, persistent: false };
+  const fresh = { files: [], settings: { ...DEFAULT_SETTINGS }, salt: null, labels: {}, summary: null, entries: [], persistent: false };
   const db = await openDb();
   if (db) {
     try {
@@ -82,10 +82,28 @@ export async function clear() {
     try { await tx(db, "readwrite", st => st.clear()); } catch { /* nothing stored */ }
   }
   const persistent = state?.persistent ?? false;
-  state = { files: [], settings: { ...DEFAULT_SETTINGS }, salt: randomHex(16), labels: {}, summary: null, persistent };
+  state = { files: [], settings: { ...DEFAULT_SETTINGS }, salt: randomHex(16), labels: {}, summary: null, entries: [], persistent };
+  extra.clear();
 }
 
 // Files the server can read: statements and rate files (unreadable ones are kept by name only).
 export const sendable = s => s.files.filter(f => f.content);
-export const hasData = s => s.files.some(f => f.kind === "statement");
+export const hasData = s => s.files.some(f => f.kind === "statement") || (s.entries ?? []).length > 0;
 export const newId = () => randomHex(6);
+
+// Other per-browser values under their own key (the sample account's entries and goal). In memory when
+// IndexedDB is unavailable; cleared with everything else by Delete all data.
+const extra = new Map();
+export async function getKey(key) {
+  if (extra.has(key)) return extra.get(key);
+  const db = await openDb();
+  let value = null;
+  if (db) { try { value = (await tx(db, "readonly", st => st.get(key))) ?? null; } catch { /* unreadable */ } }
+  extra.set(key, value);
+  return value;
+}
+export async function putKey(key, value) {
+  extra.set(key, value);
+  const db = await openDb();
+  if (db) { try { await tx(db, "readwrite", st => st.put(value, key)); } catch { /* kept in memory */ } }
+}

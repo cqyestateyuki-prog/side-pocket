@@ -25,6 +25,8 @@ function body(data, params) {
   const s = data.settings;
   return {
     files: sendable(data).map(f => ({ name: f.name, content: f.content })),
+    entries: (data.entries ?? []).map(sendableEntry), // notes stay in the browser
+    monthly_goal: s.monthly_goal ?? null,
     tax_home: s.tax_home, currency: s.currency, set_aside_rate: Math.min(0.6, Math.max(0, s.set_aside_rate)),
     after: localDay(), // deadlines count from the viewer's today, not the server's
     ...params,
@@ -39,8 +41,12 @@ async function failure(r) {
   return Object.assign(new Error(msg), { status: r.status, detail });
 }
 
+// An entry as the server sees it: no note, nothing else from the browser.
+export const sendableEntry = ({ id, kind, date, amount, currency, source, category }) =>
+  ({ id, kind, date, amount, currency, source: source || null, ...(kind === "expense" ? { category } : {}) });
+
 export function post(path, params, data) {
-  const key = `${path}|${JSON.stringify(params)}|${JSON.stringify(data.settings)}|${data.files.map(f => f.id).join(",")}`;
+  const key = `${path}|${JSON.stringify(params)}|${JSON.stringify(data.settings)}|${data.files.map(f => f.id).join(",")}|${JSON.stringify((data.entries ?? []).map(sendableEntry))}`;
   if (!cache.has(key)) {
     cache.set(key, fetch(`/api/personal/${path}`, {
       method: "POST", cache: "no-store",

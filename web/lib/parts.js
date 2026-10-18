@@ -24,9 +24,11 @@ export const noRateText = i => (NO_RATE[i.reason] ?? (x => `no rate for ${x.date
 export function warnCard(ctx, issues) {
   if (!issues?.length) return "";
   const i = issues[0];
-  const r = i.record ?? {};
+  // A manual entry without a rate (v1.4) has `entry` instead of `record` and no platform.
+  const r = i.record ?? (i.entry ? { type: i.entry.kind === "income" ? "Income" : "Expense", ref: null, amount: i.entry.amount, currency: i.entry.currency } : {});
+  const who = i.platform ?? i.entry?.label;
   const more = issues.length > 1 ? ` · ${issues.length} records waiting for a rate` : " · 1 record waiting for a rate";
-  const open = ctx.href("ledger", { c: ctx.yours ? null : ctx.creator, p: i.date.slice(0, 7), f: platformKey(i.platform) });
+  const open = ctx.href("ledger", { c: ctx.yours ? null : ctx.creator, p: i.date.slice(0, 7), f: i.platform ? platformKey(i.platform) : "__own" });
   // Your data: the rate comes from the person's own rate file or the ECB, so the card says which and
   // the fix is on My data.
   const fromFile = i.reason === "not_in_rate_file";
@@ -47,7 +49,7 @@ export function warnCard(ctx, issues) {
       </div>
     </div>
     <ul class="sa-lines wc-record">
-      ${[["Platform", esc(i.platform)], ["Type", esc(r.type)], ["Reference", `<span class="mono">${esc(r.ref ?? "—")}</span>`],
+      ${[[i.platform ? "Platform" : "Source", esc(who)], ["Type", esc(r.type)], ["Reference", `<span class="mono">${esc(r.ref ?? "—")}</span>`],
          ["Amount", cur(r.amount, r.currency)], ["Date", mmdd(i.date)], [rateLabel, `<span class="sa-badge warn">missing</span>`]]
         .map(([k, v]) => `<li><span>${k}</span><span class="amt">${v}</span></li>`).join("")}
     </ul>

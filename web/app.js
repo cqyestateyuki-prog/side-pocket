@@ -3,7 +3,8 @@
 // and may export mount(ctx) to wire up events after the html is in the page.
 // Two ledgers: "Demo data" (the fictional creators, GET /api/*) and "Your data" (statements uploaded
 // in this browser, POST /api/personal/*). Screens ask ctx.load() and don't care which.
-import { get } from "./lib/api.js";
+import { get, postDemo } from "./lib/api.js";
+import { demoBody } from "./lib/entries.js";
 import { cur, esc, icon, monthName, monthShort, quarterOf } from "./lib/format.js";
 import * as overview from "./screens/overview.js";
 import * as ledger from "./screens/ledger.js";
@@ -13,6 +14,7 @@ import * as report from "./screens/report.js";
 import * as welcome from "./screens/welcome.js";
 import * as mydata from "./screens/mydata.js";
 import * as settings from "./screens/settings.js";
+import * as milestones from "./screens/milestones.js";
 import { entered, mode, setEntered, setMode } from "./lib/prefs.js";
 import * as store from "./lib/store.js";
 import { bindDropdowns, dropdown } from "./lib/dropdown.js";
@@ -20,7 +22,7 @@ import { post } from "./lib/personal.js";
 
 // The nav has exactly four screens (user decision). `period` is "month" (Jul/Aug/Sep/Q3) or null.
 // The accountant report is reached from Tax ("Export for my accountant"), not from the nav.
-// My data and Settings & privacy are utility links in the sidebar foot and always show Your data.
+// Under a rule: My data and Settings & privacy (they always show My uploads) and Milestones (either account).
 const SCREENS = [
   { key: "overview", label: "Overview", icon: "overview", module: overview, period: "month" },
   { key: "ledger", label: "Ledger", icon: "ledger", module: ledger, period: "month" },
@@ -28,8 +30,9 @@ const SCREENS = [
   { key: "ask", label: "Ask Tilly", icon: "ask", module: ask, period: null },
   { key: "report", label: "Report", icon: "report", module: report, period: "quarter", nav: false, navAs: "tax" },
   { key: "welcome", label: "Welcome", module: welcome, period: null, nav: false, bare: true },
-  { key: "mydata", label: "My data", icon: "upload", module: mydata, period: null, nav: false, yours: true },
-  { key: "settings", label: "Settings & privacy", icon: "shield", module: settings, period: null, nav: false, yours: true },
+  { key: "mydata", label: "My data", icon: "upload", module: mydata, period: null, nav: false, yours: true, util: true },
+  { key: "milestones", label: "Milestones", icon: "award", module: milestones, period: null, nav: false, util: true },
+  { key: "settings", label: "Settings & privacy", icon: "shield", module: settings, period: null, nav: false, yours: true, util: true },
 ];
 
 const DEFAULTS = { c: "C01", month: "2026-09", quarter: "2026-Q3" };
@@ -132,6 +135,17 @@ export function currencySeg(ctx) {
     trigger: `<b class="g">${g}</b><span>${ctx.cur}</span>` });
 }
 
+// The sample account's pages go through POST once this browser has changed her entries or goal.
+const OWN = new Set(["overview", "ledger", "report"]);
+async function loadDemo(creator, path, params) {
+  const own = OWN.has(path) ? await demoBody(creator) : null;
+  return own ? postDemo(path, { creator, ...params, ...own }) : get(path, { creator, ...params });
+}
+
+// "7 of 8" next to Milestones, once a screen has loaded the badges for this account.
+const badgeCounts = new Map();
+const accountKey = (yours, creator) => (yours ? "yours" : creator);
+
 let renderSeq = 0;
 
 async function go() {
@@ -148,7 +162,9 @@ async function go() {
     ...route, creators, me: creators.find(c => c.id === route.creator) ?? creators[0], href, periodSeg, whoPill, persona, currencySeg,
     yours, mode: yours ? "yours" : "demo", data, has: yours && store.hasData(data),
     cur: yours ? data.settings.currency : "USD",
-    load: (path, params = {}) => yours ? post(path, params, data) : get(path, { creator: route.creator, ...params }),
+    load: (path, params = {}) => yours ? post(path, params, data) : loadDemo(route.creator, path, params),
+    latestMonth: yours ? yourPeriods(data).months.at(-1) ?? null : DEFAULTS.month,
+    noteBadges: list => { badgeCounts.set(accountKey(yours, route.creator), [list.filter(b => b.earned).length, list.length]); },
     refresh: () => go(),
   };
   ctx.money = v => cur(v, ctx.cur);
@@ -163,6 +179,7 @@ async function go() {
     main.innerHTML = html;
     main.scrollTop = 0;
     ctx.screen.module.mount?.(ctx, main);
+    renderNav(ctx); // picks up the badge count the screen just loaded
   } catch (e) {
     if (seq !== renderSeq) return;
     main.innerHTML = `<div class="sa-card sa-error">${icon("alert")} <div><b>Couldn’t load this screen.</b><div class="meta">${esc(e.message)}</div></div></div>`;
@@ -188,8 +205,11 @@ function renderNav(ctx) {
   // One menu: the four screens, then My data and Settings & privacy under a thin rule.
   document.getElementById("nav").innerHTML = SCREENS.filter(s => s.nav !== false).map(s =>
     `<a href="${href(s.key, { c, p: periodFor(s, ctx) })}" class="${s.key === current ? "on" : ""}">${icon(s.icon)}<span>${s.label}</span></a>`).join("")
-    + `<hr class="sa-navsep">` + SCREENS.filter(s => s.yours).map(s =>
-    `<a href="#${s.key}" class="${s.key === current ? "on" : ""}">${icon(s.icon)}<span>${esc(s.label)}</span>${s.key === "mydata" && files ? `<span class="r">${files} file${files === 1 ? "" : "s"}</span>` : ""}</a>`).join("");
+    + `<hr class="sa-navsep">` + SCREENS.filter(s => s.util).map(s => {
+      const count = s.key === "mydata" && files ? `${files} file${files === 1 ? "" : "s"}`
+        : s.key === "milestones" && badgeCounts.has(accountKey(ctx.yours, ctx.creator)) ? badgeCounts.get(accountKey(ctx.yours, ctx.creator)).join(" of ") : "";
+      return `<a href="${s.key === "milestones" ? href(s.key, { c }) : `#${s.key}`}" class="${s.key === current ? "on" : ""}">${icon(s.icon)}<span>${esc(s.label)}</span>${count ? `<span class="r">${count}</span>` : ""}</a>`;
+    }).join("");
   const keep = SCREENS.find(s => s.key === current && s.nav !== false) ? current : "overview";
   document.getElementById("mode").innerHTML =
     `<a href="#${keep}" data-mode="demo" class="${ctx.yours ? "" : "on"}"><span class="av-mini">M</span>Moon Spirit</a><a href="#${keep}" data-mode="yours" class="${ctx.yours ? "on" : ""}">${icon("lock", "sm")}My uploads</a>`;

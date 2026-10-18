@@ -32,7 +32,7 @@ ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(ROOT / ".env")
 
 from api import personal, views  # noqa: E402
-from daoshou import agent_v2, data, ledger  # noqa: E402
+from daoshou import agent_v2, bookkeeping, data, ledger  # noqa: E402
 from daoshou.prism_tracing import TracedAgent, default_model, nicrron_client  # noqa: E402
 
 app = FastAPI(title="Side Pocket API", version="0.1")
@@ -98,6 +98,63 @@ def forms(creator: str, period: str) -> dict:
 def report(creator: str, period: str, after: str | None = None) -> dict:
     c, months = _creator(creator), views.check_months(period)
     return views.report(c, period, months, views.check_day(after) if after else date.today().isoformat())
+
+
+# ---------------------------------------------------------------- the sample account's own entries and goal
+
+class DemoRequest(BaseModel):
+    """The same pages for a demo creator, with the entries and goal this browser keeps for them.
+
+    `entries` replaces the creator's fixture list (the browser starts from GET /api/entries and adds,
+    edits or removes); `monthly_goal` replaces the fixture goal (null = no goal). Notes stay in the
+    browser and are ignored here, like on /api/personal/*.
+    """
+    creator: str
+    month: str | None = None
+    period: str | None = None
+    after: str | None = None
+    entries: list = []
+    monthly_goal: dict | None = None
+
+
+def _own(req: DemoRequest) -> dict:
+    c = _creator(req.creator)
+    entries, _ = bookkeeping.parse(req.entries, today=date.today())
+    goal = None
+    if req.monthly_goal is not None:
+        currency = str(req.monthly_goal.get("currency", "USD")).upper()
+        try:
+            amount = ledger.D(str(req.monthly_goal.get("amount")))
+        except Exception:
+            raise HTTPException(422, "monthly_goal.amount must be a number") from None
+        if not amount.is_finite() or amount <= 0 or amount > 10_000_000 or currency not in ("USD", "CNY"):
+            raise HTTPException(422, "monthly_goal needs an amount above 0 and currency USD or CNY")
+        goal = {"amount": amount, "currency": currency}
+    return {**c, "entries": entries, "monthly_goal": goal}
+
+
+@app.get("/api/entries")
+def demo_entries(creator: str) -> dict:
+    """A demo creator's fictional manual entries and monthly goal (the starting list for the browser)."""
+    _creator(creator)
+    spec = bookkeeping._fixture().get(creator) or {}
+    return {"creator": creator, "entries": spec.get("entries", []), "monthly_goal": spec.get("monthly_goal")}
+
+
+@app.post("/api/overview")
+def overview_own(req: DemoRequest) -> dict:
+    return views.overview(_own(req), views.check_month(req.month or ""))
+
+
+@app.post("/api/ledger")
+def ledger_own(req: DemoRequest) -> dict:
+    return views.ledger_view(_own(req), views.check_month(req.month or ""))
+
+
+@app.post("/api/report")
+def report_own(req: DemoRequest) -> dict:
+    c, months = _own(req), views.check_months(req.period or "")
+    return views.report(c, req.period, months, views.check_day(req.after) if req.after else date.today().isoformat())
 
 
 # ---------------------------------------------------------------- ask (the agent)

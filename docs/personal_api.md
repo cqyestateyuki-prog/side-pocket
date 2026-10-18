@@ -236,7 +236,12 @@ The new fields are only ever added. Every field the statements produce keeps its
 - `kept_after_expenses`: `{platform_net, manual_income, expenses, kept, rule}`, where
   kept = platform net + manual income − expenses. Platform fees are already inside platform
   net, so an expense is only something the person entered. Nothing is counted twice.
-- `kept_by_month[]` (report): `{month, platform_net, manual_income, expenses, kept, complete}`.
+- `kept_after_expenses` also carries `income` (platform net + manual income, rounded once; the goal
+  counts the same income, so the hero, the kept box and the goal card agree to the cent) and
+  `gross_income` (statement gross + manual income).
+- `income_month_over_month` (overview): `{previous_month, previous_income, change, change_pct}` for all
+  income, next to the statements-only `month_over_month`.
+- `kept_by_month[]` (report): `{month, platform_net, manual_income, expenses, kept, income, gross_income, complete}`.
 - `goal`: `null` without a `monthly_goal`, otherwise:
   ```json
   {"amount": 6000.0, "currency": "USD", "basis": "income: platform net plus manual income, before expenses",
@@ -343,6 +348,12 @@ computed by the same code. Only C01 (Moon Spirit) has entries and a goal, in
 `daoshou_testdata/data/manual_entries.json`: fictional, July to September 2026, with a USD 6,000
 monthly goal. Every other demo creator has empty entries and `goal: null`. `/api/tax-items`,
 `/api/forms`, the 89 graded questions and the PRISM agents don't use entries.
+
+The sample account in the app keeps its own changes in the browser. `GET /api/entries?creator=C01`
+returns the fixture list and goal to start from; `POST /api/overview`, `/api/ledger` and `/api/report`
+take `{creator, month | period, after, entries, monthly_goal}` in the body, where `entries` replaces the
+fixture list and `monthly_goal` replaces the fixture goal (`null` = none). With the fixture list they
+return exactly what the GET endpoints return. Notes are ignored, as on `/api/personal/*`.
 
 C01, in USD:
 
