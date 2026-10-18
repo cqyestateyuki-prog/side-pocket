@@ -65,6 +65,10 @@ function editor(sa, plats) {
 const issueLine = i => `${i.platform} ${i.record?.ref ?? ""}: no ${i.currency} rate for ${i.date}. It stays out until the rate is added.`;
 
 export async function render(ctx) {
+  return (await page(ctx)) + `<p class="sa-pagenote">${COPY.DISCLAIMER}</p>`;
+}
+
+async function page(ctx) {
   fmt = ctx.money ?? usd;
   if (ctx.yours && !ctx.has) return emptyScreen(ctx, "Tax", YOURS.EMPTY_TAX);
   // Your data: the report carries the tax items, so one request covers the page.

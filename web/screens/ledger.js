@@ -1,6 +1,7 @@
 import { YOURS } from "../lib/copy.js";
 import { cur, dateShort, esc, icon, mmdd, periodLabel, picon, usd, weekday } from "../lib/format.js";
 import { emptyScreen, noRateText, top, warnCard } from "../lib/parts.js";
+import { bindDropdowns, dropdown } from "../lib/dropdown.js";
 import { openPanel } from "../lib/importPanel.js";
 
 async function load(ctx) {
@@ -22,19 +23,20 @@ function filtered(ctx, rows) {
     .sort((a, b) => dir * a.date.localeCompare(b.date) || a.platform.localeCompare(b.platform));
 }
 
-// Column filters (kit v1.4.1): Date sorts, Platform and Type filter. Each header is a small pill over a
-// native select; an active filter shows its value in the accent colour.
+// Column headers (kit v1.4.1): each has an outline icon; Date sorts, Platform and Type filter through the
+// shared dropdown, and an active filter shows its value in the accent colour.
+const th = (ic, label, cls = "") => `<th class="${cls}"><span class="th-l">${icon(ic, "sm")}${label}</span></th>`;
+
 function head(ctx, L, cols) {
   const f = ctx.query.get("f"), type = ctx.query.get("t"), sort = ctx.query.get("s") === "new" ? "new" : "old";
   const types = [...new Set(L.rows.filter(r => !f || r.platform === f).map(r => r.type))].sort();
-  const pick = (key, text, on, options) => `<label class="th-pick ${on ? "on" : ""}">${esc(text)}${icon("chevron", "sm chev")}
-    <select data-col="${key}" aria-label="${key === "s" ? "Sort by date" : key === "f" ? "Filter by platform" : "Filter by type"}">${options}</select></label>`;
-  const opt = (v, label, sel) => `<option value="${esc(v)}" ${sel ? "selected" : ""}>${esc(label)}</option>`;
   const plat = f && L.platforms.find(p => p.platform === f);
+  const pick = (name, ic, text, on, value, options) => `<th>${dropdown({ name, label: name === "s" ? "Sort by date" : name === "f" ? "Filter by platform" : "Filter by type",
+    cls: `th-pick${on ? " on" : ""}`, align: "start", value, options, trigger: `${icon(ic, "sm")}<span>${esc(text)}</span>` })}</th>`;
   return `<thead><tr>
-    <th>${pick("s", "Date", sort === "new", opt("old", "Oldest first", sort === "old") + opt("new", "Newest first", sort === "new"))}</th>
-    <th>${pick("f", plat ? plat.label : "Platform", !!plat, opt("", "All platforms", !f) + L.platforms.map(p => opt(p.platform, p.label, p.platform === f)).join(""))}</th>
-    <th>${pick("t", type || "Type", !!type, opt("", "All types", !type) + types.map(x => opt(x, x, x === type)).join(""))}</th>
+    ${pick("s", "calendar", "Date", sort === "new", sort, [{ value: "old", label: "Oldest first" }, { value: "new", label: "Newest first" }])}
+    ${pick("f", "layers", plat ? plat.label : "Platform", !!plat, f ?? "", [{ value: "", label: "All platforms" }, ...L.platforms.map(p => ({ value: p.platform, label: p.label, icon: picon(p.platform) }))])}
+    ${pick("t", "tag", type || "Type", !!type, type ?? "", [{ value: "", label: "All types" }, ...types.map(x => ({ value: x, label: x }))])}
     ${cols}</tr></thead>`;
 }
 
@@ -68,7 +70,7 @@ export async function render(ctx) {
       .map(([l, v, c]) => `<div class="sa-card sa-kpi"><div class="label">${l}</div><div class="sa-fig num" style="${c ? `color:${c}` : ""}">${usd(v)}</div></div>`).join("")}
   </div>
   <div class="sa-tablewrap"><table class="sa-table dense">
-    ${head(ctx, L, `<th>Original</th><th class="money">Gross</th><th class="money">Platform fee</th><th class="money">Payout fee</th><th class="money">Withheld</th><th class="money">Net</th>`)}
+    ${head(ctx, L, th("fx", "Original") + th("coins", "Gross", "money") + th("percent", "Platform fee", "money") + th("percent", "Payout fee", "money") + th("bank", "Withheld", "money") + th("wallet", "Net", "money"))}
     <tbody>${rows.map(r => `<tr class="${r.net_usd == null ? "missing" : ""}">
       <td class="num">${mmdd(r.date)}</td>
       <td>${picon(r.platform)}${esc(r.platform_label)}</td>
@@ -143,19 +145,20 @@ async function renderYours(ctx) {
   </div>
   ${curs.length ? `<div class="sa-note info" style="margin-bottom:14px">${icon("info", "sm")}<span>${withFile ? YOURS.LEDGER_FILE_NOTE : YOURS.LEDGER_ECB_NOTE}</span></div>` : ""}
   <div class="sa-tablewrap"><table class="sa-table dense">
-    ${head(ctx, L, `<th>Original</th><th class="money">Gross (${ctx.cur})</th><th class="money">Fees</th><th class="money">Withheld</th><th class="money">Net (${ctx.cur})</th>`)}
+    ${head(ctx, L, th("fx", "Original") + th("coins", `Gross (${ctx.cur})`, "money") + th("percent", "Fees", "money") + th("bank", "Withheld", "money") + th("wallet", `Net (${ctx.cur})`, "money"))}
     <tbody>${body}
       <tr class="total"><td colspan="4">${esc(label)} total · ${rows.length} record${rows.length === 1 ? "" : "s"}${left ? ` · ${left} record${left === 1 ? "" : "s"} left out` : ""}</td><td class="money">${money(t.gross)}</td><td class="money">${money(-(t.platform_fee + t.payout_fee))}</td><td class="money">${money(-t.withheld)}</td><td class="money">${money(t.net)}</td></tr>
     </tbody></table></div>`;
 }
 
 export function mount(ctx, root) {
-  root.querySelectorAll("[data-col]").forEach(sel => sel.addEventListener("change", () => {
+  const by = col => v => {
     const q = { f: ctx.query.get("f"), t: ctx.query.get("t"), s: ctx.query.get("s") };
-    q[sel.dataset.col] = sel.value && !(sel.dataset.col === "s" && sel.value === "old") ? sel.value : null;
-    if (sel.dataset.col === "f") q.t = null; // types differ per platform
+    q[col] = v && !(col === "s" && v === "old") ? v : null;
+    if (col === "f") q.t = null; // types differ per platform
     location.hash = ctx.href("ledger", { c: ctx.yours ? null : ctx.creator, p: ctx.period, ...q });
-  }));
+  };
+  bindDropdowns(root, { s: by("s"), f: by("f"), t: by("t") });
   root.querySelector("[data-csv]")?.addEventListener("click", () => downloadCsv(ctx));
   const open = () => openPanel(ctx, root, () => {
     if (ctx.query.get("import")) history.replaceState(null, "", ctx.href("ledger", { c: ctx.creator, p: ctx.period, f: ctx.query.get("f"), t: ctx.query.get("t") }));

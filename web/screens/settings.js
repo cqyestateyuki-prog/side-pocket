@@ -50,7 +50,7 @@ export async function render(ctx) {
       <div class="row"><h3>${icon("globe", "sm")} Tax home</h3>
         <div class="ctl"><div class="sa-seg">${HOMES.map(([k, l]) => `<button type="button" data-home="${k}" class="${k === home[0] ? "on" : ""}">${l}</button>`).join("")}</div></div>
         <p>${home[2]}</p></div>
-      <div class="row"><h3>${icon("fx", "sm")} Display currency</h3><div class="ctl">${ctx.currencySeg(ctx)}</div>
+      <div class="row"><h3>${icon("fx", "sm")} Display currency</h3><div class="ctl"><div class="sa-seg">${[["USD", "$ USD"], ["CNY", "¥ CNY"]].map(([c, l]) => `<button type="button" data-cur="${c}" class="${c === ctx.cur ? "on" : ""}">${l}</button>`).join("")}</div></div>
         <p>${X.CURRENCY_HELP}</p></div>
       <div class="row"><h3>${icon("sliders", "sm")} Set-aside rate</h3>
         <div class="ctl"><div class="sa-seg">${PRESETS.map(r => `<button type="button" data-rate="${r}" class="${r === rate ? "on" : ""}">${r}%</button>`).join("")}</div><label class="sa-rateinput"><input data-rate-in inputmode="decimal" value="${rate}" aria-label="Set-aside rate">%</label></div>
@@ -118,6 +118,7 @@ function openDialog(ctx, root) {
 export function mount(ctx, root) {
   const save = async patch => { await store.saveSettings(patch); ctx.refresh(); };
   root.querySelectorAll("[data-home]").forEach(b => b.addEventListener("click", () => save({ tax_home: b.dataset.home })));
+  root.querySelectorAll("[data-cur]").forEach(b => b.addEventListener("click", () => save({ currency: b.dataset.cur })));
   root.querySelectorAll("[data-rate]").forEach(b => b.addEventListener("click", () => save({ set_aside_rate: +b.dataset.rate / 100 })));
   root.querySelector("[data-rate-in]")?.addEventListener("change", e => {
     const v = Math.max(0, Math.min(MAX_RATE, Math.round(Number(e.target.value) || 0)));

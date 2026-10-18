@@ -3,7 +3,6 @@
 // and may export mount(ctx) to wire up events after the html is in the page.
 // Two ledgers: "Demo data" (the fictional creators, GET /api/*) and "Your data" (statements uploaded
 // in this browser, POST /api/personal/*). Screens ask ctx.load() and don't care which.
-import { COPY } from "./lib/copy.js";
 import { get } from "./lib/api.js";
 import { cur, esc, icon, monthName, monthShort, quarterOf } from "./lib/format.js";
 import * as overview from "./screens/overview.js";
@@ -16,6 +15,7 @@ import * as mydata from "./screens/mydata.js";
 import * as settings from "./screens/settings.js";
 import { entered, mode, setEntered, setMode } from "./lib/prefs.js";
 import * as store from "./lib/store.js";
+import { bindDropdowns, dropdown } from "./lib/dropdown.js";
 import { post } from "./lib/personal.js";
 
 // The nav has exactly four screens (user decision). `period` is "month" (Jul/Aug/Sep/Q3) or null.
@@ -93,14 +93,15 @@ function periodFor(target, ctx) {
 
 const periodName = p => p.includes("Q") ? `Q${p.slice(-1)} ${p.slice(0, 4)}` : `${monthName(p)} ${p.slice(0, 4)}`;
 
-// Period and display currency are dropdowns (kit v1.4.1): a pill that shows the choice over a native
-// select, so the list can grow with more months, quarters and years.
+// Period and display currency are dropdowns (kit v1.4.1), so the list can grow with more months,
+// quarters and years: months newest first, then quarters.
 export function periodSeg(ctx) {
   if (!ctx.period) return "";
-  const all = periodsOf(ctx), opt = p => `<option value="${p}" ${p === ctx.period ? "selected" : ""}>${periodName(p)}</option>`;
-  const group = (label, ps) => ps.length ? `<optgroup label="${label}">${ps.slice().reverse().map(opt).join("")}</optgroup>` : "";
-  return `<label class="sa-pick" title="Period">${icon("calendar", "sm")}<span>${periodName(ctx.period)}</span>${icon("chevron", "sm chev")}
-    <select data-period-switch aria-label="Period">${group("Months", all.filter(p => !p.includes("Q")))}${group("Quarters", all.filter(p => p.includes("Q")))}</select></label>`;
+  const all = periodsOf(ctx);
+  const options = [...all.filter(p => !p.includes("Q")).reverse().map(p => ({ value: p, label: periodName(p), group: "Months" })),
+                   ...all.filter(p => p.includes("Q")).reverse().map(p => ({ value: p, label: periodName(p), group: "Quarters" }))];
+  return dropdown({ name: "period", label: "Period", value: ctx.period, options,
+    trigger: `${icon("calendar", "sm")}<span>${periodName(ctx.period)}</span>` });
 }
 
 const issueText = c => c.data_issues?.length
@@ -114,12 +115,11 @@ export function whoPill(ctx) {
   const me = ctx.creators.find(c => c.id === ctx.creator) ?? ctx.creators[0];
   const p = persona(me);
   const warn = me.data_issues?.length;
-  return `<label class="sa-who picker" title="${warn ? esc(issueText(me)) : "Switch creator"}">
-    <div class="av">${esc(p.display[0])}${warn ? `<i class="warn-dot" aria-label="Has data issues"></i>` : ""}</div>
-    <div><b>${esc(p.display)}</b><span>${esc(warn ? issueText(me) : p.meta)}</span></div>
-    ${icon("chevron", "sm chev")}
-    <select data-creator-switch aria-label="Creator">${ctx.creators.map(c => `<option value="${c.id}" ${c.id === me.id ? "selected" : ""}>${esc(persona(c).display)}${c.data_issues?.length ? ` · ${esc(issueText(c))}` : ""}</option>`).join("")}</select>
-  </label>`;
+  return dropdown({ name: "creator", label: "Creator", value: me.id, cls: "sa-who picker",
+    options: ctx.creators.map(c => ({ value: c.id, label: persona(c).display, meta: c.data_issues?.length ? issueText(c) : persona(c).meta,
+      icon: `<span class="av-mini">${esc(persona(c).display[0])}</span>` })),
+    trigger: `<div class="av">${esc(p.display[0])}${warn ? `<i class="warn-dot" aria-label="Has data issues"></i>` : ""}</div>
+    <div><b>${esc(p.display)}</b><span>${esc(warn ? issueText(me) : p.meta)}</span></div>` });
 }
 
 // Display currency switch (Your data only; the demo is in USD). Saving it re-renders the screen.
@@ -127,8 +127,9 @@ const CURRENCIES = [["USD", "$", "US dollar"], ["CNY", "¥", "Chinese yuan"]];
 export function currencySeg(ctx) {
   if (!ctx.yours) return "";
   const [, g] = CURRENCIES.find(([c]) => c === ctx.cur) ?? CURRENCIES[0];
-  return `<label class="sa-pick" title="Display currency"><b class="g">${g}</b><span>${ctx.cur}</span>${icon("chevron", "sm chev")}
-    <select data-currency-switch aria-label="Display currency">${CURRENCIES.map(([c, , n]) => `<option value="${c}" ${c === ctx.cur ? "selected" : ""}>${c} · ${n}</option>`).join("")}</select></label>`;
+  return dropdown({ name: "currency", label: "Display currency", value: ctx.cur,
+    options: CURRENCIES.map(([c, sym, n]) => ({ value: c, label: c, meta: n, icon: `<b class="sym">${sym}</b>` })),
+    trigger: `<b class="g">${g}</b><span>${ctx.cur}</span>` });
 }
 
 let renderSeq = 0;
@@ -168,37 +169,32 @@ async function go() {
   } finally {
     main.classList.remove("loading");
   }
-  main.querySelector("[data-creator-switch]")?.addEventListener("change", ev => {
-    // A creator with unconvertible records opens on the month that needs attention.
-    const next = creators.find(c => c.id === ev.target.value);
-    const issueMonth = ctx.screen.period === "month" ? next?.data_issues?.[0]?.month : null;
-    location.hash = href(ctx.screen.key, { c: ev.target.value, p: issueMonth ?? (ctx.screen.period ? ctx.period : null) });
+  bindDropdowns(main, {
+    creator: id => {
+      // A creator with unconvertible records opens on the month that needs attention.
+      const next = creators.find(c => c.id === id);
+      const issueMonth = ctx.screen.period === "month" ? next?.data_issues?.[0]?.month : null;
+      location.hash = href(ctx.screen.key, { c: id, p: issueMonth ?? (ctx.screen.period ? ctx.period : null) });
+    },
+    period: p => { location.hash = href(ctx.screen.key, { c: ctx.yours ? null : ctx.creator, p }); },
+    currency: async c => { await store.saveSettings({ currency: c }); go(); },
   });
-  main.querySelector("[data-period-switch]")?.addEventListener("change", ev => {
-    location.hash = href(ctx.screen.key, { c: ctx.yours ? null : ctx.creator, p: ev.target.value });
-  });
-  main.querySelectorAll("[data-currency-switch]").forEach(sel => sel.addEventListener("change", async () => {
-    if (sel.value === ctx.cur) return;
-    await store.saveSettings({ currency: sel.value });
-    go();
-  }));
 }
 
 function renderNav(ctx) {
   const current = ctx.screen.navAs ?? ctx.screen.key;
   const c = ctx.yours || ctx.creator === DEFAULTS.c ? null : ctx.creator;
+  const files = ctx.yours ? ctx.data.files.filter(f => f.kind === "statement").length : 0;
+  // One menu: the four screens, then My data and Settings & privacy under a thin rule.
   document.getElementById("nav").innerHTML = SCREENS.filter(s => s.nav !== false).map(s =>
-    `<a href="${href(s.key, { c, p: periodFor(s, ctx) })}" class="${s.key === current ? "on" : ""}">${icon(s.icon)}<span>${s.label}</span></a>`).join("");
+    `<a href="${href(s.key, { c, p: periodFor(s, ctx) })}" class="${s.key === current ? "on" : ""}">${icon(s.icon)}<span>${s.label}</span></a>`).join("")
+    + `<hr class="sa-navsep">` + SCREENS.filter(s => s.yours).map(s =>
+    `<a href="#${s.key}" class="${s.key === current ? "on" : ""}">${icon(s.icon)}<span>${esc(s.label)}</span>${s.key === "mydata" && files ? `<span class="r">${files} file${files === 1 ? "" : "s"}</span>` : ""}</a>`).join("");
   const keep = SCREENS.find(s => s.key === current && s.nav !== false) ? current : "overview";
   document.getElementById("mode").innerHTML =
     `<a href="#${keep}" data-mode="yours" class="${ctx.yours ? "on" : ""}">${icon("lock", "sm")}Your data</a><a href="#${keep}" data-mode="demo" class="${ctx.yours ? "" : "on"}">Demo data</a>`;
-  const files = ctx.yours ? ctx.data.files.filter(f => f.kind === "statement").length : 0;
-  document.getElementById("util").innerHTML = SCREENS.filter(s => s.yours).map(s =>
-    `<a href="#${s.key}" class="${s.key === current ? "on" : ""}">${icon(s.icon)}${esc(s.label)}${s.key === "mydata" && files ? `<span class="r">${files} file${files === 1 ? "" : "s"}</span>` : ""}</a>`).join("");
-  document.getElementById("prism").innerHTML = `<i></i>${ctx.yours ? "Content-free PRISM traces" : "Every run traced in PRISM"}`;
 }
 
-document.getElementById("tagline").textContent = COPY.TAGLINE;
 document.getElementById("signout").addEventListener("click", () => {
   setEntered(false);
   location.hash = "#welcome";
@@ -214,6 +210,5 @@ document.getElementById("mode").addEventListener("click", ev => {
 });
 // First visit to the bare URL opens the welcome screen; any deep link goes straight to its screen.
 if (!location.hash && !entered()) history.replaceState(null, "", "#welcome");
-document.getElementById("disclaimer").textContent = COPY.DISCLAIMER;
 window.addEventListener("hashchange", go);
 go();
