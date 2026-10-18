@@ -1,5 +1,5 @@
 import { COPY, YOURS } from "../lib/copy.js";
-import { cur, dateLong, daysBetween, esc, icon, localDay, pcol, periodLabel, usd } from "../lib/format.js";
+import { cur, dateLong, daysBetween, esc, icon, localDay, periodLabel, picon, usd } from "../lib/format.js";
 import { COUNTRY, emptyScreen, platformKey, top, warnCard } from "../lib/parts.js";
 import { mascot } from "../lib/mascot.js";
 import { saveExcluded, saveRate, setAside } from "../lib/prefs.js";
@@ -21,7 +21,7 @@ function formsTable(F) {
     const [cls, text] = f.possible_duplicate_report ? ["warn", "Possible duplicate"] : (STATUS[f.calendar_year.status] ?? ["sim", f.calendar_year.status]);
     const form = f.form === "none" ? "No US form · CN withholding record" : `${f.form} (simulated)`;
     return `<tr>
-      <td><i class="sa-pdot" style="background:${pcol(f.platform).fill}"></i><b>${esc(f.label)}</b></td>
+      <td>${picon(f.platform)}<b>${esc(f.label)}</b></td>
       <td><span class="sa-badge sim" title="${esc(f.issuer)}">${esc(form)}</span></td>
       <td class="money">${f.form_view_gross_usd == null ? `<span class="meta">—</span>` : usd(f.form_view_gross_usd)}</td>
       <td class="money net">${usd(f.bank_view_landed_usd)}</td>
@@ -57,13 +57,12 @@ function editor(sa, plats) {
     </div>
     <div class="row meta-row"><span>${COPY.SETTINGS_PROMISE}</span><button class="link" data-reset ${sa.custom ? "" : "hidden"}>Reset to ${Math.round(sa.defaultRate * 100)}%</button></div>
     <details class="advanced"${sa.excluded.size ? " open" : ""}><summary>Advanced · platforms in the base</summary>
-      <ul class="sa-togglelist">${plats.map(p => `<li data-p="${p.platform}" class="${sa.excluded.has(p.platform) ? "off" : ""}"><span class="tl-name"><i class="sa-pdot" style="background:${pcol(p.platform).fill}"></i>${esc(p.label)}</span><span class="amt">${fmt(p.net)}</span><button class="sa-toggle ${sa.excluded.has(p.platform) ? "" : "on"}" aria-label="Include ${esc(p.label)}"></button></li>`).join("")}</ul>
+      <ul class="sa-togglelist">${plats.map(p => `<li data-p="${p.platform}" class="${sa.excluded.has(p.platform) ? "off" : ""}"><span class="tl-name">${picon(p.platform)}${esc(p.label)}</span><span class="amt">${fmt(p.net)}</span><button class="sa-toggle ${sa.excluded.has(p.platform) ? "" : "on"}" aria-label="Include ${esc(p.label)}"></button></li>`).join("")}</ul>
     </details>
   </div>`;
 }
 
 const issueLine = i => `${i.platform} ${i.record?.ref ?? ""}: no ${i.currency} rate for ${i.date}. It stays out until the rate is added.`;
-const HOME_LABEL = { US: "US tax home", CN: "China tax home", BOTH: "tax home: United States and China" };
 
 export async function render(ctx) {
   fmt = ctx.money ?? usd;
@@ -100,7 +99,7 @@ export async function render(ctx) {
   const qLabel = ctx.period.includes("Q") ? `Q${ctx.period.slice(-1)} ` : "";
   ed = { creator: who, rate: Math.round(sa.rate * 100), out: new Set(sa.excluded), totalNet, byPlatform: plats, api: T.set_aside, qLabel, yours: ctx.yours };
 
-  return top(ctx, "Tax", ctx.yours ? `${label} · ${ctx.query.get("view") ? "US view" : HOME_LABEL.US} · shown in ${ctx.cur}` : label) + `
+  return top(ctx, "Tax", "") + `
   <div class="sa-grid">
     ${warnCard(ctx, issues)}
     <section class="sa-hero c8 tax-hero">
@@ -200,7 +199,7 @@ function china(ctx, T, R) {
   const qLabel = ctx.period.includes("Q") ? `Q${ctx.period.slice(-1)} ` : "";
   const win = cnWindow(T);
   const { inside, outside, sum, withheldCn } = cnSplit(ctx, T, R);
-  const row = p => `<tr><td><i class="sa-pdot" style="background:${pcol(p.platform).fill}"></i><b>${esc(p.label)}</b></td><td class="money">${p.records}</td>
+  const row = p => `<tr><td>${picon(p.platform)}<b>${esc(p.label)}</b></td><td class="money">${p.records}</td>
     <td class="money">${money(p.gross)}</td><td class="money net">${money(p.net)}</td><td class="money ${p.cn_tax ? "tax" : "zero"}">${money(p.cn_tax)}</td></tr>`;
   const all = [...inside, ...outside];
   const cnTotal = sum(all, "cn_tax");
@@ -211,7 +210,7 @@ function china(ctx, T, R) {
     ...(ctx.cur === "CNY" && R.fx_used.length ? [YOURS.ACC_FX.replace("{n}", R.fx_used.length)] : []),
     ...T.issues.map(i => esc(issueLine(i))),
   ];
-  return top(ctx, "Tax", `${label} · ${ctx.query.get("view") ? "China view" : HOME_LABEL.CN} · shown in ${ctx.cur}`) + `
+  return top(ctx, "Tax", "") + `
   <div class="sa-grid">
     ${warnCard(ctx, T.issues)}
     <section class="sa-hero c8 tax-hero cn">
@@ -251,7 +250,6 @@ const usQuarter = d => ({ 1: "Q4", 4: "Q1", 6: "Q2", 9: "Q3" })[+d.slice(5, 7)] 
 
 function both(ctx, T, R) {
   const k = ctx.cur.toLowerCase(), money = ctx.money;
-  const label = periodLabel(ctx.period);
   const qLabel = ctx.period.includes("Q") ? `Q${ctx.period.slice(-1)} ` : "";
   const due = T.next_us_estimated_tax_due, win = cnWindow(T);
   const F = T.forms, T4 = F?.totals_for_platforms_with_forms;
@@ -265,7 +263,7 @@ function both(ctx, T, R) {
     ...T.issues.map(i => esc(issueLine(i))),
   ];
   const usCount = due?.due_date ? `<div class="sa-count"><div class="tag">United States</div><div class="days num">${due.days_left}</div><div class="of">days to the next<br>estimated-tax payment</div><div class="glass" style="margin-top:12px">${icon("calendar", "sm")} ${dateLong(due.due_date)} · ${usQuarter(due.due_date)}</div></div>` : "";
-  return top(ctx, "Tax", `${label.split(" · ")[0]} · ${HOME_LABEL.BOTH} · shown in ${ctx.cur}`) + `
+  return top(ctx, "Tax", "") + `
   <div class="sa-grid">
     ${warnCard(ctx, T.issues)}
     <section class="sa-hero c12 tax-hero both">

@@ -1,5 +1,5 @@
 import { YOURS } from "../lib/copy.js";
-import { cur, dateShort, esc, icon, mmdd, pcol, periodLabel, usd, weekday } from "../lib/format.js";
+import { cur, dateShort, esc, icon, mmdd, periodLabel, picon, usd, weekday } from "../lib/format.js";
 import { emptyScreen, noRateText, top, warnCard } from "../lib/parts.js";
 import { openPanel } from "../lib/importPanel.js";
 
@@ -56,7 +56,7 @@ export async function render(ctx) {
     <thead><tr><th>Date</th><th>Platform</th><th>Type</th><th>Original</th><th class="money">Gross</th><th class="money">Platform fee</th><th class="money">Payout fee</th><th class="money">Withheld</th><th class="money">Net</th></tr></thead>
     <tbody>${rows.map(r => `<tr class="${r.net_usd == null ? "missing" : ""}">
       <td class="num">${mmdd(r.date)}</td>
-      <td><i class="sa-pdot" style="background:${pcol(r.platform).fill}"></i>${esc(r.platform_label)}</td>
+      <td>${picon(r.platform)}${esc(r.platform_label)}</td>
       <td>${esc(r.type)}${r.ref ? `<span class="sub">${esc(r.ref)}</span>` : ""}</td>
       <td class="num">${original(r)}</td>
       ${r.gross_usd == null ? cell(null) : `<td class="money">${usd(r.gross_usd)}</td>`}${cell(r.platform_fee_usd, "fee")}${cell(r.payout_fee_usd, "payout")}${cell(r.withheld_usd, "tax")}${cell(r.net_usd, "net")}</tr>`).join("")}
@@ -67,7 +67,7 @@ function filters(ctx, L, link, types) {
   const f = ctx.query.get("f"), type = ctx.query.get("t");
   return `<div class="sa-filters">
     <a class="sa-chip ${f ? "" : "on"}" href="${link({ f: null, t: null })}">All · ${L.rows.length} records</a>
-    ${L.platforms.map(p => `<a class="sa-chip ${f === p.platform ? "on" : ""}" href="${link({ f: f === p.platform ? null : p.platform, t: null })}"><i class="dot" style="background:${pcol(p.platform).fill}"></i>${p.label}</a>`).join("")}
+    ${L.platforms.map(p => `<a class="sa-chip ${f === p.platform ? "on" : ""}" href="${link({ f: f === p.platform ? null : p.platform, t: null })}">${picon(p.platform)}${p.label}</a>`).join("")}
     <label class="sa-btn secondary sm select">${icon("filter", "sm")} ${type ? esc(type) : "Type"}
       <select data-type aria-label="Record type"><option value="">All types</option>${types.map(x => `<option ${x === type ? "selected" : ""}>${esc(x)}</option>`).join("")}</select></label>
     <button class="sa-btn secondary sm" data-csv>${icon("download", "sm")} CSV</button>
@@ -120,7 +120,7 @@ async function renderYours(ctx) {
   const neg = (v, cls) => !v ? `<td class="money zero">—</td>` : `<td class="money ${cls}">${money(-v)}</td>`;
   const orig = r => `${cur(r.original.gross, r.original.currency)}<span class="sub">${esc(r.original.currency)}</span>`;
   const body = rows.map(r => {
-    const head = `<td class="num">${mmdd(r.date)}</td><td><i class="sa-pdot" style="background:${pcol(r.platform).fill}"></i>${esc(r.platform_label)}</td>
+    const head = `<td class="num">${mmdd(r.date)}</td><td>${picon(r.platform)}${esc(r.platform_label)}</td>
       <td>${esc(r.type)}${r.ref ? `<span class="sub">${esc(r.ref)}</span>` : ""}</td><td class="num">${orig(r)}</td>`;
     if (r.issue) {
       const i = issueFor(L, r);
@@ -131,8 +131,7 @@ async function renderYours(ctx) {
   }).join("");
   const label = periodLabel(ctx.period).split(" · ")[0];
 
-  const sub = `${label} · shown in ${ctx.cur}${curs.length ? (withFile ? " · with your rate file" : " · no rate file uploaded") : ""}`;
-  return top(ctx, "Ledger", sub, { actions: ctx.currencySeg(ctx) }) + `
+  return top(ctx, "Ledger", "", { actions: ctx.currencySeg(ctx) }) + `
   ${L.issues.length ? `<div class="sa-grid" style="margin-bottom:16px">${warnCard(ctx, L.issues)}</div>` : ""}
   <div class="sa-kpirow">
     ${[["Gross", t.gross, ""], ["Fees", -(t.platform_fee + t.payout_fee), "var(--sa-fee-text)"], ["Tax withheld", -t.withheld, "var(--sa-tax-text)"],

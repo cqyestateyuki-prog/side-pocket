@@ -54,6 +54,9 @@
 <script>
 const D = window.SA_DATA, C = D.copy;
 const PCOL = k => ({ fill: `var(--sa-p-${k})`, tint: `var(--sa-p-${k}-tint)`, text: `var(--sa-p-${k}-text)` });
+// Platform marks (v1.4.1): Simple Icons in brand colours, letter marks for Contra and Fiverr; unknown keys keep the dot.
+const PICON = k => ["bilibili", "youtube", "twitch", "patreon", "upwork", "fiverr", "freelancer", "contra"].includes(k)
+  ? `<img class="sa-picon" src="../02-logos/platforms/${k}.svg" alt="" width="16" height="16">` : `${PICON(k)}`;
 const usd = v => (v < 0 ? "−" : "") + "$" + Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const usd0 = v => "$" + Math.round(v).toLocaleString("en-US");
 const cny = v => "¥" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -87,7 +90,7 @@ function overview() {
     ["Payout & payment fees", t.payout_fee, "var(--sa-payout)"], ["Tax withheld by platforms", t.withheld, "var(--sa-tax)"]];
   const plats = [...o.platforms].sort((a, b) => b.net - a.net);
   return `
-  <div class="sa-top"><div><h1>Overview</h1><p>September 2026 · ${o.platforms.length} platforms · 2 currencies</p></div>
+  <div class="sa-top"><div><h1>Overview</h1></div>
     <div class="right">${periodSeg("Sep")}${moon()}</div></div>
   <div class="sa-grid">
     <section class="sa-hero c7">
@@ -121,7 +124,7 @@ function overview() {
     <section class="sa-card c5">
       <div class="head"><h2>By platform</h2><span class="meta">share of net</span></div>
       <div class="sa-bar">${plats.map(p => `<span title="${p.label}" style="width:${(p.share_of_net * 100).toFixed(2)}%;background:${PCOL(p.platform).fill}"></span>`).join("")}</div>
-      <ul class="sa-legend">${plats.map(p => `<li><span class="dot" style="background:${PCOL(p.platform).fill};border-radius:50%"></span><span>${p.label}</span><span class="amt">${usd(p.net)}</span><span class="pct">${pct(p.net_rate)} kept</span></li>`).join("")}</ul>
+      <ul class="sa-legend">${plats.map(p => `<li>${PICON(p.platform)}<span>${p.label}</span><span class="amt">${usd(p.net)}</span><span class="pct">${pct(p.net_rate)} kept</span></li>`).join("")}</ul>
     </section>
   </div>`;
 }
@@ -132,14 +135,14 @@ function ledger() {
   const rows = [...L.rows].sort((a, b) => a.date.localeCompare(b.date) || a.platform.localeCompare(b.platform));
   const cell = (v, cls) => `<td class="money ${v === 0 ? "zero" : cls}">${v === 0 ? "—" : usd(cls === "net" ? v : -v)}</td>`;
   return `
-  <div class="sa-top"><div><h1>Ledger</h1><p>${C.LEDGER_INTRO}</p></div><div class="right">${periodSeg("Sep")}${moon()}</div></div>
+  <div class="sa-top"><div><h1>Ledger</h1></div><div class="right">${periodSeg("Sep")}${moon()}</div></div>
   <div class="sa-kpirow">
     ${[["Gross", t.gross, ""], ["Platform fees", -t.platform_fee, "var(--sa-fee-text)"], ["Payout fees", -t.payout_fee, "var(--sa-payout-text)"], ["Tax withheld", -t.withheld, "var(--sa-tax-text)"], ["Net", t.net, "var(--sa-forest)"]]
       .map(([l, v, c]) => `<div class="sa-card sa-kpi"><div class="label">${l}</div><div class="sa-fig num" style="${c ? `color:${c}` : ""}">${usd(v)}</div></div>`).join("")}
   </div>
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
     <span class="sa-chip on">All · ${rows.length} records</span>
-    ${D.overview_c01_sep.platforms.map(p => `<span class="sa-chip"><i class="dot" style="background:${PCOL(p.platform).fill}"></i>${p.label}</span>`).join("")}
+    ${D.overview_c01_sep.platforms.map(p => `<span class="sa-chip">${PICON(p.platform)}${p.label}</span>`).join("")}
     <span style="margin-left:auto" class="sa-btn secondary sm">${icon("filter", "sm")} Type</span>
     <span class="sa-btn secondary sm">${icon("download", "sm")} CSV</span>
   </div>
@@ -147,7 +150,7 @@ function ledger() {
     <thead><tr><th>Date</th><th>Platform</th><th>Type</th><th>Original</th><th class="money">Gross</th><th class="money">Platform fee</th><th class="money">Payout fee</th><th class="money">Withheld</th><th class="money">Net</th></tr></thead>
     <tbody>${rows.map(r => `<tr>
       <td class="num">${r.date.slice(5).replace("-", "/")}</td>
-      <td><i class="sa-pdot" style="background:${PCOL(r.platform).fill}"></i>${r.platform_label}</td>
+      <td>${PICON(r.platform)}${r.platform_label}</td>
       <td>${r.type}${r.ref ? `<span class="sub">${r.ref}</span>` : ""}</td>
       <td class="num">${r.original.currency === "USD" ? `<span class="meta">USD</span>` : `${cny(r.original.gross)}<span class="fx">÷ ${r.fx.rate.toFixed(4)} · ${r.fx.rate_date}</span>`}</td>
       <td class="money">${usd(r.gross_usd)}</td>${cell(r.platform_fee_usd, "fee")}${cell(r.payout_fee_usd, "payout")}${cell(r.withheld_usd, "tax")}<td class="money net">${usd(r.net_usd)}</td></tr>`).join("")}
@@ -172,7 +175,7 @@ function tax() {
       .map(([v, c]) => v > 0 ? `<span style="width:${Math.max(4, v / g * 100)}%;background:${c}"></span>` : "").join("")}</div><span class="num">${usd(-g)}</span></div>`;
   };
   return `
-  <div class="sa-top"><div><h1>Tax items</h1><p>Q3 2026 · July to September</p></div><div class="right">${periodSeg("Q3 2026")}${moon()}</div></div>
+  <div class="sa-top"><div><h1>Tax items</h1></div><div class="right">${periodSeg("Q3 2026")}${moon()}</div></div>
   <div class="sa-grid">
     <section class="sa-hero c8" style="display:grid;grid-template-columns:1fr 210px;gap:24px;min-height:220px">
       <div>
@@ -204,7 +207,7 @@ function tax() {
       <div class="sa-tablewrap"><table class="sa-table">
         <thead><tr><th>Platform</th><th>Form (simulated)</th><th>Paid out to</th><th class="money">Form view</th><th class="money">Bank view</th><th>${C.GAP_LABEL}</th><th class="money">Txns</th><th>Status</th></tr></thead>
         <tbody>${F.rows.map(f => `<tr>
-          <td><i class="sa-pdot" style="background:${PCOL(f.platform).fill}"></i><b>${f.label}</b></td>
+          <td>${PICON(f.platform)}<b>${f.label}</b></td>
           <td>${f.form === "none" ? `<span class="sa-badge tax">No US form</span>` : `<span class="sa-badge sim">${f.form}</span>`}</td>
           <td>${f.payout_method === "PayPal" ? `<b>PayPal</b>` : `<span class="meta">${f.payout_method}</span>`}</td>
           <td class="money">${f.form_view === null ? `<span class="meta">—</span>` : usd(f.form_view)}</td><td class="money net">${usd(f.bank_view)}</td>
@@ -293,7 +296,7 @@ function report() {
 function missing() {
   const O = D.overview_c11_aug, i = O.issues[0], L = D.ledger_c11_aug;
   return `
-  <div class="sa-top"><div><h1>Overview</h1><p>August 2026 · Lena Koch</p></div><div class="right">${periodSeg("Aug")}${who("Lena Koch", "", "Berlin · DE tax home")}</div></div>
+  <div class="sa-top"><div><h1>Overview</h1></div><div class="right">${periodSeg("Aug")}${who("Lena Koch", "", "Berlin · DE tax home")}</div></div>
   <div class="sa-grid">
     <section class="sa-hero c7">
       <div class="orb"></div>
@@ -315,7 +318,7 @@ function missing() {
     </section>
     <section class="sa-card c12"><div class="head"><h2>August records</h2><span class="meta">${L.rows.length} records · 1 waiting for a rate</span></div>
       <div class="sa-tablewrap"><table class="sa-table"><thead><tr><th>Date</th><th>Platform</th><th>Type</th><th>Original</th><th class="money">Net (USD)</th></tr></thead>
-      <tbody>${L.rows.map(r => { const miss = r.net_usd === null; return `<tr class="${miss ? "missing" : ""}"><td class="num">${r.date.slice(5).replace("-", "/")}</td><td><i class="sa-pdot" style="background:${PCOL(r.platform).fill}"></i>${r.platform_label}</td><td>${r.type}${r.ref ? `<span class="sub">${r.ref}</span>` : ""}</td>
+      <tbody>${L.rows.map(r => { const miss = r.net_usd === null; return `<tr class="${miss ? "missing" : ""}"><td class="num">${r.date.slice(5).replace("-", "/")}</td><td>${PICON(r.platform)}${r.platform_label}</td><td>${r.type}${r.ref ? `<span class="sub">${r.ref}</span>` : ""}</td>
         <td class="num">${r.original.currency} ${r.original.gross.toLocaleString("en-US", { minimumFractionDigits: 2 })}${r.fx && r.fx.rate ? `<span class="fx">× ${r.fx.rate} · ${r.fx.rate_date}</span>` : miss ? `<span class="fx" style="color:var(--sa-warn-text)">no rate for ${r.date}</span>` : ""}</td>
         <td class="money ${miss ? "" : "net"}">${miss ? `<span class="sa-badge warn">rate missing</span>` : usd(r.net_usd)}</td></tr>`; }).join("")}</tbody></table></div></section>
   </div>`;
@@ -347,13 +350,13 @@ function sources() {
     </section>
     <div class="c12 sa-srcgrid">${S.sources.map(x => x.connected ? `
       <div class="sa-src">
-        <div class="name"><span><i class="sa-pdot" style="background:${PCOL(x.platform).fill}"></i>${x.label}</span><span class="sa-badge ok">Connected</span></div>
+        <div class="name"><span>${PICON(x.platform)}${x.label}</span><span class="sa-badge ok">Connected</span></div>
         <div class="file">${icon("file", "sm")} ${x.file}</div>
         <div class="fmt">${x.format}</div>
         <div class="stats"><span class="num">${x.records} records · ${range(x.from, x.to)}</span><span>→ <b style="color:var(--sa-ink)">${x.payout_method === "Bank transfer" ? "Bank" : x.payout_method}</b></span></div>
       </div>` : `
       <div class="sa-src off">
-        <div class="name"><span><i class="sa-pdot" style="background:${PCOL(x.platform).fill}"></i>${x.label}</span><span class="sa-badge sim">Not connected</span></div>
+        <div class="name"><span>${PICON(x.platform)}${x.label}</span><span class="sa-badge sim">Not connected</span></div>
         <div class="file">${icon("file", "sm")} ${x.file}</div>
         <div class="fmt">${x.format}</div>
         <div style="margin-top:auto"><a class="sa-btn secondary sm">${icon("upload", "sm")} Add export</a></div>
@@ -393,7 +396,7 @@ function settings() {
     </section>
     <section class="sa-card c6">
       <div class="head"><h2>Include in the base</h2><span class="meta">Q3 net</span></div>
-      <ul class="sa-togglelist">${S.by_platform.map(p => `<li data-p="${p.platform}" data-net="${p.net}"><span style="display:flex;align-items:center;gap:8px"><i class="sa-pdot" style="background:${PCOL(p.platform).fill}"></i>${p.label}</span><span class="amt">${usd(p.net)}</span><button class="sa-toggle on" aria-label="Include ${p.label}"></button></li>`).join("")}</ul>
+      <ul class="sa-togglelist">${S.by_platform.map(p => `<li data-p="${p.platform}" data-net="${p.net}"><span style="display:flex;align-items:center;gap:8px">${PICON(p.platform)}${p.label}</span><span class="amt">${usd(p.net)}</span><button class="sa-toggle on" aria-label="Include ${p.label}"></button></li>`).join("")}</ul>
     </section>
   </div>`;
 }
@@ -455,7 +458,7 @@ function mydataEmpty() {
     <ul class="sa-promise short c12">${promiseShort()}<li class="more"><a href="#privacy">How your data is handled</a></li></ul>
     <details class="sa-card sa-howto c12">
       <summary>Where do I find my CSV files?</summary>
-      <div class="sa-where">${WHERE.map(([k, l, f, w]) => `<div><b><i class="sa-pdot" style="background:${PCOL(k).fill}"></i>${l}</b><div class="path">${w}</div></div>`).join("")}</div>
+      <div class="sa-where">${WHERE.map(([k, l, f, w]) => `<div><b>${PICON(k)}${l}</b><div class="path">${w}</div></div>`).join("")}</div>
     </details>
   </div>`;
 }
@@ -493,7 +496,7 @@ function mydata() {
       <div class="sa-tablewrap"><table class="sa-table sa-files">
         <thead><tr><th>Platform</th><th>File</th><th class="money">Rows</th><th>Dates</th><th>Currency</th><th>Issues</th><th></th></tr></thead>
         <tbody>${F.map(f => `<tr>
-          <td><i class="sa-pdot" style="background:${PCOL(f.platform).fill}"></i><b>${f.label}</b><span class="acct">${f.account}</span></td>
+          <td>${PICON(f.platform)}<b>${f.label}</b><span class="acct">${f.account}</span></td>
           <td><span class="file">${f.file}</span></td><td class="money">${f.rows}</td>
           <td class="num">${dateShort(f.from)} to ${dateShort(f.to)}</td><td>${f.currencies.join(", ")}</td>
           <td>${f.issues ? `<span class="sa-badge warn">${f.issues} need a rate</span>` : `<span class="sa-badge ok">None</span>`}</td>
@@ -548,10 +551,10 @@ function taxCn() {
   const usdW = D.tax_c01_q3.tax_withheld_by_platform[0];
   const outside = Object.entries(P).filter(([k]) => k !== "bilibili").sort((a, b) => b[1].net - a[1].net);
   const records = Object.values(P).reduce((n, p) => n + p.records, 0);
-  const row = (k, p) => `<tr><td><i class="sa-pdot" style="background:${PCOL(k).fill}"></i><b>${p.label}</b></td><td class="money">${p.records}</td>
+  const row = (k, p) => `<tr><td>${PICON(k)}<b>${p.label}</b></td><td class="money">${p.records}</td>
     <td class="money">${yen(p.gross)}</td><td class="money net">${yen(p.net)}</td><td class="money ${p.withheld ? "tax" : "zero"}">${yen(p.withheld)}</td></tr>`;
   return `
-  <div class="sa-top"><div><h1>Tax</h1><p>Q3 2026 · July to September · China tax home · shown in CNY</p></div><div class="right">${periodSeg("Q3 2026")}${you()}</div></div>
+  <div class="sa-top"><div><h1>Tax</h1></div><div class="right">${periodSeg("Q3 2026")}${you()}</div></div>
   <div class="sa-grid">
     <section class="sa-hero c8" style="display:grid;grid-template-columns:1fr 230px;gap:24px;min-height:220px">
       <div>
@@ -612,7 +615,7 @@ function overviewCny() {
   const wf = [["Platform fees", t.platform_fee, "var(--sa-fee)"], ["Payout & payment fees", t.payment_fee, "var(--sa-payout)"], ["Tax withheld by platforms", t.withheld, "var(--sa-tax)"]];
   const bar = [["Net", t.net, "var(--sa-net)"], ...wf];
   return `
-  <div class="sa-top"><div><h1>Overview</h1><p>September 2026 · ${plats.length} platforms · shown in CNY</p></div><div class="right">${curSeg("CNY")}${periodSeg("Sep")}${you()}</div></div>
+  <div class="sa-top"><div><h1>Overview</h1></div><div class="right">${curSeg("CNY")}${periodSeg("Sep")}${you()}</div></div>
   <div class="sa-grid">
     <section class="sa-hero c7">
       <div class="orb"></div>
@@ -628,7 +631,7 @@ function overviewCny() {
     <section class="sa-card c5">
       <div class="head"><h2>By platform</h2><span class="meta">net · kept of gross</span></div>
       <div class="sa-bar">${plats.map(p => `<span title="${p.label}" style="width:${(p.share * 100).toFixed(2)}%;background:${PCOL(p.k).fill}"></span>`).join("")}</div>
-      <ul class="sa-legend">${plats.map(p => `<li class="${p === best ? "best" : ""}"><span class="dot round" style="background:${PCOL(p.k).fill}"></span><span>${p.label}${p === best ? `<span class="sa-badge sim">keeps the most</span>` : ""}</span><span class="amt">${yen(p.net)}</span><span class="pct">${pct(p.kept)}</span></li>`).join("")}</ul>
+      <ul class="sa-legend">${plats.map(p => `<li class="${p === best ? "best" : ""}">${PICON(p.k)}<span>${p.label}${p === best ? `<span class="sa-badge sim">keeps the most</span>` : ""}</span><span class="amt">${yen(p.net)}</span><span class="pct">${pct(p.kept)}</span></li>`).join("")}</ul>
     </section>
     <section class="sa-card c7">
       <div class="head"><h2>Where the gross went</h2></div>
@@ -670,7 +673,7 @@ function taxBoth() {
   const B = V.both, F = D.forms_c01_q3.totals, T = D.tax_c01_q3, Q = V.cny_q3, W = V.cn_window;
   const dup = D.forms_c01_q3.rows.find(r => r.duplicate);
   return `
-  <div class="sa-top"><div><h1>Tax</h1><p>Q3 2026 · tax home: United States and China · shown in USD</p></div><div class="right">${periodSeg("Q3 2026")}${you()}</div></div>
+  <div class="sa-top"><div><h1>Tax</h1></div><div class="right">${periodSeg("Q3 2026")}${you()}</div></div>
   <div class="sa-grid">
     <section class="sa-hero c12" style="display:grid;grid-template-columns:1fr auto;gap:32px;min-height:0;align-items:end">
       <div>
@@ -731,12 +734,12 @@ function ledgerCnyCase(kind) {
   };
   const cell = (v, cls, neg) => !v ? `<td class="money zero">—</td>` : `<td class="money ${cls}">${yen(neg ? -v : v)}</td>`;
   const orig = r => r.original.currency === "CNY" ? `${cny(r.original.gross)}<span class="sub">CNY</span>` : `$${r.original.gross.toLocaleString("en-US", { minimumFractionDigits: 2 })}<span class="sub">USD</span>`;
-  const head = r => `<td class="num">${r.date.slice(5).replace("-", "/")}</td><td><i class="sa-pdot" style="background:${PCOL(r.platform).fill}"></i>${r.platform_label}</td><td>${r.type}${r.ref ? `<span class="sub">${r.ref}</span>` : ""}</td><td class="num">${orig(r)}</td>`;
+  const head = r => `<td class="num">${r.date.slice(5).replace("-", "/")}</td><td>${PICON(r.platform)}${r.platform_label}</td><td>${r.type}${r.ref ? `<span class="sub">${r.ref}</span>` : ""}</td><td class="num">${orig(r)}</td>`;
   const sources = kind === "ecb"
     ? `ECB reference rates <b class="num" style="color:var(--sa-ink)">${conv.length}</b> · ${earlier} from an earlier working day`
     : `Your rate file <b class="num" style="color:var(--sa-ink)">${conv.length - LG.issues.length}</b> · missing <b class="num" style="color:var(--sa-warn-text)">${LG.issues.length}</b>`;
   return `
-  <div class="sa-top"><div><h1>Ledger</h1><p>August 2026 · shown in CNY · ${kind === "ecb" ? "no rate file uploaded" : "with your rate file"}</p></div><div class="right">${curSeg("CNY")}${periodSeg("Aug")}${you()}</div></div>
+  <div class="sa-top"><div><h1>Ledger</h1></div><div class="right">${curSeg("CNY")}${periodSeg("Aug")}${you()}</div></div>
   <div class="sa-kpirow">
     ${[["Gross", t.gross, ""], ["Fees", -(t.platform_fee + t.payout_fee), "var(--sa-fee-text)"], ["Tax withheld", -t.withheld, "var(--sa-tax-text)"], [LG.complete ? "Net" : "Net · incomplete", t.net, "var(--sa-forest)"]]
       .map(([l, v, c]) => `<div class="sa-card sa-kpi"><div class="label">${l}</div><div class="sa-fig num" style="${c ? `color:${c}` : ""}">${yen(v)}</div></div>`).join("")}
@@ -802,7 +805,7 @@ function overviewV14(m) {
   const srcs = [...I.sources].sort((a, b) => b.net - a.net), own = srcs.filter(x => x.own);
   const maxCat = Math.max(...E.by_category.map(c => c.amount));
   return `
-  <div class="sa-top"><div><h1>Overview</h1><p>${monthName(m)} 2026 · ${srcs.length} income sources · ${E.count} expenses</p></div><div class="right">${periodSeg(monthName(m).slice(0, 3))}${you()}</div></div>
+  <div class="sa-top"><div><h1>Overview</h1></div><div class="right">${periodSeg(monthName(m).slice(0, 3))}${you()}</div></div>
   <div class="sa-grid">
     <section class="sa-hero c7">
       <div class="orb"></div>
@@ -819,7 +822,7 @@ function overviewV14(m) {
     <section class="sa-card c7">
       <div class="head"><h2>Income by source</h2><span class="meta">net · share of net</span></div>
       <div class="sa-bar">${srcs.map(x => `<span title="${x.label}" class="${x.own ? "own" : ""}" style="width:${(x.net / I.net * 100).toFixed(2)}%;${x.own ? "" : `background:${PCOL(x.key).fill}`}"></span>`).join("")}</div>
-      <ul class="sa-legend">${srcs.map(x => `<li><span class="dot round" style="${x.own ? "background:transparent;box-shadow:inset 0 0 0 2px var(--sa-accent-text)" : `background:${PCOL(x.key).fill}`}"></span><span>${x.label}${x.own ? youTag() : ""}</span><span class="amt">${money(x.net)}</span><span class="pct">${pct(x.net / I.net)}</span></li>`).join("")}</ul>
+      <ul class="sa-legend">${srcs.map(x => `<li>${x.own ? `<span class="dot round" style="background:transparent;box-shadow:inset 0 0 0 2px var(--sa-accent-text)"></span>` : PICON(x.key)}<span>${x.label}${x.own ? youTag() : ""}</span><span class="amt">${money(x.net)}</span><span class="pct">${pct(x.net / I.net)}</span></li>`).join("")}</ul>
     </section>
     <section class="sa-card c5">
       <div class="head"><h2>Expenses by category</h2><span class="meta">${E.count} entries</span></div>
@@ -839,12 +842,12 @@ function ledgerV14() {
   const row = r => {
     const d = `<td class="num">${r.date.slice(5).replace("-", "/")}</td>`;
     if (r.kind === "expense") return `<tr class="expense">${d}<td><i class="sa-pdot exp"></i>${r.label}${youTag()}</td><td>Expense<span class="sub">${r.ref}</span></td><td class="num">${orig(r)}</td><td class="money zero">—</td><td class="money zero">—</td><td class="money zero">—</td><td class="money exp">${money(-r.amount_usd)}</td></tr>`;
-    const dot = r.kind === "statement" ? `<i class="sa-pdot" style="background:${PCOL(r.key).fill}"></i>` : `<i class="sa-pdot own"></i>`;
+    const dot = r.kind === "statement" ? `${PICON(r.key)}` : `<i class="sa-pdot own"></i>`;
     return `<tr>${d}<td>${dot}${r.label}${r.kind === "income" ? youTag() : ""}</td><td>${r.type}${r.ref ? `<span class="sub">${r.ref}</span>` : ""}</td><td class="num">${orig(r)}</td>
       <td class="money">${money(r.gross)}</td>${cell(r.fees, "fee")}${cell(r.withheld, "tax")}<td class="money net">${money(r.net)}</td></tr>`;
   };
   return `
-  <div class="sa-top"><div><h1>Ledger</h1><p>${monthName(m)} 2026 · ${Y.LEDGER_V14_SUB}</p></div>
+  <div class="sa-top"><div><h1>Ledger</h1></div>
     <div class="right"><a class="sa-btn secondary sm">${icon("upload", "sm")} Add statements</a><a class="sa-btn primary sm" href="#entry-expense">${icon("plus", "sm")} Add entry</a>${periodSeg("Sep")}</div></div>
   <div class="sa-kpirow">
     ${[["Gross income", t.gross, ""], ["Fees", -t.fees, "var(--sa-fee-text)"], ["Tax withheld", -t.withheld, "var(--sa-tax-text)"], ["Your expenses", -t.expenses, ""], ["Kept after expenses", t.kept, "var(--sa-forest)"]]

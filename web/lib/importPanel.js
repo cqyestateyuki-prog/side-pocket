@@ -3,7 +3,7 @@
 // each platform's export lives, and shows what the import check found (records it can't convert).
 // It doesn't repeat the Ledger (no record counts or totals). Dropped files are read in this
 // browser only.
-import { esc, icon, monthShort, pcol } from "./format.js";
+import { esc, icon, monthShort, picon } from "./format.js";
 import { COPY } from "./copy.js";
 import { mascot } from "./mascot.js";
 
@@ -28,7 +28,7 @@ function fileLines(ctx) {
   return `<ul class="sa-importlist files">${dropped.map(f => {
     const p = PLATFORMS[f.platform];
     return p
-      ? `<li><i class="sa-pdot" style="background:${pcol(f.platform).fill}"></i><span><b>${esc(f.name)}</b><span class="r">${p.label} export · ${f.mine == null ? `${f.rows} rows` : `${f.mine} of ${f.rows} rows are ${esc(ctx.persona(ctx.me).display)}’s`}</span></span>${icon("check", "sm ok")}</li>`
+      ? `<li>${picon(f.platform)}<span><b>${esc(f.name)}</b><span class="r">${p.label} export · ${f.mine == null ? `${f.rows} rows` : `${f.mine} of ${f.rows} rows are ${esc(ctx.persona(ctx.me).display)}’s`}</span></span>${icon("check", "sm ok")}</li>`
       : `<li class="bad"><i class="sa-pdot"></i><span><b>${esc(f.name)}</b><span class="r">Not a format Side Atlas reads yet</span></span>${icon("alert", "sm")}</li>`;
   }).join("")}</ul>
   <div class="meta">Checked in your browser only; nothing is uploaded in this demo.</div>`;
@@ -42,7 +42,7 @@ export function panel(ctx) {
     const issue = issues.find(i => i.platform === p.label);
     const state = !mine[k] ? `<label class="add" for="sa-files">Add</label>`
       : issue ? `<span class="sa-badge warn">${issue.count} ${esc(issue.currency)} rate missing</span>` : icon("check", "sm ok");
-    return `<li class="${mine[k] ? "" : "off"}"><i class="sa-pdot" style="background:${pcol(k).fill}"></i>
+    return `<li class="${mine[k] ? "" : "off"}">${picon(k)}
       <span><b>${p.label}</b> <span class="mono">${p.file}</span><span class="r">${esc(p.where)}</span></span>${state}</li>`;
   }).join("");
   const issueLine = (who, i, c) => `<div class="sa-note warn">${icon("alert", "sm")}<span>${who ? `<b>${esc(who)}</b> · ` : ""}${i.count} record${i.count === 1 ? "" : "s"} can’t be converted: no ${esc(i.currency)} rate for ${esc(i.date)}.

@@ -1,5 +1,5 @@
 import { COPY, YOURS } from "../lib/copy.js";
-import { icon, monthName, pcol, pct, periodLabel } from "../lib/format.js";
+import { icon, monthName, pcol, pct, periodLabel, picon } from "../lib/format.js";
 import { empty, emptyScreen, top, warnCard } from "../lib/parts.js";
 import { mascot } from "../lib/mascot.js";
 
@@ -28,8 +28,7 @@ export async function render(ctx) {
   const t = o.totals;
   const currencies = [...new Set(o.platforms.flatMap(p => p.currencies ?? []))];
   const label = periodLabel(ctx.period).split(" · ")[0];
-  const sub = `${label} · ${o.platforms.length} platform${o.platforms.length === 1 ? "" : "s"} · ${ctx.yours ? `shown in ${ctx.cur}` : `${currencies.length} currenc${currencies.length === 1 ? "y" : "ies"}`}`;
-  const head = top(ctx, "Overview", sub, { actions: ctx.currencySeg(ctx) });
+  const head = top(ctx, "Overview", "", { actions: ctx.currencySeg(ctx) });
   if (!t.gross) return head + `<div class="sa-grid">${warnCard(ctx, o.issues)}${empty("No income recorded for this period.", ctx.yours ? "Pick another month." : "Pick another month, or another creator.")}</div>`;
 
   const isQ = ctx.period.includes("Q");
@@ -61,7 +60,7 @@ export async function render(ctx) {
     <section class="sa-card c5">
       <div class="head"><h2>By platform</h2><span class="meta">net · kept of gross</span></div>
       <div class="sa-bar">${plats.map(p => `<span title="${p.label}" style="width:${(p.share_of_net * 100).toFixed(2)}%;background:${pcol(p.platform).fill}"></span>`).join("")}</div>
-      <ul class="sa-legend">${plats.map(p => `<li class="${p.platform === best && o.platforms.length > 1 ? "best" : ""}"><span class="dot round" style="background:${pcol(p.platform).fill}"></span><span>${p.label}${p.platform === best && o.platforms.length > 1 ? ` <span class="sa-badge ok">keeps the most</span>` : ""}</span><span class="amt">${usd(p.net)}</span><span class="pct">${pct(p.net_rate)}</span></li>`).join("")}</ul>
+      <ul class="sa-legend">${plats.map(p => `<li class="${p.platform === best && o.platforms.length > 1 ? "best" : ""}">${picon(p.platform)}<span>${p.label}${p.platform === best && o.platforms.length > 1 ? ` <span class="sa-badge ok">keeps the most</span>` : ""}</span><span class="amt">${usd(p.net)}</span><span class="pct">${pct(p.net_rate)}</span></li>`).join("")}</ul>
     </section>
     <section class="sa-card c7">
       <div class="head"><h2>Where the gross went</h2></div>

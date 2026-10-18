@@ -473,3 +473,9 @@ body { background: var(--sa-page); color: var(--sa-ink); font: var(--sa-body); -
 .sa-howto > summary::after { content: "+"; font: 600 20px/1 var(--sa-font); color: var(--sa-meta); }
 .sa-howto[open] > summary::after { content: "\2212"; }
 .sa-howto .sa-where { padding: 0 24px 20px; }
+
+/* v1.4.1 · platform marks in front of platform names; bars keep the palette */
+.sa-picon { display: inline-block; width: 16px; height: 16px; margin-right: 8px; vertical-align: -3px; flex: none; }
+.sa-legend li { grid-template-columns: 18px 1fr auto 92px; }
+.sa-legend .sa-picon { margin-right: 0; }
+.sa-chip .sa-picon { width: 14px; height: 14px; margin-right: 0; vertical-align: -2px; }

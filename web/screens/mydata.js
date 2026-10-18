@@ -2,7 +2,7 @@
 // (lib/statements.js), kept in IndexedDB (lib/store.js) and checked by POST /api/personal/detect.
 // Backups (one JSON file from Settings & privacy) can be dropped here too.
 import { YOURS } from "../lib/copy.js";
-import { dateShort, esc, icon, monthShort, pcol, quarterOf } from "../lib/format.js";
+import { dateShort, esc, icon, monthShort, picon, quarterOf } from "../lib/format.js";
 import { mascot } from "../lib/mascot.js";
 import * as store from "../lib/store.js";
 import { bodyBytes, labeler, prepare, shortLabel } from "../lib/statements.js";
@@ -61,7 +61,7 @@ function emptyView(ctx) {
     ${unread.length ? filesCard(ctx, null, null) : ""}
     <details class="sa-card sa-howto c12">
       <summary>${X.WHERE_TITLE}</summary>
-      <div class="sa-where">${WHERE.map(([k, , w]) => `<div><b><i class="sa-pdot" style="background:${pcol(k).fill}"></i>${LABEL[k]}</b><div class="path">${w}</div></div>`).join("")}</div>
+      <div class="sa-where">${WHERE.map(([k, , w]) => `<div><b>${picon(k)}${LABEL[k]}</b><div class="path">${w}</div></div>`).join("")}</div>
     </details>
   </div>`;
 }
@@ -106,7 +106,7 @@ function filesCard(ctx, sum, R) {
       : need ? `<span class="sa-badge warn">${need} need${need === 1 ? "s" : ""} a rate</span>`
       : s.skipped_rows ? `<span class="sa-badge warn" title="${esc(s.skipped?.map(x => `line ${x.line}`).join(", ") ?? "")}">${s.skipped_rows} row${s.skipped_rows === 1 ? "" : "s"} skipped</span>`
       : `<span class="sa-badge ok">None</span>`;
-    return `<tr><td><i class="sa-pdot" style="background:${pcol(f.platform).fill}"></i><b>${esc(label)}</b>${(s.accounts ?? f.accounts ?? []).map(a => `<span class="acct">${esc(shortLabel(a))}</span>`).join("")}</td>
+    return `<tr><td>${picon(f.platform)}<b>${esc(label)}</b>${(s.accounts ?? f.accounts ?? []).map(a => `<span class="acct">${esc(shortLabel(a))}</span>`).join("")}</td>
       <td><span class="file">${esc(f.name)}</span></td><td class="money">${s.rows ?? "—"}</td>
       <td class="num">${s.first_date ? `${dateShort(s.first_date)} to ${dateShort(s.last_date)}` : "—"}</td><td>${(s.currencies ?? []).join(", ")}</td>
       <td>${issue}</td><td style="text-align:right">${remove(f.id)}</td></tr>`;

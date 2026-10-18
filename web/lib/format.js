@@ -19,6 +19,9 @@ export const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;"
 
 // Platform colours come from the kit tokens: fill / tint / text-on-white.
 export const pcol = key => ({ fill: `var(--sa-p-${key})`, tint: `var(--sa-p-${key}-tint)`, text: `var(--sa-p-${key}-text)` });
+// The platform's own mark (assets/platforms, Simple Icons CC0 in brand colours) in front of its name.
+export const PLATFORMS = ["bilibili", "youtube", "twitch", "patreon", "upwork", "fiverr", "freelancer", "contra"];
+export const picon = key => PLATFORMS.includes(key) ? `<img class="sa-picon" src="assets/platforms/${key}.svg" alt="" width="16" height="16">` : `<i class="sa-pdot" style="background:${pcol(key).fill}"></i>`;
 
 export const PLATFORM_KEY = {
   "Bilibili": "bilibili", "B站": "bilibili", "YouTube": "youtube", "Twitch": "twitch", "Patreon": "patreon",

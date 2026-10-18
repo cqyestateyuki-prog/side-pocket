@@ -4,7 +4,7 @@ import { cur, dateShort, esc, icon, mmdd } from "./format.js";
 import { mascot } from "./mascot.js";
 
 export function top(ctx, title, subtitle, { period = true, actions = "" } = {}) {
-  return `<div class="sa-top"><div><h1>${title}</h1><p>${subtitle}</p></div>
+  return `<div class="sa-top"><div><h1>${title}</h1>${subtitle ? `<p>${subtitle}</p>` : ""}</div>
     <div class="right">${actions}${period ? ctx.periodSeg(ctx) : ""}${ctx.whoPill(ctx)}</div></div>`;
 }
 
