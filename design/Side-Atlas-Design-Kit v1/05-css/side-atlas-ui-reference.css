@@ -522,3 +522,60 @@ button.sa-who { font: inherit; color: inherit; text-align: left; cursor: pointer
 .sa-who.picker { position: relative; cursor: pointer; padding-right: 12px; }
 .sa-who.picker .chev { color: var(--sa-meta); }
 .sa-signout { align-self: flex-start; font: var(--sa-small); color: var(--sa-meta); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+/* v1.4.1 · Tax hero (#69): Atlas with the piggy bank at the bottom right with the orb, like Overview; countdowns sit under the amount */
+.tax-hero, .tax-hero.cn, .tax-hero.both { display: block; min-height: 236px; }
+.tax-hero > div:not(.orb) { position: relative; z-index: 2; padding-right: 170px; }
+.tax-hero .title { margin: 0; font: 800 30px/1.15 var(--sa-font); color: var(--sa-on-forest); letter-spacing: var(--sa-tracking-tight, -.02em); }
+.tax-hero .amount { margin-top: 20px; position: relative; }
+.tax-hero .amount .sa-fig { margin: 0 0 6px; font-size: 48px; }
+.tax-counts { display: flex; flex-wrap: wrap; gap: 14px 36px; margin-top: 20px; }
+.tax-count { display: flex; align-items: center; gap: 14px; }
+.tax-count + .tax-count { padding-left: 36px; border-left: 1px solid var(--sa-on-forest-glass-line); }
+.tax-count .days { font: 800 52px/0.9 var(--sa-font); letter-spacing: -0.04em; color: var(--sa-accent-on-primary); }
+.tax-count .of { font: 700 14px/1.3 var(--sa-font); color: var(--sa-on-forest); white-space: nowrap; }
+.tax-count .glass { margin-top: 6px; }
+
+/* v1.4.1 · Tax already withheld (#70): a flag per country, the platform under it */
+.withheld { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 10px 0; border-top: 1px solid var(--sa-line); }
+.head + .withheld { border-top: 0; padding-top: 0; }
+.withheld .amt { text-align: right; }
+.withheld .amt .sa-fig { margin: 0; font: 800 28px/1 var(--sa-font); color: var(--sa-tax-text); }
+.withheld .who { display: flex; align-items: flex-start; gap: 12px; }
+.sa-flag { width: 24px; height: 16px; flex: none; border-radius: 3px; box-shadow: 0 0 0 1px var(--sa-line); margin-top: 3px; object-fit: cover; }
+.withheld .who b { display: block; font: 800 16px/1.3 var(--sa-font); color: var(--sa-ink); }
+.withheld .who .by { display: inline-flex; align-items: center; margin-top: 4px; font: 600 13px/1.2 var(--sa-font); color: var(--sa-text-mid); }
+.withheld .who .by .sa-picon { width: 14px; height: 14px; margin-right: 6px; }
+
+/* v1.4.1 · Ask Atlas (#71): the pigeon avatar in the title, Atlas poses in every state, an icon per tool */
+.sa-top h1.with-av { display: flex; align-items: center; gap: 14px; }
+.sa-avatar { width: 44px; height: 44px; border-radius: 14px; flex: none; }
+.examples { position: relative; min-height: 150px; padding-right: 150px; }
+.examples .example-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.examples .sa-chip { font-family: var(--sa-font); color: var(--sa-ink); }
+.examples .ex-mascot { position: absolute; right: 18px; bottom: 10px; height: var(--sa-mascot-card); }
+.thinking { display: flex; align-items: center; gap: 12px; }
+.thinking .think-mascot { height: var(--sa-mascot-card); }
+.steps-empty { display: flex; gap: 12px; align-items: center; color: var(--sa-meta); font: var(--sa-small); padding: 8px 0; }
+.steps-empty .steps-mascot { height: var(--sa-mascot-card); flex: none; }
+.sa-answer { position: relative; overflow: hidden; }
+.sa-answer .answer-mascot { position: absolute; right: 22px; bottom: 16px; height: var(--sa-mascot-card); }
+.sa-answer .sub { padding-right: 110px; }
+.sa-steps .t .tool { width: 14px; height: 14px; margin-right: 6px; vertical-align: -2px; color: var(--sa-forest); }
+.sa-steps li.err .t .tool { color: var(--sa-warn); }
+.sa-steps li.pending .n { border-style: dashed; border-color: var(--sa-line-strong); }
+
+/* v1.4.1 · Ledger KPI row (#72): icons on the labels; Net is a small hero card with the orb and Atlas */
+.sa-kpirow { grid-template-columns: repeat(4, 1fr) 1.6fr; }
+.sa-kpirow:has(.sa-kpi.net + .sa-card) { grid-template-columns: repeat(3, 1fr) 1.6fr 1.35fr; }
+.sa-kpi .label .sa-icon { width: 14px; height: 14px; color: var(--sa-meta); }
+.sa-kpi.net { position: relative; overflow: hidden; padding: 16px 20px; border-radius: var(--sa-r-card); background: var(--sa-forest); color: var(--sa-on-forest); }
+.sa-kpi.net .label, .sa-kpi.net .label .sa-icon { color: var(--sa-on-forest-mid); }
+.sa-kpi.net .sa-fig { color: var(--sa-on-forest); position: relative; z-index: 2; }
+.sa-kpi.net .orb { position: absolute; right: -60px; bottom: -86px; width: 170px; height: 170px; border-radius: 50%; background: var(--sa-lime); }
+.sa-kpi.net .kpi-mascot { position: absolute; right: 12px; bottom: 2px; height: 74px; z-index: 1; }
+.sa-gap { width: 88px; }
+
+/* v1.4.1 · tables (#73): every header has its outline icon; badges in cells may wrap */
+.sa-table td:has(> .sa-badge) { white-space: normal; }
+.sa-table td .sa-badge { white-space: normal; line-height: 1.25; max-width: 100%; }

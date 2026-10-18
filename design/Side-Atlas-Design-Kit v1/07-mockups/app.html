@@ -108,6 +108,18 @@ function thPick(label, on) {
   return `<span class="sa-dd">${trigger(true)}${menu([{ value: "", label: "All platforms" }, ...plats], "", "start")}</span>`;
 }
 const thL = (ic, label) => `<span class="th-l">${icon(ic, "sm")}${label}</span>`;
+// v1.4.1 (#69 to #73): Atlas poses, flags, countdowns and KPI cards as shipped (web/screens/tax.js, ledger.js).
+const MASCOT = (pose, cls = "") => `<img class="sa-mascot ${cls}" src="../02-logos/mascot/${pose}.png" alt="">`;
+const COUNTRY = { CN: "China", US: "United States", DE: "Germany", JP: "Japan", CA: "Canada", GB: "United Kingdom" };
+const flag = c => `<img class="sa-flag" src="../02-logos/flags/${c.toLowerCase()}.svg" alt="" width="24" height="16">`;
+const withheldWho = (c, key, label) => `<div class="who">${flag(c)}<div><b>${COUNTRY[c]}</b><span class="by">${PICON(key)}${label}</span></div></div>`;
+const taxCount = (days, of, when) => `<div class="tax-count"><div class="days num">${days}</div><div><div class="of">${of}</div><div class="glass">${icon("calendar", "sm")} ${when}</div></div></div>`;
+const kpi = (ic, label, fig, color) => `<div class="sa-card sa-kpi"><div class="label">${icon(ic, "sm")}${label}</div><div class="sa-fig num" style="${color ? `color:${color}` : ""}">${fig}</div></div>`;
+const netKpi = (label, fig) => `<div class="sa-kpi net"><div class="orb"></div>${MASCOT("coin", "kpi-mascot")}<div class="label">${icon("wallet", "sm")}${label}</div><div class="sa-fig num">${fig}</div></div>`;
+const TOOL_ICON = { find_creator: "search", get_summary: "overview", load_platform: "file", convert_currency: "fx", compute_breakdown: "coins",
+  compare_months: "up", compute_set_aside: "sliders", simulate_patreon_ios: "monitor", get_upwork_contract_fees: "percent", get_fee_details: "percent",
+  tax_items: "tax", form_check: "duplicate", get_manual_income: "pencil", get_expenses: "wallet", get_goal_progress: "target", submit_answer: "send" };
+const askTitle = () => `<h1 class="with-av"><img class="sa-avatar" src="../02-logos/icon-256.png" alt="" width="44" height="44">Ask Atlas</h1>`;
 const csvBtn = () => `<span class="sa-btn secondary sm">${icon("download", "sm")} CSV</span>`;
 const moon = () => who("Moon Spirit", "", "New York · US tax home · single-member LLC");
 
@@ -166,8 +178,9 @@ function ledger() {
   return `
   <div class="sa-top"><div><h1>Ledger</h1></div><div class="right">${csvBtn()}${periodSeg("Sep")}${moon()}</div></div>
   <div class="sa-kpirow">
-    ${[["Gross", t.gross, ""], ["Platform fees", -t.platform_fee, "var(--sa-fee-text)"], ["Payout fees", -t.payout_fee, "var(--sa-payout-text)"], ["Tax withheld", -t.withheld, "var(--sa-tax-text)"], ["Net", t.net, "var(--sa-forest)"]]
-      .map(([l, v, c]) => `<div class="sa-card sa-kpi"><div class="label">${l}</div><div class="sa-fig num" style="${c ? `color:${c}` : ""}">${usd(v)}</div></div>`).join("")}
+    ${[["coins", "Gross", t.gross, ""], ["percent", "Platform fees", -t.platform_fee, "var(--sa-fee-text)"], ["percent", "Payout fees", -t.payout_fee, "var(--sa-payout-text)"], ["bank", "Tax withheld", -t.withheld, "var(--sa-tax-text)"]]
+      .map(([ic, l, v, c]) => kpi(ic, l, usd(v), c)).join("")}
+    ${netKpi("Net", usd(t.net))}
   </div>
   <div class="sa-tablewrap"><table class="sa-table dense">
     <thead><tr><th>${thPick("Date")}</th><th>${thPick("Platform")}</th><th>${thPick("Type")}</th><th>${thL("fx", "Original")}</th><th class="money">${thL("coins", "Gross")}</th><th class="money">${thL("percent", "Platform fee")}</th><th class="money">${thL("percent", "Payout fee")}</th><th class="money">${thL("bank", "Withheld")}</th><th class="money">${thL("wallet", "Net")}</th></tr></thead>
@@ -198,29 +211,25 @@ function tax() {
       .map(([v, c]) => v > 0 ? `<span style="width:${Math.max(4, v / g * 100)}%;background:${c}"></span>` : "").join("")}</div><span class="num">${usd(-g)}</span></div>`;
   };
   return `
-  <div class="sa-top"><div><h1>Tax items</h1></div><div class="right">${periodSeg("Q3 2026")}${moon()}</div></div>
+  <div class="sa-top"><div><h1>Tax</h1></div><div class="right">${periodSeg("Q3 2026")}${moon()}</div></div>
   <div class="sa-grid">
-    <section class="sa-hero c8" style="display:grid;grid-template-columns:1fr 210px;gap:24px;min-height:220px">
+    <section class="sa-hero c8 tax-hero">
+      <div class="orb"></div>
+      ${MASCOT("piggy-bank", "hero-mascot")}
       <div>
-        <div class="lead" style="font:800 30px/1.15 var(--sa-font);color:var(--sa-on-forest);letter-spacing:-.02em">${C.TAX_HERO}</div>
-        <div class="sub" style="margin-top:10px;max-width:470px">${C.TAX_SUB}</div>
-        <div style="margin-top:20px;position:relative">
-          <div class="sa-fig num" style="margin:0 0 6px;font-size:48px">${usd(T.set_aside.amount)}</div>
+        <div class="title">${C.TAX_HERO}</div>
+        <div class="amount">
+          <div class="sa-fig num">${usd(T.set_aside.amount)}</div>
           <div class="sub">to set aside: ${usd(T.total_net_usd)} Q3 net × the 25% you chose</div>
         </div>
-      </div>
-      <div class="sa-count" style="align-self:end">
-        <div class="days num">${T.next_us_estimated_tax_due.days_left}</div>
-        <div class="of">days to the next US<br>estimated-tax payment</div>
-        <div class="glass" style="margin-top:12px">${icon("calendar", "sm")} ${dateLong(T.next_us_estimated_tax_due.due_date)}</div>
+        <div class="tax-counts">${taxCount(T.next_us_estimated_tax_due.days_left, "days to next payment", `${dateLong(T.next_us_estimated_tax_due.due_date)} · Q4`)}</div>
       </div>
     </section>
     <section class="sa-card c4">
       <div class="head"><h2>Tax already withheld</h2></div>
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
-        <div><span class="sa-badge tax">${icon("globe", "sm")} China · ${w.platform}</span>
-          <div class="meta" style="margin-top:8px">Individual income tax, withheld by the platform</div></div>
-        <div style="text-align:right"><div class="sa-fig num" style="font:800 28px/1 var(--sa-font);color:var(--sa-tax-text)">${usd(w.withheld_usd)}</div><div class="meta num">${cny(w.withheld_cny)}</div></div>
+      <div class="withheld">
+        ${withheldWho("CN", "bilibili", w.platform)}
+        <div class="amt"><div class="sa-fig num">${usd(w.withheld_usd)}</div><div class="meta num">${cny(w.withheld_cny)}</div></div>
       </div>
       <div class="sa-note info" style="margin-top:16px">${icon("info", "sm")}<span>Nothing was withheld on Contra, Fiverr, Patreon, Twitch, Upwork or YouTube. The set-aside covers that income.</span></div>
     </section>
@@ -228,7 +237,7 @@ function tax() {
       <div class="head"><div><h2>${C.FORMS_HEADLINE}</h2><div class="mid" style="margin-top:6px;max-width:820px">${C.FORMS_SUB}</div></div></div>
       <div class="sa-note info" style="margin-bottom:14px;font-size:14px">${icon("check", "sm")}<span>${C.THRESHOLD_BANNER}</span></div>
       <div class="sa-tablewrap"><table class="sa-table">
-        <thead><tr><th>Platform</th><th>Form (simulated)</th><th>Paid out to</th><th class="money">Form view</th><th class="money">Bank view</th><th>${C.GAP_LABEL}</th><th class="money">Txns</th><th>Status</th></tr></thead>
+        <thead><tr><th>${thL("layers", "Platform")}</th><th>${thL("file", "Form (simulated)")}</th><th>${thL("send", "Paid out to")}</th><th class="money">${thL("report", "Form view")}</th><th class="money">${thL("bank", "Bank view")}</th><th>${thL("duplicate", C.GAP_LABEL)}</th><th class="money">${thL("ledger", "Txns")}</th><th>${thL("check", "Status")}</th></tr></thead>
         <tbody>${F.rows.map(f => `<tr>
           <td>${PICON(f.platform)}<b>${f.label}</b></td>
           <td>${f.form === "none" ? `<span class="sa-badge tax">No US form</span>` : `<span class="sa-badge sim">${f.form}</span>`}</td>
@@ -261,17 +270,20 @@ function ask() {
   const A = D.ask_example, o = D.overview_c01_sep, t = o.totals;
   const lines = [["Gross income", t.gross, 10], ["Platform fees", -t.platform_fee, 10], ["Payout & payment fees", -t.payout_fee, 10], ["Tax withheld by Bilibili", -t.withheld, 10], ["Set aside at your 25%", o.set_aside.amount, 10]];
   return `
-  <div class="sa-top"><div><h1>Ask</h1><p>The agent looks things up step by step; code does the math.</p></div><div class="right">${moon()}</div></div>
+  <div class="sa-top"><div>${askTitle()}<p>The agent looks things up step by step; code does the math.</p></div><div class="right">${moon()}</div></div>
   <div class="sa-grid">
     <div class="c7 stack">
       <div class="sa-bubble">${A.question}</div>
       <section class="sa-hero sa-answer" style="min-height:0">
+        ${MASCOT("envelope", "answer-mascot")}
         <div class="lead">You landed in September 2026</div>
         <div class="sa-fig num">${usd(t.net)}<span class="sa-ref">11</span></div>
         <div class="sub">out of ${usd(t.gross)} gross across 7 platforms. Contra kept the most of each dollar (100%), <span class="num">Bilibili</span> the least (${pct(o.platforms.find(p => p.platform === "bilibili").net_rate)}).</div>
       </section>
       <section class="sa-card" style="padding:18px 24px">
         <ul class="sa-lines">${lines.map(([l, v, s]) => `<li><span>${l}</span><span class="amt">${usd(v)}<span class="sa-ref light">${s}</span></span></li>`).join("")}</ul>
+        <div class="label" style="margin-top:14px">Platform fees by platform</div>
+        <div class="sa-platchips">${o.platforms.filter(p => p.platform_fee > 0).sort((a, b) => b.platform_fee - a.platform_fee).map(p => `<span class="sa-chip">${PICON(p.platform)}${p.label} <span class="num">${usd(p.platform_fee)}</span></span>`).join("")}</div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:12px">
           <span class="meta" style="display:flex;gap:6px;align-items:center;color:var(--sa-forest)">${icon("check", "sm")} ${C.ASK_PROMISE}</span>
           <span class="sa-prism"><i></i>Traced in PRISM ${icon("external", "sm")}</span>
@@ -281,8 +293,40 @@ function ask() {
     </div>
     <section class="sa-card c5">
       <div class="head"><h2>Agent steps</h2><span class="sa-badge ok">${A.trace.steps} tool calls</span></div>
-      <ol class="sa-steps">${A.steps.map((s, i) => `<li class="${i === A.steps.length - 1 ? "final" : ""}"><span class="n">${i + 1}</span><div><div class="t">${s.tool}<span class="meta" style="font-family:var(--sa-font)"> · ${s.args}</span></div><div class="s">${s.summary}</div></div>${icon("check", "sm")}</li>`).join("")}</ol>
+      <ol class="sa-steps">${A.steps.map((s, i) => `<li class="${i === A.steps.length - 1 ? "final" : ""}"><span class="n">${i + 1}</span><div><div class="t">${icon(TOOL_ICON[s.tool] ?? "steps", "sm tool")}${s.tool}<span class="meta" style="font-family:var(--sa-font)"> · ${s.args}</span></div><div class="s">${s.summary}</div></div>${icon("check", "sm")}</li>`).join("")}</ol>
     </section>
+  </div>`;
+}
+
+/* ---------------- 04b · Ask before asking, 04c · Atlas working (v1.4.1) ---------------- */
+const ASK_EXAMPLES = ["How much did I actually make in September, across every platform?", "Who took my money in Q3: platform fees or tax?", "What tax items do I have this quarter?"];
+const askInput = () => `<div class="sa-input"><span>${C.ASK_PLACEHOLDER}</span><a class="sa-btn primary sm">${icon("send", "sm")} Ask</a></div>`;
+function askEmpty() {
+  return `
+  <div class="sa-top"><div>${askTitle()}<p>The agent looks things up step by step; code does the math.</p></div><div class="right">${moon()}</div></div>
+  <div class="sa-grid">
+    <div class="c7 stack">
+      <section class="sa-card sage examples">${MASCOT("laptop", "ex-mascot")}<div class="label">Try asking</div>
+        <div class="example-list">${ASK_EXAMPLES.map(q => `<span class="sa-chip">${q}</span>`).join("")}</div></section>
+      ${askInput()}
+    </div>
+    <section class="sa-card c5"><div class="head"><h2>Agent steps</h2></div>
+      <div class="steps-empty">${MASCOT("ledger", "steps-mascot")}<div>Each lookup and calculation shows up here as the agent works, and is traced in PRISM.</div></div></section>
+  </div>`;
+}
+function askThinking() {
+  const A = D.ask_example, s0 = A.steps[0];
+  return `
+  <div class="sa-top"><div>${askTitle()}<p>The agent looks things up step by step; code does the math.</p></div><div class="right">${moon()}</div></div>
+  <div class="sa-grid">
+    <div class="c7 stack">
+      <div class="sa-bubble">${A.question}</div>
+      <section class="sa-card thinking">${MASCOT("laptop", "think-mascot")}<div class="meta">Atlas is working through the steps…</div></section>
+      ${askInput()}
+    </div>
+    <section class="sa-card c5"><div class="head"><h2>Agent steps</h2><span class="sa-badge sim">running</span></div>
+      <ol class="sa-steps"><li><span class="n">1</span><div><div class="t">${icon(TOOL_ICON[s0.tool] ?? "steps", "sm tool")}${s0.tool}<span class="meta" style="font-family:var(--sa-font)"> · ${s0.args}</span></div><div class="s">${s0.summary}</div></div>${icon("check", "sm")}</li>
+        <li class="pending"><span class="n"></span><div><div class="s">The agent is choosing its next step…</div></div></li></ol></section>
   </div>`;
 }
 
@@ -520,7 +564,7 @@ function mydata() {
     <section class="sa-card c12">
       <div class="head"><h2>Imported statements</h2><span class="meta">${X.FILES_NOTE}</span></div>
       <div class="sa-tablewrap"><table class="sa-table sa-files">
-        <thead><tr><th>Platform</th><th>File</th><th class="money">Rows</th><th>Dates</th><th>Currency</th><th>Issues</th><th></th></tr></thead>
+        <thead><tr><th>${thL("layers", "Platform")}</th><th>${thL("file", "File")}</th><th class="money">${thL("ledger", "Rows")}</th><th>${thL("calendar", "Dates")}</th><th>${thL("fx", "Currency")}</th><th>${thL("alert", "Issues")}</th><th></th></tr></thead>
         <tbody>${F.map(f => `<tr>
           <td>${PICON(f.platform)}<b>${f.label}</b><span class="acct">${f.account}</span></td>
           <td><span class="file">${f.file}</span></td><td class="money">${f.rows}</td>
@@ -582,26 +626,21 @@ function taxCn() {
   return `
   <div class="sa-top"><div><h1>Tax</h1></div><div class="right">${periodSeg("Q3 2026")}${you()}</div></div>
   <div class="sa-grid">
-    <section class="sa-hero c8" style="display:grid;grid-template-columns:1fr 230px;gap:24px;min-height:220px">
+    <section class="sa-hero c8 tax-hero cn">
+      <div class="orb"></div>
+      ${MASCOT("piggy-bank", "hero-mascot")}
       <div>
-        <div class="lead" style="font:800 30px/1.15 var(--sa-font);color:var(--sa-on-forest);letter-spacing:-.02em">${X.CN_TAX_HERO}</div>
-        <div style="margin-top:22px;position:relative">
-          <div class="sa-fig num" style="margin:0 0 6px;font-size:48px">${yen(Q.set_aside_25)}</div>
-          <div class="sub">to set aside: ${yen(Q.totals.net)} Q3 net × the 25% you chose</div>
-        </div>
-      </div>
-      <div class="sa-count" style="align-self:end">
-        <div class="days num">${W.days_to_open}</div>
-        <div class="of">days until the 2026<br>annual filing window opens</div>
-        <div class="glass" style="margin-top:12px">${icon("calendar", "sm")} Mar 1 to Jun 30, 2027</div>
+        <div class="title">${X.CN_TAX_HERO}</div>
+        <div class="amount"><div class="sa-fig num">${yen(Q.set_aside_25)}</div>
+          <div class="sub">to set aside: ${yen(Q.totals.net)} Q3 net × the 25% you chose</div></div>
+        <div class="tax-counts">${taxCount(W.days_to_open, "days until filing opens", "Mar 1 to Jun 30, 2027")}</div>
       </div>
     </section>
     <section class="sa-card c4">
       <div class="head"><h2>Tax already withheld</h2></div>
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
-        <div><span class="sa-badge tax">${icon("globe", "sm")} China · Bilibili</span>
-          <div class="meta" style="margin-top:8px">Individual income tax, withheld by the platform</div></div>
-        <div style="text-align:right"><div class="sa-fig num" style="font:800 28px/1 var(--sa-font);color:var(--sa-tax-text)">${yen(Q.bilibili.withheld)}</div><div class="meta num">${usd(usdW.withheld_usd)}</div></div>
+      <div class="withheld">
+        ${withheldWho("CN", "bilibili", "Bilibili")}
+        <div class="amt"><div class="sa-fig num">${yen(Q.bilibili.withheld)}</div><div class="meta num">${usd(usdW.withheld_usd)}</div></div>
       </div>
       <div class="sa-note info" style="margin-top:16px">${icon("info", "sm")}<span>${X.CN_WITHHELD_NOTE}</span></div>
     </section>
@@ -609,7 +648,7 @@ function taxCn() {
       <div class="head"><h2>Income by where it was paid</h2><span class="meta">${X.CN_WINDOW_LABEL}</span></div>
       <div class="sa-note warn" style="margin-bottom:14px">${icon("globe", "sm")}<span>${X.CN_FOREIGN_FLAG}</span></div>
       <div class="sa-tablewrap"><table class="sa-table">
-        <thead><tr><th>Platform</th><th class="money">Records</th><th class="money">Gross</th><th class="money">Net</th><th class="money">Chinese tax withheld</th></tr></thead>
+        <thead><tr><th>${thL("layers", "Platform")}</th><th class="money">${thL("ledger", "Records")}</th><th class="money">${thL("coins", "Gross")}</th><th class="money">${thL("wallet", "Net")}</th><th class="money">${thL("bank", "Chinese tax withheld")}</th></tr></thead>
         <tbody>
           <tr class="group"><td colspan="5">Inside China <span class="sa-badge tax">Withheld at withdrawal</span></td></tr>
           ${row("bilibili", P.bilibili)}
@@ -702,15 +741,14 @@ function taxBoth() {
   return `
   <div class="sa-top"><div><h1>Tax</h1></div><div class="right">${periodSeg("Q3 2026")}${you()}</div></div>
   <div class="sa-grid">
-    <section class="sa-hero c12" style="display:grid;grid-template-columns:1fr auto;gap:32px;min-height:0;align-items:end">
+    <section class="sa-hero c12 tax-hero both">
+      <div class="orb"></div>
+      ${MASCOT("piggy-bank", "hero-mascot")}
       <div>
-        <div class="lead" style="font:800 30px/1.15 var(--sa-font);color:var(--sa-on-forest);letter-spacing:-.02em">${X.BOTH_HERO}</div>
-        <div style="margin-top:22px;position:relative"><div class="sa-fig num" style="margin:0 0 6px;font-size:48px">${usd(T.set_aside.amount)}</div>
+        <div class="title">${X.BOTH_HERO}</div>
+        <div class="amount"><div class="sa-fig num">${usd(T.set_aside.amount)}</div>
           <div class="sub">to set aside: ${usd(T.total_net_usd)} Q3 net × the 25% you chose</div></div>
-      </div>
-      <div class="sa-counts">
-        <div class="sa-count"><div class="tag">United States</div><div class="days num">${B.us_due.days}</div><div class="of">days to the next<br>estimated-tax payment</div><div class="glass" style="margin-top:12px">${icon("calendar", "sm")} Jan 15, 2027 · Q4</div></div>
-        <div class="sa-count"><div class="tag">China</div><div class="days num">${W.days_to_open}</div><div class="of">days until the 2026<br>annual filing window opens</div><div class="glass" style="margin-top:12px">${icon("calendar", "sm")} Mar 1 to Jun 30, 2027</div></div>
+        <div class="tax-counts">${taxCount(B.us_due.days, "days to next US payment", "Jan 15, 2027 · Q4")}${taxCount(W.days_to_open, "days until China filing opens", "Mar 1 to Jun 30, 2027")}</div>
       </div>
     </section>
     <div class="c12 sa-note info">${icon("globe", "sm")}<span>${X.BOTH_FLAG}</span></div>
@@ -769,8 +807,9 @@ function ledgerCnyCase(kind) {
   return `
   <div class="sa-top"><div><h1>Ledger</h1></div><div class="right">${curSeg("CNY")}${periodSeg("Aug")}${you()}</div></div>
   <div class="sa-kpirow">
-    ${[["Gross", t.gross, ""], ["Fees", -(t.platform_fee + t.payout_fee), "var(--sa-fee-text)"], ["Tax withheld", -t.withheld, "var(--sa-tax-text)"], [LG.complete ? "Net" : "Net · incomplete", t.net, "var(--sa-forest)"]]
-      .map(([l, v, c]) => `<div class="sa-card sa-kpi"><div class="label">${l}</div><div class="sa-fig num" style="${c ? `color:${c}` : ""}">${yen(v)}</div></div>`).join("")}
+    ${[["coins", "Gross", t.gross, ""], ["percent", "Fees", -(t.platform_fee + t.payout_fee), "var(--sa-fee-text)"], ["bank", "Tax withheld", -t.withheld, "var(--sa-tax-text)"]]
+      .map(([ic, l, v, c]) => kpi(ic, l, yen(v), c)).join("")}
+    ${netKpi(LG.complete ? "Net" : "Net · incomplete", yen(t.net))}
     <div class="sa-card sa-kpi"><div class="label">${icon("fx", "sm")} Rates for USD records</div><div class="meta" style="margin-top:10px;line-height:1.6">${sources}</div></div>
   </div>
   ${iss ? `<section class="sa-warncard" style="display:grid;grid-template-columns:1fr 380px;gap:24px;margin-bottom:16px">
@@ -879,8 +918,9 @@ function ledgerV14() {
   <div class="sa-top"><div><h1>Ledger</h1></div>
     <div class="right"><a class="sa-btn secondary sm">${icon("upload", "sm")} Add statements</a><a class="sa-btn primary sm" href="#entry-expense">${icon("plus", "sm")} Add entry</a>${csvBtn()}${periodSeg("Sep")}</div></div>
   <div class="sa-kpirow">
-    ${[["Gross income", t.gross, ""], ["Fees", -t.fees, "var(--sa-fee-text)"], ["Tax withheld", -t.withheld, "var(--sa-tax-text)"], ["Your expenses", -t.expenses, ""], ["Kept after expenses", t.kept, "var(--sa-forest)"]]
-      .map(([l, v, c]) => `<div class="sa-card sa-kpi"><div class="label">${l}</div><div class="sa-fig num" style="${c ? `color:${c}` : ""}">${money(v)}</div></div>`).join("")}
+    ${[["coins", "Gross income", t.gross, ""], ["percent", "Fees", -t.fees, "var(--sa-fee-text)"], ["bank", "Tax withheld", -t.withheld, "var(--sa-tax-text)"], ["pencil", "Your expenses", -t.expenses, ""]]
+      .map(([ic, l, v, c]) => kpi(ic, l, money(v), c)).join("")}
+    ${netKpi("Kept after expenses", money(t.kept))}
   </div>
   <div class="sa-tablewrap"><table class="sa-table dense">
     <thead><tr><th>${thPick("Date")}</th><th>${thPick("Source")}</th><th>${thPick("Type")}</th><th>${thL("fx", "Original")}</th><th class="money">${thL("coins", "Gross")}</th><th class="money">${thL("percent", "Fees")}</th><th class="money">${thL("bank", "Withheld")}</th><th class="money">${thL("wallet", "Net")}</th></tr></thead>
@@ -953,10 +993,11 @@ const RENDER = { overview, ledger, tax, ask, report, sources, settings, missing,
   "mydata-empty": mydataEmpty, mydata, privacy, "tax-cn": taxCn, "overview-cny": overviewCny,
   "privacy-delete": privacyDelete, "tax-both": taxBoth, "overview-empty": overviewEmpty, "ledger-cny": ledgerCny, "ledger-cny-file": ledgerCnyFile,
   "entry-expense": entryExpense, "entry-income": entryIncome, "ledger-v14": ledgerV14, "overview-v14": overviewV14p, milestones, "goal-sheet": goalSheet, "goal-reached": overviewV14r,
-  "overview-period": () => withOpen("period", overview), "ledger-platform": () => withOpen("platform", ledger) };
+  "overview-period": () => withOpen("period", overview), "ledger-platform": () => withOpen("platform", ledger),
+  "ask-empty": askEmpty, "ask-thinking": askThinking };
 // 01b and 02b: the same screens with one menu drawn open.
 function withOpen(name, screen) { OPEN = name; try { return screen(); } finally { OPEN = null; } }
-const NAV_OF = { sources: "ledger", settings: "tax", report: "tax", missing: "overview", "overview-period": "overview", "ledger-platform": "ledger", "mydata-empty": "mydata", "tax-cn": "tax", "overview-cny": "overview",
+const NAV_OF = { "ask-empty": "ask", "ask-thinking": "ask", sources: "ledger", settings: "tax", report: "tax", missing: "overview", "overview-period": "overview", "ledger-platform": "ledger", "mydata-empty": "mydata", "tax-cn": "tax", "overview-cny": "overview",
   "privacy-delete": "privacy", "tax-both": "tax", "overview-empty": "overview", "ledger-cny": "ledger", "ledger-cny-file": "ledger",
   "entry-expense": "ledger", "entry-income": "ledger", "ledger-v14": "ledger", "overview-v14": "overview", "goal-sheet": "overview", "goal-reached": "overview" };
 const YOURS = new Set(["mydata-empty", "mydata", "privacy", "tax-cn", "overview-cny", "privacy-delete", "tax-both", "overview-empty", "ledger-cny", "ledger-cny-file",

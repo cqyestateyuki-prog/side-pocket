@@ -2,7 +2,7 @@
 
 Everything needed to build Side Atlas's look and feel: the spec, logos, icons, tokens, code, fonts, a clickable prototype and screen images. Version 1.4.1, 17 October 2026, desktop only.
 
-Start with `01-spec/Side-Atlas-Look-and-Feel-Spec.pdf`. Then open `07-mockups/app.html` in a browser (works offline; switch screens in the left nav and the Your data / Demo data switch, or with `#overview`, `#ledger`, `#tax`, `#ask`, `#report`, `#sources`, `#settings`, `#missing`, and for v1.3 `#mydata-empty`, `#mydata`, `#privacy`, `#privacy-delete`, `#tax-cn`, `#tax-both`, `#overview-cny`, `#overview-empty`, `#ledger-cny`, `#ledger-cny-file`, and for v1.4 `#entry-expense`, `#entry-income`, `#ledger-v14`, `#overview-v14`, `#milestones`, `#goal-sheet`, `#goal-reached`, and for v1.4.1 `#overview-period`, `#ledger-platform`; `?screen=<name>` works too).
+Start with `01-spec/Side-Atlas-Look-and-Feel-Spec.pdf`. Then open `07-mockups/app.html` in a browser (works offline; switch screens in the left nav and the Your data / Demo data switch, or with `#overview`, `#ledger`, `#tax`, `#ask`, `#report`, `#sources`, `#settings`, `#missing`, and for v1.3 `#mydata-empty`, `#mydata`, `#privacy`, `#privacy-delete`, `#tax-cn`, `#tax-both`, `#overview-cny`, `#overview-empty`, `#ledger-cny`, `#ledger-cny-file`, and for v1.4 `#entry-expense`, `#entry-income`, `#ledger-v14`, `#overview-v14`, `#milestones`, `#goal-sheet`, `#goal-reached`, and for v1.4.1 `#overview-period`, `#ledger-platform`, `#ask-empty`, `#ask-thinking`; `?screen=<name>` works too).
 
 ## What's new in v1.4.1
 
@@ -12,7 +12,10 @@ Each change was signed off in chat and matches the product as shipped (`web/`, c
 - One sidebar menu: the four screens, a rule, then My data, Milestones, Settings & privacy. Tagline, PRISM chip and disclaimer leave the sidebar; the disclaimer closes the Tax screens (#66).
 - Ledger: outline icons on every column header; Date sorts, Platform and Type filter from the header; CSV in the page header (#64, #67).
 - Platform marks instead of colour dots (`02-logos/platforms/`, #61); badge tiles show the earned date only and every badge has its own Atlas pose (#59, #60); less text on My data and no period/currency subtitles (#56 to #58, #62).
-- New drawings 01b (period menu open) and 02b (Platform filter open); icons 34 → 39 (tag, layers, percent, wallet, coins). Decisions #56 to #68 are in the decision log.
+- New drawings 01b (period menu open) and 02b (Platform filter open); icons 34 → 39 (tag, layers, percent, wallet, coins).
+- Tax heroes like Overview: Atlas with the piggy bank on the orb, countdowns under the amount in one short row (#69). Tax already withheld: country flags (`02-logos/flags/`) with the platform underneath (#70).
+- Ask Atlas: pigeon avatar in the title, laptop / ledger / envelope poses, an icon per tool, platform marks on fee chips; new drawings 04b (before asking) and 04c (Atlas working) (#71).
+- Ledger KPI row: icons on the labels and the Net card as a small violet hero with the coin pose (#72); header icons on the Tax and My data tables (#73). New poses in `02-logos/mascot/`: piggy-bank, laptop, ledger, envelope, coin (matching shipped commit 32b47ab). Decisions #56 to #73 are in the decision log.
 
 ## What's new in v1.4
 

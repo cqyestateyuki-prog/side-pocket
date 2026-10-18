@@ -17,6 +17,8 @@ if [ "${1:-}" != "v13" ]; then
   shoot 03-tax tax 900
   shoot 03b-tax-full tax "${TAX_FULL_HEIGHT:-1640}"
   shoot 04-ask ask 900
+  shoot 04b-ask-empty ask-empty 900
+  shoot 04c-ask-thinking ask-thinking 900
   shoot 05-report report 900
   shoot 06-missing missing 900
   shoot 07-sources sources 900
