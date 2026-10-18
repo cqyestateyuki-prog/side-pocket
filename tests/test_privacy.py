@@ -94,13 +94,20 @@ def _ask(client, monkeypatch, plan, **extra):
 
 
 QUESTION = "I'm Moon Spirit (bili_330121). How much did I keep in September 2026?"
+ENTRIES = [{"id": "entry-7731", "kind": "income", "date": "2026-09-14", "amount": 900, "currency": "CNY",
+            "source": "Tutoring", "note": "Lily's maths class, paid on WeChat"},
+           {"id": "entry-7732", "kind": "expense", "date": "2026-09-02", "amount": 59.99, "currency": "USD",
+            "source": "Adobe Creative Cloud", "category": "Software & subscriptions"}]
 
 
 def test_ask_sends_totals_only_and_traces_content_free(client, monkeypatch, traced):
     plan = [[("get_summary", {})], [("compute_breakdown", {"month": "2026-09"})],
             [("tax_items", {"period": "2026-Q3", "after_date": "2026-09-01"}), ("form_check", {"period": "2026-Q3"})],
+            [("get_manual_income", {"period": "2026-09"}), ("get_expenses", {"period": "2026-09"}),
+             ("get_goal_progress", {"period": "2026-09"})],
             [("submit_answer", {"answer": 5341.79, "unit": "USD"})], "You kept $5,341.79."]
-    r, model, events = _ask(client, monkeypatch, plan, question=QUESTION)
+    r, model, events = _ask(client, monkeypatch, plan, question=QUESTION, entries=ENTRIES,
+                            monthly_goal={"amount": 6000, "currency": "USD"})
     assert r.headers["cache-control"].startswith("no-store")
     names = [n for n, _ in events]
     assert names[-2:] == ["answer", "done"] and "error" not in names
@@ -108,13 +115,18 @@ def test_ask_sends_totals_only_and_traces_content_free(client, monkeypatch, trac
 
     tool_output = "".join(model.seen[1:])  # everything after the first call is tool results
     assert re.search(r"acct-\d{4}", model.seen[1])  # get_summary: the server's own 4-digit codes
-    for secret in ACCOUNT_IDS + ["FO226285", "UW-2101", "Lumen Studio", "2026-09-16"]:
+    for secret in ACCOUNT_IDS + ["FO226285", "UW-2101", "Lumen Studio", "2026-09-16", "entry-773", "Lily", "WeChat",
+                                 "Adobe"]:
         assert secret not in tool_output.replace(QUESTION, ""), secret
+    assert "Tutoring" in tool_output and "Software & subscriptions" in tool_output  # labels, as totals
+    tools = {e[1]["name"]: e[1]["result"] for e in events if e[0] == "step" and e[1]["type"] == "tool"}
+    assert tools["get_expenses"]["kept_after_expenses"]["expenses_usd"] == 59.99
+    assert tools["get_goal_progress"]["months"][0]["month"] == "2026-09"
 
     sent = json.dumps([p for _, p in traced], ensure_ascii=False)
     assert [path for path, _ in traced] == ["/api/traces", "/api/spans/ingest", "/api/trajectories"]
     assert traced[0][1]["content_free"] is True and traced[1][1]["content_free"] is True
-    for secret in ["Moon Spirit", "bili_330121", "5341.79", "5,341.79", "September"]:
+    for secret in ["Moon Spirit", "bili_330121", "5341.79", "5,341.79", "September", "Tutoring", "Lily", "Adobe"]:
         assert secret not in sent, secret
     assert traced[0][1]["output_message"] == prism_tracing.ANSWERED
     assert {s["name"] for s in traced[1][1]["spans"]} >= {"get_summary", "compute_breakdown", "form_check"}

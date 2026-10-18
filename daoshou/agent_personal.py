@@ -8,6 +8,9 @@ uploading; on top of that, accounts reach the model only as "acct-NNNN" codes dr
 made fresh for each request, so not even the browser's labels get through. The question the
 user types is the one thing that reaches the model as they wrote it.
 
+Manual income and expenses come back totalled by the person's own source label or by category;
+an expense's own label and any notes never reach the model (notes never reach the server).
+
 Runs are traced to PRISM content-free (see prism_tracing.py).
 """
 from __future__ import annotations
@@ -16,7 +19,7 @@ import hashlib
 import secrets
 from decimal import Decimal
 
-from . import ledger, tax_home
+from . import bookkeeping, ledger, rewards, tax_home
 from .prism_tracing import ToolError
 
 SYSTEM = """You are Atlas, the assistant in Side Atlas. You answer questions about one person's \
@@ -35,7 +38,11 @@ Start with get_summary to see which platforms, months and settings there are. Th
 - tax over a month or a period ('2025-09', '2025-Q3' or '2025-07~2025-09'): tax_items (tax withheld, \
 the set-aside at the user's own rate, deadlines for their tax home, items for an accountant);
 - US tax forms vs what landed (1099-K threshold, possible duplicate reports): form_check. It only \
-applies when the tax home includes the US.
+applies when the tax home includes the US;
+- income the user entered by hand (tutoring, a commission): get_manual_income;
+- expenses they entered, and what they kept after expenses: get_expenses. Platform fees are already \
+taken out of platform net, so they are not expenses;
+- their monthly income goal: get_goal_progress.
 
 If any tool reports missing data (for example MissingFXRate), do not work around it: call \
 submit_answer with answer null and say exactly what is missing.
@@ -78,6 +85,23 @@ TOOLS = [
                        "possible-duplicate-report flag and the calendar-year 1099-K threshold status. In USD.",
         "parameters": {"type": "object", "properties": {**_period}, "required": ["period"]}}},
     {"type": "function", "function": {
+        "name": "get_manual_income",
+        "description": "Income the user entered by hand (not from a statement) for a month or period: totals by "
+                       "their own source labels, number of entries and the total. Fails if a rate is missing.",
+        "parameters": {"type": "object", "properties": {**_period}, "required": ["period"]}}},
+    {"type": "function", "function": {
+        "name": "get_expenses",
+        "description": "Expenses the user entered for a month or period: totals by category, number of entries, the "
+                       "total, and what they kept after expenses (platform net + manual income - expenses). "
+                       "Fails if a rate is missing.",
+        "parameters": {"type": "object", "properties": {**_period}, "required": ["period"]}}},
+    {"type": "function", "function": {
+        "name": "get_goal_progress",
+        "description": "Progress toward the user's monthly income goal for each month of a period: income "
+                       "(platform net + manual income, before expenses), progress, remaining and whether it was "
+                       "reached. Says so when no goal is set.",
+        "parameters": {"type": "object", "properties": {**_period}, "required": ["period"]}}},
+    {"type": "function", "function": {
         "name": "submit_answer",
         "description": "Record the final answer. Call exactly once.",
         "parameters": {"type": "object", "properties": {
@@ -110,6 +134,7 @@ def make_tools(creator: dict, *, currency: str, home: str, today: str, state: di
     sfx = currency.lower()
     cents = ledger.cents
     codes = pseudonyms(creator["account_list"], secrets.token_bytes(16))
+    entries = bookkeeping.entries_of(creator)
 
     def months_of(period: str) -> list[str]:
         try:
@@ -139,6 +164,23 @@ def make_tools(creator: dict, *, currency: str, home: str, today: str, state: di
     def money(values: dict) -> dict:
         return {f"{k}_{sfx}": cents(v) for k, v in values.items()}
 
+    def entry_totals(months: list[str], kind: str) -> tuple[dict[str, list], Decimal]:
+        """label -> [amount, entries] for income (by source) or expenses (by category)."""
+        groups: dict[str, list] = {}
+        total = Decimal(0)
+        for e in entries:
+            if e.kind != kind or e.record.month not in months:
+                continue
+            try:
+                amount = ledger.convert(e.record, currency)["net"]
+            except ledger.MissingFXRate as err:
+                raise _missing(err) from None
+            g = groups.setdefault(e.label, [Decimal(0), 0])
+            g[0] += amount
+            g[1] += 1
+            total += amount
+        return groups, total
+
     def get_summary() -> dict:
         issues = []
         for m in creator["active_months"]:
@@ -155,7 +197,13 @@ def make_tools(creator: dict, *, currency: str, home: str, today: str, state: di
                 "months": creator["active_months"],
                 "platforms": [{"platform": ledger.LABEL[p], "accounts": [codes[(p, a)] for a in accts]}
                               for p, accts in creator["account_list"].items()],
-                "months_with_missing_rates": issues}
+                "months_with_missing_rates": issues,
+                "manual_income_sources": sorted({e.source for e in entries if e.kind == "income"}),
+                "expense_categories": sorted({e.category for e in entries if e.kind == "expense"}),
+                "manual_entries": {"income": sum(e.kind == "income" for e in entries),
+                                   "expenses": sum(e.kind == "expense" for e in entries)},
+                "monthly_goal": ({"amount": float(goal["amount"]), "currency": goal["currency"]}
+                                 if (goal := bookkeeping.goal_of(creator)) else None)}
 
     def compute_breakdown(month: str) -> dict:
         b = totals(months_of(month)[0])
@@ -216,9 +264,39 @@ def make_tools(creator: dict, *, currency: str, home: str, today: str, state: di
             raise _missing(e) from None
         return {"period": period, "currency": "USD", **out}
 
+    def get_manual_income(period: str) -> dict:
+        groups, total = entry_totals(months_of(period), "income")
+        return {"period": period, "currency": currency,
+                "by_source": [{"source": label, f"income_{sfx}": cents(v), "entries": n}
+                              for label, (v, n) in sorted(groups.items(), key=lambda kv: -kv[1][0])],
+                f"total_{sfx}": cents(total), "entries": sum(n for _, n in groups.values())}
+
+    def get_expenses(period: str) -> dict:
+        months = months_of(period)
+        groups, total = entry_totals(months, "expense")
+        _, manual = entry_totals(months, "income")
+        net = sum((totals(m)["total"]["net"] for m in months), Decimal(0))
+        return {"period": period, "currency": currency,
+                "by_category": [{"category": label, f"amount_{sfx}": cents(v), "entries": n}
+                                for label, (v, n) in sorted(groups.items(), key=lambda kv: -kv[1][0])],
+                f"total_{sfx}": cents(total), "entries": sum(n for _, n in groups.values()),
+                "kept_after_expenses": {f"platform_net_{sfx}": cents(net), f"manual_income_{sfx}": cents(manual),
+                                        f"expenses_{sfx}": cents(total), f"kept_{sfx}": cents(net + manual - total)},
+                "note": "Platform fees are already taken out of platform net; expenses are only what the user "
+                        "entered."}
+
+    def get_goal_progress(period: str) -> dict:
+        goal = bookkeeping.goal_of(creator)
+        if not goal:
+            return {"goal": None, "note": "No monthly goal is set."}
+        g = rewards.goal_progress(bookkeeping.events(creator), months_of(period), goal["amount"], goal["currency"])
+        return {"amount": g["amount"], "currency": g["currency"], "basis": g["basis"],
+                "months": [{k: v for k, v in m.items() if k != "reached_on"} for m in g["months"]],
+                "months_reached": g["months_reached"]}
+
     def submit_answer(answer=None, unit: str = "", explanation: str = "") -> dict:
         state["submitted"] = {"answer": answer, "unit": unit, "explanation": explanation}
         return {"status": "recorded"}
 
     return {f.__name__: f for f in (get_summary, compute_breakdown, compare_months, tax_items, form_check,
-                                    submit_answer)}
+                                    get_manual_income, get_expenses, get_goal_progress, submit_answer)}

@@ -1,0 +1,27 @@
+{
+  "note": "Fictional manual income and expenses for the demo, C01 (Moon Spirit) only, July to September 2026. The 89 graded questions and the PRISM agents are about platform statements and don't read this file.",
+  "creators": {
+    "C01": {
+      "monthly_goal": {"amount": 6000, "currency": "USD"},
+      "entries": [
+        {"id": "c01-e01", "kind": "expense", "date": "2026-07-02", "amount": 59.99, "currency": "USD", "source": "Adobe Creative Cloud", "category": "Software & subscriptions"},
+        {"id": "c01-e02", "kind": "expense", "date": "2026-07-05", "amount": 16.00, "currency": "USD", "source": "Figma Professional", "category": "Software & subscriptions"},
+        {"id": "c01-i01", "kind": "income", "date": "2026-07-06", "amount": 600, "currency": "CNY", "source": "Tutoring"},
+        {"id": "c01-i02", "kind": "income", "date": "2026-07-20", "amount": 600, "currency": "CNY", "source": "Tutoring"},
+        {"id": "c01-e03", "kind": "expense", "date": "2026-08-02", "amount": 59.99, "currency": "USD", "source": "Adobe Creative Cloud", "category": "Software & subscriptions"},
+        {"id": "c01-i03", "kind": "income", "date": "2026-08-03", "amount": 800, "currency": "CNY", "source": "Tutoring"},
+        {"id": "c01-e04", "kind": "expense", "date": "2026-08-05", "amount": 16.00, "currency": "USD", "source": "Figma Professional", "category": "Software & subscriptions"},
+        {"id": "c01-e05", "kind": "expense", "date": "2026-08-09", "amount": 279.00, "currency": "USD", "source": "USB microphone", "category": "Equipment"},
+        {"id": "c01-i04", "kind": "income", "date": "2026-08-12", "amount": 450, "currency": "EUR", "source": "Logo commission"},
+        {"id": "c01-i05", "kind": "income", "date": "2026-08-17", "amount": 800, "currency": "CNY", "source": "Tutoring"},
+        {"id": "c01-i06", "kind": "income", "date": "2026-08-31", "amount": 800, "currency": "CNY", "source": "Tutoring"},
+        {"id": "c01-e06", "kind": "expense", "date": "2026-09-02", "amount": 59.99, "currency": "USD", "source": "Adobe Creative Cloud", "category": "Software & subscriptions"},
+        {"id": "c01-e07", "kind": "expense", "date": "2026-09-05", "amount": 16.00, "currency": "USD", "source": "Figma Professional", "category": "Software & subscriptions"},
+        {"id": "c01-e08", "kind": "expense", "date": "2026-09-10", "amount": 129.00, "currency": "USD", "source": "Online course: motion design", "category": "Education"},
+        {"id": "c01-i07", "kind": "income", "date": "2026-09-14", "amount": 900, "currency": "CNY", "source": "Tutoring"},
+        {"id": "c01-i08", "kind": "income", "date": "2026-09-21", "amount": 480, "currency": "EUR", "source": "Logo commission"},
+        {"id": "c01-i09", "kind": "income", "date": "2026-09-28", "amount": 900, "currency": "CNY", "source": "Tutoring"}
+      ]
+    }
+  }
+}

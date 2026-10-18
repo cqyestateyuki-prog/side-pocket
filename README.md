@@ -165,11 +165,13 @@ daoshou/                 agent code (internal codename)
   ledger.py              deterministic ledger: parsing, FX, fees, tax items, form check
   statements.py, fx.py   reading uploads; exchange rates for them
   tax_home.py            US / China deadlines and items, labelled real or simulated
+  bookkeeping.py         manual income and expenses (checked one by one), events for rewards
+  rewards.py             monthly goal progress and milestone badges (pure functions)
   data.py, grading.py    test-data access, answer grading
 tests/                   pytest: uploads reproduce the demo numbers, privacy, tax homes
 web/                     the Side Atlas app (Overview, Ledger, Tax, Ask Atlas)
 scripts/                 run_batch.py, smoke_test.py, astra.py (copy), gen_image.py (mascot)
-daoshou_testdata/        fictional platform exports, FX rates, 89 questions + answers
+daoshou_testdata/        fictional platform exports, FX rates, 89 questions + answers, C01's manual entries
 design/                  design kit (tokens, spec, prototype), mascot, logo, references
 docs/                    fact sheet, Reddit research, PRISM notes + screenshots, pitch, submission
 results/                 batch results (JSONL)

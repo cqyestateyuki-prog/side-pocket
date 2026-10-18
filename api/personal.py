@@ -29,7 +29,7 @@ import sys
 import threading
 import uuid
 from datetime import date
-from typing import Literal
+from typing import Any, Literal
 
 from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.exception_handlers import request_validation_exception_handler
@@ -38,7 +38,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
 from api import views
-from daoshou import agent_personal, ledger, statements, tax_home
+from daoshou import agent_personal, bookkeeping, ledger, statements, tax_home
 from daoshou.prism_tracing import TracedAgent, default_model, nicrron_client
 
 PREFIX = "/api/personal"
@@ -57,8 +57,16 @@ class StatementFile(BaseModel):
     content_base64: str | None = None   # or its bytes, e.g. a statement saved as GB18030
 
 
+class MonthlyGoal(BaseModel):
+    amount: float = Field(gt=0, le=10_000_000)
+    currency: Literal["USD", "CNY"] = "USD"
+
+
 class PersonalRequest(BaseModel):
-    files: list[StatementFile] = Field(min_length=1, max_length=MAX_FILES)
+    files: list[StatementFile] = Field(default_factory=list, max_length=MAX_FILES)
+    # manual income and expenses, checked one by one in daoshou/bookkeeping.py (a bad one is reported, not fatal)
+    entries: list[Any] = Field(default_factory=list, max_length=bookkeeping.MAX_ENTRIES)
+    monthly_goal: MonthlyGoal | None = None
     tax_home: Literal["US", "CN", "BOTH"] = "US"
     currency: Literal["USD", "CNY"] = "USD"
     set_aside_rate: float = Field(0.25, ge=0, le=0.6)
@@ -86,30 +94,46 @@ class PersonalAsk(PersonalRequest):
 
 # ---------------------------------------------------------------- helpers
 
-def _load(req: PersonalRequest) -> tuple[statements.Upload, dict]:
+def _read(req: PersonalRequest, *, reference_rates: bool) -> tuple[statements.Upload, list]:
     files = []
     for f in req.files:
         try:
             files.append((f.name, statements.decode(f.content, f.content_base64)))
         except ValueError as e:
             raise HTTPException(422, f"{f.name}: {e}") from None
-    upload = statements.read(files, currency=req.currency, reference_rates=req.reference_rates)
-    if not any(f.records for f in upload.statements()):
-        raise HTTPException(422, {"message": "None of these files is a statement Side Atlas can read.",
-                                  "import": upload.summary()})
+    entries, summary = bookkeeping.parse(req.entries, today=date.today())
+    cny_goal = req.monthly_goal is not None and req.monthly_goal.currency == "CNY"
+    upload = statements.read(files, currency=req.currency, reference_rates=reference_rates,
+                             extra=[e.record for e in entries], cny_everywhere=cny_goal)
+    upload.entries = summary
+    return upload, entries
+
+
+def _load(req: PersonalRequest) -> tuple[statements.Upload, dict]:
+    upload, entries = _read(req, reference_rates=req.reference_rates)
+    if not any(f.records for f in upload.statements()) and not entries:
+        raise HTTPException(422, {"message": "None of these files is a statement Side Atlas can read, and there "
+                                             "are no manual entries.", "import": upload.summary()})
+    goal = req.monthly_goal
     c = statements.profile(upload, tax_home=req.tax_home, set_aside_rate=req.set_aside_rate,
-                           payout_methods=req.payout_methods)
+                           payout_methods=req.payout_methods, entries=entries,
+                           monthly_goal={"amount": ledger.D(goal.amount), "currency": goal.currency} if goal else None)
     return upload, c
 
 
-def _month(req: PersonalRequest, upload: statements.Upload) -> str:
-    return views.check_month(req.month) if req.month else upload.months()[-1]
+def _months(upload: statements.Upload, c: dict) -> list[str]:
+    """Months with statement records or manual entries."""
+    return sorted(set(upload.months()) | {e.record.month for e in c["entries"]})
 
 
-def _period(req: PersonalRequest, upload: statements.Upload) -> tuple[str, list[str]]:
+def _month(req: PersonalRequest, upload: statements.Upload, c: dict) -> str:
+    return views.check_month(req.month) if req.month else _months(upload, c)[-1]
+
+
+def _period(req: PersonalRequest, upload: statements.Upload, c: dict) -> tuple[str, list[str]]:
     if req.period:
         return req.period, views.check_months(req.period)
-    latest = upload.months()[-1]
+    latest = _months(upload, c)[-1]
     period = f"{latest[:4]}-Q{(int(latest[5:]) - 1) // 3 + 1}"
     return period, ledger.months_in(period)
 
@@ -120,7 +144,8 @@ def _after(req: PersonalRequest) -> str:
 
 def _settings(req: PersonalRequest) -> dict:
     return {"tax_home": req.tax_home, "currency": req.currency, "set_aside_rate": req.set_aside_rate,
-            "payout_methods": req.payout_methods, "reference_rates": req.reference_rates}
+            "payout_methods": req.payout_methods, "reference_rates": req.reference_rates,
+            "monthly_goal": req.monthly_goal.model_dump() if req.monthly_goal else None}
 
 
 def _wrap(out: dict, upload: statements.Upload, req: PersonalRequest) -> dict:
@@ -163,45 +188,45 @@ def _tax(c: dict, months: list[str], period: str, after: str, req: PersonalReque
 @router.get("/formats")
 def formats() -> dict:
     """How files are recognised, so the browser can relabel the account column before uploading."""
-    return {**statements.formats(), "limits": {"max_files": MAX_FILES, "max_body_bytes": MAX_BODY,
-                                               "max_skipped_rows_listed": statements.MAX_SKIPPED}}
+    return {**statements.formats(),
+            "entries": {"fields": list(bookkeeping.FIELDS), "kinds": ["income", "expense"],
+                        "expense_categories": bookkeeping.CATEGORIES, "max_label_length": bookkeeping.MAX_LABEL,
+                        "rules": "income needs source; an expense needs category and may have source; amount > 0 "
+                                 "with at most 2 decimals; date YYYY-MM-DD, not in the future; currency a 3-letter "
+                                 "code; any other field (notes) is ignored"},
+            "limits": {"max_files": MAX_FILES, "max_body_bytes": MAX_BODY, "max_entries": bookkeeping.MAX_ENTRIES,
+                       "max_skipped_rows_listed": statements.MAX_SKIPPED}}
 
 
 @router.post("/detect")
 def detect(req: PersonalRequest) -> dict:
-    files = []
-    for f in req.files:
-        try:
-            files.append((f.name, statements.decode(f.content, f.content_base64)))
-        except ValueError as e:
-            raise HTTPException(422, f"{f.name}: {e}") from None
-    upload = statements.read(files, currency=req.currency, reference_rates=False)
+    upload, _ = _read(req, reference_rates=False)
     return {"import": upload.summary(), "settings": _settings(req)}
 
 
 @router.post("/overview")
 def overview(req: PersonalRequest) -> dict:
     upload, c = _load(req)
-    return _wrap(views.overview(c, _month(req, upload), req.currency), upload, req)
+    return _wrap(views.overview(c, _month(req, upload, c), req.currency), upload, req)
 
 
 @router.post("/ledger")
 def ledger_view(req: PersonalRequest) -> dict:
     upload, c = _load(req)
-    return _wrap(views.ledger_view(c, _month(req, upload), req.currency), upload, req)
+    return _wrap(views.ledger_view(c, _month(req, upload, c), req.currency), upload, req)
 
 
 @router.post("/tax-items")
 def tax_items(req: PersonalRequest) -> dict:
     upload, c = _load(req)
-    period, months = _period(req, upload)
+    period, months = _period(req, upload, c)
     return _wrap(_tax(c, months, period, _after(req), req), upload, req)
 
 
 @router.post("/forms")
 def forms(req: PersonalRequest) -> dict:
     upload, c = _load(req)
-    period, months = _period(req, upload)
+    period, months = _period(req, upload, c)
     if "US" not in tax_home.HOMES[req.tax_home]:
         out = {"creator": views.profile(c), "period": period, "applies": False,
                "note": "US tax forms (1099) are for US taxpayers. With a China tax home, platforms outside China "
@@ -214,7 +239,7 @@ def forms(req: PersonalRequest) -> dict:
 @router.post("/report")
 def report(req: PersonalRequest) -> dict:
     upload, c = _load(req)
-    period, months = _period(req, upload)
+    period, months = _period(req, upload, c)
     after = _after(req)
     out = views.report(c, period, months, after, req.currency)
     out["tax"] = _tax(c, months, period, after, req)

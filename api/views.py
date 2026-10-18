@@ -4,6 +4,9 @@ come from the bundled demo data or from statements a user uploaded.
 
 Amounts are in `currency`: USD (the default, and what the demo endpoints use) or CNY. Money keys
 carry the currency as a suffix (`net_usd`, `net_cny`) where a response mixes amounts.
+
+Manual income, expenses, the monthly goal and badges (daoshou/bookkeeping.py, daoshou/rewards.py)
+are only ever added as new fields: every field the platform statements produce keeps its value.
 """
 from __future__ import annotations
 
@@ -13,7 +16,7 @@ from decimal import Decimal
 
 from fastapi import HTTPException
 
-from daoshou import agent_v2, ledger
+from daoshou import agent_v2, bookkeeping, ledger, rewards
 
 MONEY = ("gross", "platform_fee", "payout_fee", "withheld", "net")
 ZERO = Decimal(0)
@@ -233,6 +236,100 @@ def tax(c: dict, months: list[str], period: str, after: str, currency: str = "US
             "forms": ledger.form_check(c, months, skip_missing=True), "note": DISCLAIMER}
 
 
+# ---------------------------------------------------------------- manual entries, goal, badges
+
+def entry_book(c: dict, months: list[str], currency: str = "USD") -> dict:
+    """Manual income and expenses in these months: rows, totals by source and by category, issues."""
+    sfx = currency.lower()
+    rows, issues = [], []
+    income = expenses = ZERO
+    by_source: dict[str, dict] = {}
+    by_category: dict[str, dict] = {}
+    for e in bookkeeping.entries_of(c):
+        rec = e.record
+        if rec.month not in months:
+            continue
+        row = {"id": e.id, "date": rec.date, "month": rec.month, "kind": e.kind, "manual": True,
+               "source": e.source, "category": e.category,
+               "original": {"currency": rec.currency, "amount": float(rec.gross)}}
+        try:
+            steps = fx_steps(rec, currency)
+            amount = ledger.convert(rec, currency)["net"]
+        except ledger.MissingFXRate as err:
+            row.update({"fx": None, **({"fx_cny": None} if currency == "CNY" else {}), f"amount_{sfx}": None,
+                        "issue": "missing_fx"})
+            rows.append(row)
+            issue = {"type": "missing_fx", "currency": err.currency, "date": rec.date, "platform": None,
+                     "entry": {"id": e.id, "kind": e.kind, "label": e.label, "currency": rec.currency,
+                               "amount": float(rec.gross)},
+                     "message": err.detail or f"No {err.currency}/USD rate for {rec.date}; this entry is left out "
+                                              f"of the totals until the rate is added."}
+            if err.reason:
+                issue["reason"] = err.reason
+            issues.append(issue)
+            continue
+        for step in steps.values():  # new rows, so the demo table is named as a source too
+            if step and "source" not in step:
+                step["source"] = ledger.quote(rec, step["currency"]).source
+        row.update(steps)
+        row[f"amount_{sfx}"] = ledger.cents(amount)
+        rows.append(row)
+        group = (by_source if e.kind == "income" else by_category).setdefault(e.label, {"amount": ZERO, "entries": 0})
+        group["amount"] += amount
+        group["entries"] += 1
+        if e.kind == "income":
+            income += amount
+        else:
+            expenses += amount
+    return {"rows": rows, "income": income, "expenses": expenses, "by_source": by_source,
+            "by_category": by_category, "issues": issues}
+
+
+def _bookkeeping(c: dict, months: list[str], currency: str, bk: dict) -> tuple[dict, list]:
+    """The new overview fields for these months, and any entries that couldn't be converted."""
+    eb = entry_book(c, months, currency)
+    net = bk["total"]["net"]
+    everything = net + eb["income"]
+    sources = ([{"source": ledger.LABEL[p], "platform": p, "manual": False, "amount": t["net"], "records": t["records"]}
+                for p, t in bk["per"].items()]
+               + [{"source": label, "platform": None, "manual": True, "amount": g["amount"], "records": g["entries"]}
+                  for label, g in eb["by_source"].items()])
+    order = {cat: i for i, cat in enumerate(bookkeeping.CATEGORIES)}
+    fields = {
+        "income_by_source": [{"source": r["source"], "platform": r["platform"], "manual": r["manual"],
+                              "income": ledger.cents(r["amount"]), "share": ratio(r["amount"], everything),
+                              "records": r["records"]}
+                             for r in sorted(sources, key=lambda r: (-r["amount"], r["source"]))],
+        "manual_income": {"total": ledger.cents(eb["income"]),
+                          "entries": sum(g["entries"] for g in eb["by_source"].values()),
+                          "sources": len(eb["by_source"])},
+        "expenses": {"total": ledger.cents(eb["expenses"]),
+                     "entries": sum(g["entries"] for g in eb["by_category"].values())},
+        "expenses_by_category": [{"category": cat, "amount": ledger.cents(g["amount"]), "entries": g["entries"],
+                                  "share": ratio(g["amount"], eb["expenses"])}
+                                 for cat, g in sorted(eb["by_category"].items(), key=lambda kv: order[kv[0]])],
+        "kept_after_expenses": {"platform_net": ledger.cents(net), "manual_income": ledger.cents(eb["income"]),
+                                "expenses": ledger.cents(eb["expenses"]),
+                                "kept": ledger.cents(net + eb["income"] - eb["expenses"]),
+                                "rule": "platform net (fees already taken out) + manual income − expenses"},
+    }
+    return {**fields, "_rows": eb["rows"]}, eb["issues"]
+
+
+def _rewards(c: dict, months: list[str], currency: str) -> dict:
+    events = bookkeeping.events(c)
+    goal = bookkeeping.goal_of(c)
+    return {"goal": rewards.goal_progress(events, months, goal["amount"], goal["currency"]) if goal else None,
+            "badges": rewards.badges(events, currency=currency, as_of=months[-1])}
+
+
+def _with_entries(out: dict, issues: list) -> dict:
+    if issues:
+        out["issues"] = out["issues"] + issues
+        out["complete"] = False
+    return out
+
+
 def overview(c: dict, month: str, currency: str = "USD") -> dict:
     bk = book(c, [month], currency)
     prev_month = previous(month)
@@ -243,24 +340,30 @@ def overview(c: dict, month: str, currency: str = "USD") -> dict:
     active = c.get("active_months") or []
     has_prev = bool(prev["per"]) or bool(active and prev_month >= min(active))
     rate = ledger.D(c["set_aside_rate"])
-    return {"creator": profile(c), "month": month, "currency": currency,
-            "complete": not bk["issues"], "issues": bk["issues"],
-            "totals": money(total), "platforms": platforms, "best_keep_rate": best(platforms),
-            "month_over_month": {
-                "previous_month": prev_month,
-                "previous_net": ledger.cents(prev["total"]["net"]) if has_prev else None,
-                "change": ledger.cents(total["net"] - prev["total"]["net"]) if has_prev else None,
-                "change_pct": ratio(total["net"] - prev["total"]["net"], prev["total"]["net"]) if has_prev else None,
-                "previous_complete": not prev["issues"]},
-            "set_aside": {"rate": float(rate), "amount": ledger.cents(total["net"] * rate),
-                          "base": f"net income in {currency}", "note": DISCLAIMER}}
+    out = {"creator": profile(c), "month": month, "currency": currency,
+           "complete": not bk["issues"], "issues": bk["issues"],
+           "totals": money(total), "platforms": platforms, "best_keep_rate": best(platforms),
+           "month_over_month": {
+               "previous_month": prev_month,
+               "previous_net": ledger.cents(prev["total"]["net"]) if has_prev else None,
+               "change": ledger.cents(total["net"] - prev["total"]["net"]) if has_prev else None,
+               "change_pct": ratio(total["net"] - prev["total"]["net"], prev["total"]["net"]) if has_prev else None,
+               "previous_complete": not prev["issues"]},
+           "set_aside": {"rate": float(rate), "amount": ledger.cents(total["net"] * rate),
+                         "base": f"net income in {currency}", "note": DISCLAIMER}}
+    extra, issues = _bookkeeping(c, [month], currency, bk)
+    extra.pop("_rows")
+    return _with_entries({**out, **extra, **_rewards(c, [month], currency)}, issues)
 
 
 def ledger_view(c: dict, month: str, currency: str = "USD") -> dict:
     bk = book(c, [month], currency)
-    return {"creator": profile(c), "month": month, "currency": currency,
-            "complete": not bk["issues"], "issues": bk["issues"],
-            "rows": bk["rows"], "totals": money(bk["total"]), "waterfall": waterfall(bk["total"])}
+    out = {"creator": profile(c), "month": month, "currency": currency,
+           "complete": not bk["issues"], "issues": bk["issues"],
+           "rows": bk["rows"], "totals": money(bk["total"]), "waterfall": waterfall(bk["total"])}
+    extra, issues = _bookkeeping(c, [month], currency, bk)
+    return _with_entries({**out, "entry_rows": extra["_rows"], "manual_income": extra["manual_income"],
+                          "expenses": extra["expenses"], "kept_after_expenses": extra["kept_after_expenses"]}, issues)
 
 
 def forms(c: dict, period: str, months: list[str]) -> dict:
@@ -272,22 +375,28 @@ def forms(c: dict, period: str, months: list[str]) -> dict:
 def report(c: dict, period: str, months: list[str], after: str, currency: str = "USD") -> dict:
     bk = book(c, months, currency)
     platforms = platform_rows(bk)
-    by_month = []
+    by_month, kept_by_month = [], []
     for m in months:
         mb = book(c, [m], currency)
         by_month.append({"month": m, **money(mb["total"]), "complete": not mb["issues"],
                          "platforms": len(mb["per"])})
+        month_extra, month_issues = _bookkeeping(c, [m], currency, mb)
+        kept = {k: v for k, v in month_extra["kept_after_expenses"].items() if k != "rule"}
+        kept_by_month.append({"month": m, **kept, "complete": not mb["issues"] and not month_issues})
     used = {(s["currency"], s["rate_date"], s["rate"], s.get("source")) for r in bk["rows"]
             for s in (r.get("fx"), r.get("fx_cny")) if s}
-    return {"title": f"Side income report — {c['name']} — {period}", "creator": profile(c), "period": period,
-            "months": months, "generated_on": date.today().isoformat(), "currency": currency,
-            "complete": not bk["issues"], "issues": bk["issues"],
-            "totals": money(bk["total"]), "waterfall": waterfall(bk["total"]),
-            "by_month": by_month, "by_platform": platforms, "best_keep_rate": best(platforms),
-            "fx_used": [{"currency": cur, "date": d, "rate": rate, **({"source": src} if src else {})}
-                        for cur, d, rate, src in sorted(used, key=lambda u: u[:3])],
-            "tax": tax(c, months, period, after, currency),
-            "assumptions_note": ledger.assumptions().get("note"), "disclaimer": DISCLAIMER}
+    out = {"title": f"Side income report — {c['name']} — {period}", "creator": profile(c), "period": period,
+           "months": months, "generated_on": date.today().isoformat(), "currency": currency,
+           "complete": not bk["issues"], "issues": bk["issues"],
+           "totals": money(bk["total"]), "waterfall": waterfall(bk["total"]),
+           "by_month": by_month, "by_platform": platforms, "best_keep_rate": best(platforms),
+           "fx_used": [{"currency": cur, "date": d, "rate": rate, **({"source": src} if src else {})}
+                       for cur, d, rate, src in sorted(used, key=lambda u: u[:3])],
+           "tax": tax(c, months, period, after, currency),
+           "assumptions_note": ledger.assumptions().get("note"), "disclaimer": DISCLAIMER}
+    extra, issues = _bookkeeping(c, months, currency, bk)
+    extra["entry_rows"] = extra.pop("_rows")
+    return _with_entries({**out, **extra, "kept_by_month": kept_by_month, **_rewards(c, months, currency)}, issues)
 
 
 def step_event(step: dict) -> dict:

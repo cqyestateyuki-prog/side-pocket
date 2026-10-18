@@ -239,6 +239,7 @@ class Upload:
     """Every file in one request, parsed, with rates resolved for the records that need them."""
     files: list[ParsedFile]
     rates: fx.Rates
+    entries: dict | None = None     # bookkeeping.parse's summary of the manual entries, if any were sent
 
     def statements(self) -> list[ParsedFile]:
         return [f for f in self.files if f.kind == "statement"]
@@ -284,14 +285,18 @@ class Upload:
                               for p, accts in self.accounts().items()],
                 "months": self.months(), "records": sum(len(f.records) for f in statements),
                 "rate_sources": self.rates.sources(), "rates_note": self.rates.reference_error,
-                "overlaps": self.overlaps()}
+                "overlaps": self.overlaps(),
+                "entries": self.entries or {"received": 0, "accepted": 0, "income": 0, "expenses": 0, "rejected": [],
+                                            "ignored_fields": []}}
 
 
-def read(files: list[tuple[str, str]], *, currency: str = "USD", reference_rates: bool = True) -> Upload:
-    """Parse (name, text) pairs, drop exact duplicates, and attach rates to every record.
+def read(files: list[tuple[str, str]], *, currency: str = "USD", reference_rates: bool = True,
+         extra: list[ledger.Record] = (), cny_everywhere: bool = False) -> Upload:
+    """Parse (name, text) pairs, drop exact duplicates, and attach rates to every record, and to
+    `extra` records (manual entries) as well.
 
     Rates are looked up for each non-USD record's date, and for every record's date when amounts
-    are to be shown in CNY."""
+    are to be shown in CNY (or a CNY goal needs them: `cny_everywhere`)."""
     parsed, digests = [], {}
     for name, text in files:
         digest = hashlib.sha256(text.replace("\r\n", "\n").strip().encode()).hexdigest()
@@ -305,26 +310,27 @@ def read(files: list[tuple[str, str]], *, currency: str = "USD", reference_rates
     for f in parsed:
         for c, days in f.rates.items():
             uploaded.setdefault(c, {}).update(days)
+    every = [r for f in parsed for _, r in f.records] + list(extra)
     needed: dict[str, set[str]] = {}
-    for f in parsed:
-        for _, r in f.records:
-            if r.currency != "USD":
-                needed.setdefault(r.currency, set()).add(r.date)
-            if currency == "CNY":
-                needed.setdefault("CNY", set()).add(r.date)
+    for r in every:
+        if r.currency != "USD":
+            needed.setdefault(r.currency, set()).add(r.date)
+        if currency == "CNY" or cny_everywhere:
+            needed.setdefault("CNY", set()).add(r.date)
     rates = fx.resolve(uploaded, needed, fetch=reference_rates)
-    for f in parsed:
-        for _, r in f.records:
-            r.rates = rates
+    for r in every:
+        r.rates = rates
     return Upload(parsed, rates)
 
 
-def profile(upload: Upload, *, tax_home: str, set_aside_rate: float, payout_methods: dict[str, str]) -> dict:
-    """A creator dict in the shape the ledger and the API expect, built from the upload."""
+def profile(upload: Upload, *, tax_home: str, set_aside_rate: float, payout_methods: dict[str, str],
+            entries: list | None = None, monthly_goal: dict | None = None) -> dict:
+    """A creator dict in the shape the ledger and the API expect, built from the upload (plus the
+    manual entries and goal, see daoshou/bookkeeping.py)."""
     accounts = upload.accounts()
     return {"creator_id": "you", "name": "You", "profile": None, "tax_country": tax_home,
             "set_aside_rate": set_aside_rate, "active_months": upload.months(),
             "accounts": {p: ", ".join(a for a in accts if a) or ledger.LABEL[p] for p, accts in accounts.items()},
             "account_list": accounts,
             "payout_methods": {p: m for p, m in payout_methods.items() if p in accounts},
-            "records": upload.records()}
+            "records": upload.records(), "entries": entries or [], "monthly_goal": monthly_goal}
