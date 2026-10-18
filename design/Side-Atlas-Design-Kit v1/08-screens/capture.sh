@@ -1,5 +1,5 @@
 #!/bin/bash
-# Export prototype screens as 1440×900 PNGs with headless Chrome (v1.3.1).
+# Export prototype screens as 1440×900 PNGs with headless Chrome (v1.4.1).
 #   bash capture.sh          every screen
 #   bash capture.sh v13      only the v1.3, v1.3.1 and v1.4 screens (10 to 22)
 set -euo pipefail
@@ -21,6 +21,9 @@ if [ "${1:-}" != "v13" ]; then
   shoot 06-missing missing 900
   shoot 07-sources sources 900
   shoot 08-settings settings 900
+  # v1.4.1: one menu drawn open
+  shoot 01b-overview-period-menu overview-period 900
+  shoot 02b-ledger-platform-menu ledger-platform 900
 fi
 shoot 10-mydata-empty mydata-empty 900
 shoot 11-mydata mydata 900

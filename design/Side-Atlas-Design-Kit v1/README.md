@@ -1,8 +1,18 @@
 # Side Atlas Design Kit
 
-Everything needed to build Side Atlas's look and feel: the spec, logos, icons, tokens, code, fonts, a clickable prototype and screen images. Version 1.4, 17 October 2026, desktop only.
+Everything needed to build Side Atlas's look and feel: the spec, logos, icons, tokens, code, fonts, a clickable prototype and screen images. Version 1.4.1, 17 October 2026, desktop only.
 
-Start with `01-spec/Side-Atlas-Look-and-Feel-Spec.pdf`. Then open `07-mockups/app.html` in a browser (works offline; switch screens in the left nav and the Your data / Demo data switch, or with `#overview`, `#ledger`, `#tax`, `#ask`, `#report`, `#sources`, `#settings`, `#missing`, and for v1.3 `#mydata-empty`, `#mydata`, `#privacy`, `#privacy-delete`, `#tax-cn`, `#tax-both`, `#overview-cny`, `#overview-empty`, `#ledger-cny`, `#ledger-cny-file`, and for v1.4 `#entry-expense`, `#entry-income`, `#ledger-v14`, `#overview-v14`, `#milestones`, `#goal-sheet`, `#goal-reached`; `?screen=<name>` works too).
+Start with `01-spec/Side-Atlas-Look-and-Feel-Spec.pdf`. Then open `07-mockups/app.html` in a browser (works offline; switch screens in the left nav and the Your data / Demo data switch, or with `#overview`, `#ledger`, `#tax`, `#ask`, `#report`, `#sources`, `#settings`, `#missing`, and for v1.3 `#mydata-empty`, `#mydata`, `#privacy`, `#privacy-delete`, `#tax-cn`, `#tax-both`, `#overview-cny`, `#overview-empty`, `#ledger-cny`, `#ledger-cny-file`, and for v1.4 `#entry-expense`, `#entry-income`, `#ledger-v14`, `#overview-v14`, `#milestones`, `#goal-sheet`, `#goal-reached`, and for v1.4.1 `#overview-period`, `#ledger-platform`; `?screen=<name>` works too).
+
+## What's new in v1.4.1
+
+Each change was signed off in chat and matches the product as shipped (`web/`, commit b023c5e).
+
+- One dropdown for period, display currency, creator and the ledger's column filters, with one Side Atlas menu style; header controls 44px tall; Settings keeps segmented controls (#63, #65).
+- One sidebar menu: the four screens, a rule, then My data, Milestones, Settings & privacy. Tagline, PRISM chip and disclaimer leave the sidebar; the disclaimer closes the Tax screens (#66).
+- Ledger: outline icons on every column header; Date sorts, Platform and Type filter from the header; CSV in the page header (#64, #67).
+- Platform marks instead of colour dots (`02-logos/platforms/`, #61); badge tiles show the earned date only and every badge has its own Atlas pose (#59, #60); less text on My data and no period/currency subtitles (#56 to #58, #62).
+- New drawings 01b (period menu open) and 02b (Platform filter open); icons 34 → 39 (tag, layers, percent, wallet, coins). Decisions #56 to #68 are in the decision log.
 
 ## What's new in v1.4
 
@@ -45,12 +55,12 @@ Start with `01-spec/Side-Atlas-Look-and-Feel-Spec.pdf`. Then open `07-mockups/ap
 | Folder | What's inside | Who uses it |
 |---|---|---|
 | `01-spec` | The spec (HTML source + PDF): brand test, principles, logo and icons, tokens, palette, components, every screen, fix list, implementation, release checks. | Everyone |
-| `02-logos` | App icon (`icon-256.png`), favicons, the v1 globe mark and lockups (superseded), letters-only wordmark, and Atlas the mascot in `mascot/` (wave, think, worried, celebrate). | Design, engineering |
-| `03-icons` | 34 icons as SVGs, one sprite, `side-atlas-icons.js`, `preview.html`. Adapted from Lucide (ISC). All use `currentColor`. No emoji. | Design, engineering |
+| `02-logos` | App icon (`icon-256.png`), favicons, the v1 globe mark and lockups (superseded), letters-only wordmark, Atlas the mascot in `mascot/` (wave, think, worried, celebrate; the v1.4 badge poses in `mascot/v2/`), and the platform marks in `platforms/` (Simple Icons CC0 in brand colours, letter marks for Contra and Fiverr). | Design, engineering |
+| `03-icons` | 39 icons as SVGs, one sprite, `side-atlas-icons.js`, `preview.html`. Adapted from Lucide (ISC). All use `currentColor`. No emoji. | Design, engineering |
 | `04-tokens` | `side-atlas-tokens.json` (W3C design tokens; Tokens Studio → Figma), `.css` (`--sa-*` custom properties), `.js`. | Design, engineering |
 | `05-css` | `side-atlas-align.css`: drop-in base (fonts, tokens, type, pill buttons, tabular numbers). `side-atlas-ui-reference.css`: the component styles the prototype uses. | Engineering |
 | `06-fonts` | Plus Jakarta Sans variable woff2 (latin + latin-ext), `side-atlas-fonts.css`, OFL licence. | Engineering |
-| `07-mockups` | `app.html` (the desktop app, 22 screens), `data.js` (real numbers from the fictional test set via `daoshou/ledger.py`), `data-v13.js` + `gen_data_v13.py` (the v1.3 Your data numbers, CNY view and China split), `data-v131-ledger.js` + `gen_ledger_v131.py` (screen 17 from the real `/api/personal/ledger`, ECB rates fetched), `data-v14.js` + `gen_data_v14.py` + `copy-v14.js` (v1.4: entries, expenses, goal and badges), `copy-v13.js` (GPT-6 Astra copy for v1.3). | Everyone |
+| `07-mockups` | `app.html` (the desktop app, 24 screens), `data.js` (real numbers from the fictional test set via `daoshou/ledger.py`), `data-v13.js` + `gen_data_v13.py` (the v1.3 Your data numbers, CNY view and China split), `data-v131-ledger.js` + `gen_ledger_v131.py` (screen 17 from the real `/api/personal/ledger`, ECB rates fetched), `data-v14.js` + `gen_data_v14.py` + `copy-v14.js` (v1.4: entries, expenses, goal and badges), `copy-v13.js` (GPT-6 Astra copy for v1.3). | Everyone |
 | `08-screens` | `desktop/` PNGs at 1440×900 in flow order (+ full-length tax screens), and `capture.sh` to re-export them with headless Chrome (`capture.sh v13` for screens 10 to 22 only). 01 to 08 show the v1.1 drawings in the v1.3 shell. | Design, product |
 
 ## The rules in one place
@@ -60,7 +70,7 @@ Start with `01-spec/Side-Atlas-Look-and-Feel-Spec.pdf`. Then open `07-mockups/ap
 - **Money:** ink or forest on light surfaces, tabular, right-aligned in tables. Fees (clay, stone) and tax withheld (tax blue) never share a colour.
 - **Buttons:** primary forest pill; pressed sinks 1px and darkens; secondary white with a strong line; selected forest-100.
 - **Logo (v1.2):** the pigeon-head app icon (Atlas the mascot on a violet rounded square, `02-logos/icon-256.png`) + "Side Atlas" 800. No Chinese name in the lockup. The v1 globe SVGs in `02-logos/` are superseded.
-- **Icons:** the 34 in `03-icons`, currentColor, 2px stroke. No emoji.
+- **Icons:** the 39 in `03-icons`, currentColor, 2px stroke. No emoji.
 - **Stops:** missing data shows a light warning card beside the forest hero, names the record, leaves it out of totals (marked incomplete). Nothing is estimated.
 - **Your data (v1.3.1):** nothing that names a person or an account leaves the browser; accounts show as `acct ••NNNN`. Delete is a white danger pill; only the confirm button inside the delete dialog is filled.
 - **Rates (v1.3.1):** every converted amount shows its rate, the rate's date and its source.

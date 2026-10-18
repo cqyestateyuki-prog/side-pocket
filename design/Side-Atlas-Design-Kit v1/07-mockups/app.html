@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=1440">
-<title>Side Atlas · prototype v1.3</title>
+<title>Side Atlas · prototype v1.4.1</title>
 <link rel="icon" href="../02-logos/app-icons-and-favicons/favicon.svg">
 <link rel="stylesheet" href="../05-css/side-atlas-ui-reference.css">
 <script src="../03-icons/side-atlas-icons.js"></script>
@@ -41,12 +41,7 @@
     </div>
     <div class="sa-mode" id="mode" aria-label="Data"></div>
     <nav class="sa-nav" id="nav"></nav>
-    <div class="foot">
-      <nav class="sa-util" id="util"></nav>
-      <div class="tag" id="tagline"></div>
-      <span class="sa-prism" id="prism"><i></i>Every run traced in PRISM</span>
-      <div class="meta" id="disclaimer"></div>
-    </div>
+    <div class="foot"><span class="sa-signout">Sign out</span></div>
   </aside>
   <main class="sa-main" id="main"></main>
 </div>
@@ -56,7 +51,7 @@ const D = window.SA_DATA, C = D.copy;
 const PCOL = k => ({ fill: `var(--sa-p-${k})`, tint: `var(--sa-p-${k}-tint)`, text: `var(--sa-p-${k}-text)` });
 // Platform marks (v1.4.1): Simple Icons in brand colours, letter marks for Contra and Fiverr; unknown keys keep the dot.
 const PICON = k => ["bilibili", "youtube", "twitch", "patreon", "upwork", "fiverr", "freelancer", "contra"].includes(k)
-  ? `<img class="sa-picon" src="../02-logos/platforms/${k}.svg" alt="" width="16" height="16">` : `${PICON(k)}`;
+  ? `<img class="sa-picon" src="../02-logos/platforms/${k}.svg" alt="" width="16" height="16">` : `<i class="sa-pdot" style="background:${PCOL(k).fill}"></i>`;
 const usd = v => (v < 0 ? "−" : "") + "$" + Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const usd0 = v => "$" + Math.round(v).toLocaleString("en-US");
 const cny = v => "¥" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -65,24 +60,54 @@ const icon = (n, cls = "") => `<svg class="sa-icon ${cls}"><use href="#sa-i-${n}
 const monthName = m => new Date(m + "-01T12:00:00").toLocaleString("en-US", { month: "long" });
 const dateLong = d => new Date(d + "T12:00:00").toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
-/* v1.3 nav: exactly four screens (decision #23). My data and Settings & privacy are utility links in the
-   sidebar foot; every other screen is a route reached from inside the four. */
+/* v1.4.1 sidebar: one menu (decision #66). The four screens, a thin rule, then My data, Milestones and
+   Settings & privacy; every other screen is a route reached from inside these. */
 const NAV = [["overview", "Overview", "overview"], ["ledger", "Ledger", "ledger"], ["tax", "Tax", "tax"], ["ask", "Ask Atlas", "ask"]];
-// v1.4: Milestones joins the utility links (decision #47); the nav stays at four.
 const UTIL = [["mydata", "My data", "upload"], ["milestones", "Milestones", "award"], ["privacy", "Settings & privacy", "shield"]];
 const V = window.SA_V13, X = window.SA_COPY_V13;
 const yen = v => (v < 0 ? "−" : "") + "¥" + Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const dateShort = d => new Date(d + "T12:00:00").toLocaleString("en-US", { month: "short", day: "numeric" });
 
+// Demo creators: the creator pill is a dropdown trigger (chevron), as in the product.
 function who(name, cjk, meta) {
-  return `<div class="sa-who"><div class="av">${cjk ? `<span class="cjk">${cjk}</span>` : name[0]}</div><div><b>${name}</b><span>${meta}</span></div></div>`;
+  return `<div class="sa-who picker"><div class="av">${cjk ? `<span class="cjk">${cjk}</span>` : name[0]}</div><div><b>${name}</b><span>${meta}</span></div>${icon("chevron", "sm chev")}</div>`;
 }
-// v1.4.1: period and currency are dropdown pills (a native select in the product), so the list can grow.
+/* v1.4.1 · one dropdown (decision #65, web/lib/dropdown.js): a trigger in its own look (header pill, creator
+   pill, table header) and one Side Atlas menu. OPEN names the menu a state screen draws open (01b, 02b);
+   placeMenus() pins it under its trigger the way the product does. */
+let OPEN = null;
+function menu(options, value, align = "end") {
+  let group = null;
+  return `<div class="sa-menu" role="listbox" data-align="${align}">${options.map(o => {
+    const head = o.group && o.group !== group ? `<div class="grp">${(group = o.group)}</div>` : "";
+    const on = o.value === value;
+    return `${head}<span class="opt${on ? " on" : ""}">${o.icon ?? ""}<span class="t">${o.label}${o.meta ? `<small>${o.meta}</small>` : ""}</span>${on ? icon("check", "sm tick") : ""}</span>`;
+  }).join("")}</div>`;
+}
+function placeMenus() {
+  document.querySelectorAll(".sa-dd > .sa-menu").forEach(m => {
+    const r = m.previousElementSibling.getBoundingClientRect(), w = m.offsetWidth;
+    m.style.left = `${m.dataset.align === "start" ? r.left : r.right - w}px`;
+    m.style.top = `${r.bottom + 6}px`;
+  });
+}
 const PERIOD_LONG = { Jul: "July 2026", Aug: "August 2026", Sep: "September 2026", "Q3 2026": "Q3 2026" };
 function periodSeg(on) {
-  return `<span class="sa-pick">${icon("calendar", "sm")}<span>${PERIOD_LONG[on] ?? on}</span>${icon("chevron", "sm chev")}</span>`;
+  const trigger = open => `<span class="sa-pick" aria-expanded="${open}">${icon("calendar", "sm")}<span>${PERIOD_LONG[on] ?? on}</span>${icon("chevron", "sm chev")}</span>`;
+  if (OPEN !== "period") return trigger(false);
+  const months = ["2026-09", "2026-08", "2026-07"].map(m => ({ value: `${monthName(m).slice(0, 3)}`, label: `${monthName(m)} 2026`, group: "Months" }));
+  return `<div class="sa-dd">${trigger(true)}${menu([...months, { value: "Q3 2026", label: "Q3 2026", group: "Quarters" }], on)}</div>`;
 }
-const thPick = (label, on) => `<span class="th-pick ${on ? "on" : ""}">${label}${icon("chevron", "sm chev")}</span>`;
+// Ledger column headers (decision #67): an outline icon before every label; Date sorts, Platform (Source) and
+// Type filter, each a header trigger with a chevron.
+const TH_ICON = { Date: "calendar", Platform: "layers", Source: "layers", Type: "tag" };
+function thPick(label, on) {
+  const trigger = open => `<span class="th-pick${on ? " on" : ""}" aria-expanded="${open}">${icon(TH_ICON[label], "sm")}<span>${label}</span>${icon("chevron", "sm chev")}</span>`;
+  if (!(OPEN === "platform" && label === "Platform")) return trigger(false);
+  const plats = D.overview_c01_sep.platforms.map(p => ({ value: p.platform, label: p.label, icon: PICON(p.platform) }));
+  return `<span class="sa-dd">${trigger(true)}${menu([{ value: "", label: "All platforms" }, ...plats], "", "start")}</span>`;
+}
+const thL = (ic, label) => `<span class="th-l">${icon(ic, "sm")}${label}</span>`;
 const csvBtn = () => `<span class="sa-btn secondary sm">${icon("download", "sm")} CSV</span>`;
 const moon = () => who("Moon Spirit", "", "New York · US tax home · single-member LLC");
 
@@ -145,7 +170,7 @@ function ledger() {
       .map(([l, v, c]) => `<div class="sa-card sa-kpi"><div class="label">${l}</div><div class="sa-fig num" style="${c ? `color:${c}` : ""}">${usd(v)}</div></div>`).join("")}
   </div>
   <div class="sa-tablewrap"><table class="sa-table dense">
-    <thead><tr><th>${thPick("Date")}</th><th>${thPick("Platform")}</th><th>${thPick("Type")}</th><th>Original</th><th class="money">Gross</th><th class="money">Platform fee</th><th class="money">Payout fee</th><th class="money">Withheld</th><th class="money">Net</th></tr></thead>
+    <thead><tr><th>${thPick("Date")}</th><th>${thPick("Platform")}</th><th>${thPick("Type")}</th><th>${thL("fx", "Original")}</th><th class="money">${thL("coins", "Gross")}</th><th class="money">${thL("percent", "Platform fee")}</th><th class="money">${thL("percent", "Payout fee")}</th><th class="money">${thL("bank", "Withheld")}</th><th class="money">${thL("wallet", "Net")}</th></tr></thead>
     <tbody>${rows.map(r => `<tr>
       <td class="num">${r.date.slice(5).replace("-", "/")}</td>
       <td>${PICON(r.platform)}${r.platform_label}</td>
@@ -227,7 +252,8 @@ function tax() {
           <li><span class="box"></span><span>Keep this forms-vs-bank reconciliation (gap ${usd(tot.gap_usd)}: platform fees and payout fees) with your records.</span></li></ul></div>
       <a class="sa-btn primary">${icon("download", "sm")} Export for my accountant</a>
     </section>
-  </div>`;
+  </div>
+  <p class="sa-pagenote">${C.DISCLAIMER}</p>`;
 }
 
 /* ---------------- Ask ---------------- */
@@ -425,6 +451,8 @@ function bindSettings() {
 // numbers). The person is "You": no name, no account; account IDs appear only as pseudonymised labels.
 const you = () => `<div class="sa-who"><div class="av">${icon("lock", "sm")}</div><div><b>You</b><span>Your data · kept in this browser</span></div></div>`;
 const curSeg = on => `<span class="sa-pick"><b class="g">${on === "CNY" ? "¥" : "$"}</b><span>${on}</span>${icon("chevron", "sm chev")}</span>`;
+// Settings keeps segmented controls for every row (decision #65): tax home, display currency, set-aside rate.
+const curSegSettings = on => `<div class="sa-seg">${[["USD", "$ USD"], ["CNY", "¥ CNY"]].map(([c, l]) => `<button class="${c === on ? "on" : ""}">${l}</button>`).join("")}</div>`;
 // Where each export lives (same list as the product's import drawer; paths may change).
 const WHERE = [
   ["upwork", "Upwork", "upwork_transactions.csv", "Reports → Transaction history → Download CSV"],
@@ -517,7 +545,7 @@ function privacy() {
       <div class="row"><h3>${icon("globe", "sm")} Tax home</h3>
         <div class="ctl"><div class="sa-seg">${["United States", "China", "Both"].map(x => `<button class="${x === "China" ? "on" : ""}">${x}</button>`).join("")}</div></div>
         <p>${X.TAXHOME_HELP_CN}</p></div>
-      <div class="row"><h3>${icon("fx", "sm")} Display currency</h3><div class="ctl">${curSeg("CNY")}</div>
+      <div class="row"><h3>${icon("fx", "sm")} Display currency</h3><div class="ctl">${curSegSettings("CNY")}</div>
         <p>${X.CURRENCY_HELP}</p></div>
       <div class="row"><h3>${icon("sliders", "sm")} Set-aside rate</h3>
         <div class="ctl"><div class="sa-seg">${[20, 25, 30].map(r => `<button class="${r === 25 ? "on" : ""}">${r}%</button>`).join("")}</div><label class="sa-rateinput"><input value="25" aria-label="Set-aside rate">%</label></div>
@@ -602,7 +630,8 @@ function taxCn() {
       </div>
       <a class="sa-btn primary">${icon("download", "sm")} Export for my accountant</a>
     </section>
-  </div>`;
+  </div>
+  <p class="sa-pagenote">${C.DISCLAIMER}</p>`;
 }
 
 /* ---------------- 14 · Overview in CNY ---------------- */
@@ -703,7 +732,8 @@ function taxBoth() {
         <div><div class="label">Annual filing window</div><b>Mar 1 to Jun 30</b><span class="s">2027 · for tax year 2026</span></div>
       </div>
     </section>
-  </div>`;
+  </div>
+  <p class="sa-pagenote">${C.DISCLAIMER}</p>`;
 }
 
 /* ---------------- 16 · Overview in Your data mode, before any import ---------------- */
@@ -750,7 +780,7 @@ function ledgerCnyCase(kind) {
   </section>` : ""}
   <div class="sa-note info" style="margin-bottom:14px">${icon("info", "sm")}<span>${kind === "ecb" ? X.LEDGER_ECB_NOTE : X.LEDGER_FILE_NOTE}</span></div>
   <div class="sa-tablewrap"><table class="sa-table dense">
-    <thead><tr><th>${thPick("Date")}</th><th>${thPick("Platform")}</th><th>${thPick("Type")}</th><th>Original</th><th class="money">Gross (CNY)</th><th class="money">Fees</th><th class="money">Withheld</th><th class="money">Net (CNY)</th></tr></thead>
+    <thead><tr><th>${thPick("Date")}</th><th>${thPick("Platform")}</th><th>${thPick("Type")}</th><th>${thL("fx", "Original")}</th><th class="money">${thL("coins", "Gross (CNY)")}</th><th class="money">${thL("percent", "Fees")}</th><th class="money">${thL("bank", "Withheld")}</th><th class="money">${thL("wallet", "Net (CNY)")}</th></tr></thead>
     <tbody>${LG.rows.map(r => r.issue ? `<tr class="missing">${head(r)}
       <td class="money"><span class="sa-badge warn">rate missing</span>${rateLine(r)}</td><td colspan="3" class="money meta">left out of totals</td></tr>` : `<tr>${head(r)}
       <td class="money">${r.gross_cny ? yen(r.gross_cny) : "—"}${rateLine(r)}</td>${cell(r.platform_fee_cny + r.payout_fee_cny, "fee", true)}${cell(r.withheld_cny, "tax", true)}<td class="money net">${yen(r.net_cny)}</td></tr>`).join("")}
@@ -783,7 +813,8 @@ function W14(m) {
   const latest = badges.filter(b => b.earned).sort((x, y) => x.earned_on.localeCompare(y.earned_on)).pop();
   return { ...o, badges, latest, goal: { amount: R.goal.amount, month: m, net: g.income, reached: g.reached, reached_on: g.reached_on, remaining: g.remaining } };
 }
-const youTag = () => `<span class="sa-you">${icon("pencil", "sm")}Added by you</span>`;
+// In the ledger the tag sits under the source name (like a Type sub-line) so the Net column keeps its room (v1.4.1).
+const youTag = (cls = "") => `<span class="sa-you ${cls}">${icon("pencil", "sm")}Added by you</span>`;
 const goalCard = g => g.reached
   ? `<section class="sa-card sa-goal reached"><div><div class="label">${icon("target", "sm")} ${monthName(g.month)} goal · reached ${dateShort(g.reached_on)}</div>
       <h3>${Y.GOAL_REACHED_TITLE.replace("{month}", monthName(g.month))}</h3>
@@ -839,9 +870,9 @@ function ledgerV14() {
     : `${r.original.currency === "CNY" ? cny(r.original.amount) : "€" + r.original.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}<span class="fx">${r.fx_line}</span>`;
   const row = r => {
     const d = `<td class="num">${r.date.slice(5).replace("-", "/")}</td>`;
-    if (r.kind === "expense") return `<tr class="expense">${d}<td><i class="sa-pdot exp"></i>${r.label}${youTag()}</td><td>Expense<span class="sub">${r.ref}</span></td><td class="num">${orig(r)}</td><td class="money zero">—</td><td class="money zero">—</td><td class="money zero">—</td><td class="money exp">${money(-r.amount_usd)}</td></tr>`;
+    if (r.kind === "expense") return `<tr class="expense">${d}<td><i class="sa-pdot exp"></i>${r.label}${youTag("below")}</td><td>Expense<span class="sub">${r.ref}</span></td><td class="num">${orig(r)}</td><td class="money zero">—</td><td class="money zero">—</td><td class="money zero">—</td><td class="money exp">${money(-r.amount_usd)}</td></tr>`;
     const dot = r.kind === "statement" ? `${PICON(r.key)}` : `<i class="sa-pdot own"></i>`;
-    return `<tr>${d}<td>${dot}${r.label}${r.kind === "income" ? youTag() : ""}</td><td>${r.type}${r.ref ? `<span class="sub">${r.ref}</span>` : ""}</td><td class="num">${orig(r)}</td>
+    return `<tr>${d}<td>${dot}${r.label}${r.kind === "income" ? youTag("below") : ""}</td><td>${r.type}${r.ref ? `<span class="sub">${r.ref}</span>` : ""}</td><td class="num">${orig(r)}</td>
       <td class="money">${money(r.gross)}</td>${cell(r.fees, "fee")}${cell(r.withheld, "tax")}<td class="money net">${money(r.net)}</td></tr>`;
   };
   return `
@@ -852,7 +883,7 @@ function ledgerV14() {
       .map(([l, v, c]) => `<div class="sa-card sa-kpi"><div class="label">${l}</div><div class="sa-fig num" style="${c ? `color:${c}` : ""}">${money(v)}</div></div>`).join("")}
   </div>
   <div class="sa-tablewrap"><table class="sa-table dense">
-    <thead><tr><th>${thPick("Date")}</th><th>${thPick("Source")}</th><th>${thPick("Type")}</th><th>Original</th><th class="money">Gross</th><th class="money">Fees</th><th class="money">Withheld</th><th class="money">Net</th></tr></thead>
+    <thead><tr><th>${thPick("Date")}</th><th>${thPick("Source")}</th><th>${thPick("Type")}</th><th>${thL("fx", "Original")}</th><th class="money">${thL("coins", "Gross")}</th><th class="money">${thL("percent", "Fees")}</th><th class="money">${thL("bank", "Withheld")}</th><th class="money">${thL("wallet", "Net")}</th></tr></thead>
     <tbody>${L.rows.map(row).join("")}
       <tr class="total"><td colspan="4">${monthName(m)} total · net income ${money(t.net)}, kept after expenses ${money(t.kept)}</td><td class="money">${money(t.gross)}</td><td class="money">${money(-t.fees)}</td><td class="money">${money(-t.withheld)}</td><td class="money">${money(t.net_after_expenses)}</td></tr>
     </tbody></table></div>`;
@@ -921,8 +952,11 @@ const entryExpense = () => entrySheet("expense"), entryIncome = () => entrySheet
 const RENDER = { overview, ledger, tax, ask, report, sources, settings, missing,
   "mydata-empty": mydataEmpty, mydata, privacy, "tax-cn": taxCn, "overview-cny": overviewCny,
   "privacy-delete": privacyDelete, "tax-both": taxBoth, "overview-empty": overviewEmpty, "ledger-cny": ledgerCny, "ledger-cny-file": ledgerCnyFile,
-  "entry-expense": entryExpense, "entry-income": entryIncome, "ledger-v14": ledgerV14, "overview-v14": overviewV14p, milestones, "goal-sheet": goalSheet, "goal-reached": overviewV14r };
-const NAV_OF = { sources: "ledger", settings: "tax", report: "tax", missing: "overview", "mydata-empty": "mydata", "tax-cn": "tax", "overview-cny": "overview",
+  "entry-expense": entryExpense, "entry-income": entryIncome, "ledger-v14": ledgerV14, "overview-v14": overviewV14p, milestones, "goal-sheet": goalSheet, "goal-reached": overviewV14r,
+  "overview-period": () => withOpen("period", overview), "ledger-platform": () => withOpen("platform", ledger) };
+// 01b and 02b: the same screens with one menu drawn open.
+function withOpen(name, screen) { OPEN = name; try { return screen(); } finally { OPEN = null; } }
+const NAV_OF = { sources: "ledger", settings: "tax", report: "tax", missing: "overview", "overview-period": "overview", "ledger-platform": "ledger", "mydata-empty": "mydata", "tax-cn": "tax", "overview-cny": "overview",
   "privacy-delete": "privacy", "tax-both": "tax", "overview-empty": "overview", "ledger-cny": "ledger", "ledger-cny-file": "ledger",
   "entry-expense": "ledger", "entry-income": "ledger", "ledger-v14": "ledger", "overview-v14": "overview", "goal-sheet": "overview", "goal-reached": "overview" };
 const YOURS = new Set(["mydata-empty", "mydata", "privacy", "tax-cn", "overview-cny", "privacy-delete", "tax-both", "overview-empty", "ledger-cny", "ledger-cny-file",
@@ -939,16 +973,14 @@ function go() {
   const yours = YOURS.has(key);
   document.getElementById("mode").innerHTML = `<a href="#mydata" class="${yours ? "on" : ""}">${icon("lock", "sm")}Your data</a><a href="#overview" class="${yours ? "" : "on"}">Demo data</a>`;
   document.getElementById("nav").innerHTML = NAV.map(([k, label, ic]) =>
-    `<a href="#${(yours && (NO_DATA.has(key) ? (k === "overview" ? "overview-empty" : "") : (V14_SCREENS.has(key) ? V14_HREF : YOURS_HREF)[k])) || k}" class="${k === navKey ? "on" : ""}">${icon(ic)}${label}</a>`).join("");
-  document.getElementById("util").innerHTML = UTIL.map(([k, label, ic]) =>
-    `<a href="#${k}" class="${k === navKey ? "on" : ""}">${icon(ic)}${label}${k === "mydata" && yours && !NO_DATA.has(key) ? `<span class="r">${V.files.length} files</span>` : ""}${k === "milestones" && yours && !NO_DATA.has(key) ? `<span class="r">${R.badges[R.show].filter(b => b.earned).length} of ${R.badges[R.show].length}</span>` : ""}</a>`).join("");
-  document.getElementById("prism").innerHTML = `<i></i>${yours ? "Content-free PRISM traces" : "Every run traced in PRISM"}`;
+    `<a href="#${(yours && (NO_DATA.has(key) ? (k === "overview" ? "overview-empty" : "") : (V14_SCREENS.has(key) ? V14_HREF : YOURS_HREF)[k])) || k}" class="${k === navKey ? "on" : ""}">${icon(ic)}<span>${label}</span></a>`).join("")
+    + `<hr class="sa-navsep">` + UTIL.map(([k, label, ic]) =>
+    `<a href="#${k}" class="${k === navKey ? "on" : ""}">${icon(ic)}<span>${label}</span>${k === "mydata" && yours && !NO_DATA.has(key) ? `<span class="r">${V.files.length} files</span>` : ""}${k === "milestones" && yours && !NO_DATA.has(key) ? `<span class="r">${R.badges[R.show].filter(b => b.earned).length} of ${R.badges[R.show].length}</span>` : ""}</a>`).join("");
   document.getElementById("main").innerHTML = RENDER[key]();
   document.getElementById("main").scrollTop = 0;
+  requestAnimationFrame(placeMenus);
   if (key === "settings") bindSettings();
 }
-document.getElementById("tagline").textContent = C.TAGLINE;
-document.getElementById("disclaimer").textContent = C.DISCLAIMER;
 window.addEventListener("hashchange", go);
 document.addEventListener("DOMContentLoaded", go);
 </script>

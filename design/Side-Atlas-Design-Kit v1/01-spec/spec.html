@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Side Atlas Look and Feel · v1.4</title>
+<title>Side Atlas Look and Feel · v1.4.1</title>
 <link rel="stylesheet" href="../05-css/side-atlas-ui-reference.css">
 <script src="../03-icons/side-atlas-icons.js"></script>
 <script src="../07-mockups/copy-v13.js"></script>
@@ -50,8 +50,17 @@
 <div class="doc">
   <div style="display:flex;align-items:center;gap:12px"><img src="../02-logos/icon-256.png" alt="" style="height:48px;border-radius:12px"><b style="font:800 24px/1 var(--sa-font);letter-spacing:-.02em">Side Atlas</b></div>
   <h1>Side Atlas Look and Feel</h1>
-  <p class="mid">Design spec · v1.4 · 17 October 2026 · desktop · MONEY TALKS 2 demo build</p>
+  <p class="mid">Design spec · v1.4.1 · 17 October 2026 · desktop · MONEY TALKS 2 demo build</p>
 
+  <h2>What's new in v1.4.1 · signed off in chat, shipped in the product</h2>
+  <ul>
+    <li><b>Less text.</b> My data before an import: one headline, the mascot line and one button; three short privacy promises with a link to Settings &amp; privacy; download paths folded away (#56 to #58). Badge tiles show only the earned date (#59). No period or currency subtitle under Overview, Ledger and Tax (#62).</li>
+    <li><b>Platform marks.</b> The platform's own mark before its name everywhere a dot used to be: Simple Icons (CC0) in brand colours, letter marks for Contra and Fiverr; bars keep the palette (#61). Every badge has its own Atlas pose (#60).</li>
+    <li><b>One dropdown.</b> Period, display currency, creator and the ledger's column filters open the same Side Atlas menu (rounded card, group labels, platform marks or initials, a check on the choice); header controls are all 44px tall (#63, #65). Settings keeps segmented controls.</li>
+    <li><b>Ledger columns.</b> Every column header has an outline icon; Date sorts, Platform (Source) and Type filter from their headers; the chip row is gone and CSV sits in the page header (#64, #67). In the v1.4 ledger the "Added by you" tag sits under the source name (#68).</li>
+    <li><b>One sidebar menu.</b> Overview, Ledger, Tax, Ask Atlas, a thin rule, then My data, Milestones and Settings &amp; privacy with their counts. Tagline, PRISM chip and disclaimer leave the sidebar; the disclaimer closes the Tax page (#66).</li>
+    <li><b>Two new drawings</b> (01b period menu open, 02b Platform filter open), icons 34 → 39 (tag, layers, percent, wallet, coins).</li>
+  </ul>
   <h2>What's new in v1.4 · all your side income, bookkeeping and rewards</h2>
   <ul>
     <li><b>All side income in one place.</b> Statements plus your own entries: income from a source you name (Tutoring, Logo commission) and expenses by category. Every income source sits next to the platforms on Overview; manual rows carry an "Added by you" tag. Notes stay in this browser.</li>
@@ -102,7 +111,7 @@
   <h2>1 · Logo and icons</h2>
   <div class="row"><img src="../02-logos/side-atlas-lockup.svg" style="height:56px"><span style="background:var(--sa-forest);border-radius:18px;padding:12px 18px"><img src="../02-logos/side-atlas-lockup-on-forest.svg" style="height:44px;display:block"></span><img src="../02-logos/side-atlas-mark.svg" style="height:40px"><img src="../02-logos/side-atlas-mark.svg" style="height:24px"></div>
   <p>The mark is a globe — one meridian, one parallel — in lime on a forest rounded square (radius 18/64). The lockup sets "Side Atlas" in Plus Jakarta Sans 800 (v1.2: no Chinese name; the mark is now the pigeon-head app icon, see the decision log). Don't recolour the mark, don't put the lockup on lime, don't use the wordmark without the mark under 120px wide.</p>
-  <h3>Icons · 34, adapted from Lucide (ISC), 24px grid, 2px stroke, currentColor, no emoji (v1.3 added shield, lock, trash, server, monitor; v1.4 plus, pencil, target, award)</h3>
+  <h3>Icons · 39, adapted from Lucide (ISC), 24px grid, 2px stroke, currentColor, no emoji (v1.3 added shield, lock, trash, server, monitor; v1.4 plus, pencil, target, award; v1.4.1 tag, layers, percent, wallet, coins for the ledger column headers)</h3>
   <div class="icons" id="icons"></div>
 
   <h2>2 · Core tokens</h2>
@@ -177,14 +186,17 @@
     <tr><td><b>Filled danger button</b> (v1.3.1)</td><td><code>.sa-btn.danger.solid</code>: warn fill, white text. Only as the confirm action inside the dialog; everywhere else the danger button stays white.</td></tr>
     <tr><td><b>Entry sheet</b> (v1.4)</td><td><code>.sa-drawer</code> from the right, 480px on the page colour: title, one sentence, Close. A full-width <code>.sa-seg.wide</code> Income | Expense toggle, then date and currency side by side, a 60px amount field with the currency sign, then <b>Source</b> (income: free text plus chips of your sources and "New source") or <b>Category</b> (expense: seven chips, one picked), and an optional note with a lock line saying notes stay in this browser. Primary "Add income" / "Add expense", ghost Cancel. The goal sheet uses the same frame.</td></tr>
     <tr><td><b>Form field</b> (v1.4)</td><td><code>.sa-field</code>: 11px uppercase label, 48px control (radius 14, 1.5px strong line; focus forest with a forest-100 ring), help line in meta. Big variant 60px / 26px 800 for amounts; area variant 76px for notes.</td></tr>
-    <tr><td><b>Filter chips with counts</b> (v1.4)</td><td>Existing <code>.sa-chip</code> with a <code>.n</code> count: All · Income (up icon) · Expenses (down icon); one is on. Beside them, the "Added by you" tag with how many entries this month.</td></tr>
+    <tr><td><b>Dropdown</b> (v1.4.1)</td><td>One component for every picker (<code>web/lib/dropdown.js</code>). Trigger in its own look: header pill <code>.sa-pick</code> (44px, calendar icon or currency sign, chevron), the creator pill <code>.sa-who.picker</code>, or a table header <code>.th-pick</code>; the chevron turns up and the pill border goes accent while open. Menu <code>.sa-menu</code>: surface card, radius 16, float shadow, 6px padding; uppercase group labels; options 40px tall, radius 10, hover accent-100, the chosen one in accent 800 with a check; platform options carry the platform mark, creators an initial. Pinned under its trigger in the viewport so a short table never clips it; Esc, Tab, a click outside or a scroll closes it.</td></tr>
+    <tr><td><b>Column header</b> (v1.4.1)</td><td><code>.th-l</code>: a 14px outline icon before the uppercase label (Date calendar, Platform or Source layers, Type tag, Original fx, Gross coins, fees percent, Withheld bank, Net wallet); money headers right-aligned. Date, Platform and Type are <code>.th-pick</code> triggers; an active filter shows its value in accent on accent-100, in sentence case.</td></tr>
+    <tr><td><b>Platform mark</b> (v1.4.1)</td><td><code>.sa-picon</code>: 16px image before the platform name (14px in chips and menus), from <code>02-logos/platforms/</code>; unknown sources keep a dot.</td></tr>
+    <tr><td><b>Filter chips with counts</b> (v1.4; the ledger's chip row is replaced by column filters in v1.4.1)</td><td>Existing <code>.sa-chip</code> with a <code>.n</code> count: All · Income (up icon) · Expenses (down icon); one is on. Beside them, the "Added by you" tag with how many entries this month.</td></tr>
     <tr><td><b>"Added by you" and dots</b> (v1.4)</td><td><code>.sa-you</code>: pink-100 badge, accent text, pencil icon. Platform dots stay filled in the platform colour; your own sources are hollow accent rings (<code>.sa-pdot.own</code>) and striped in share bars; expenses are dark squares (<code>.sa-pdot.exp</code>). Expense rows sit on the page colour and their amount is ink; expenses never use the fee, payout or tax colours.</td></tr>
     <tr><td><b>Expenses by category + kept sum</b> (v1.4)</td><td><code>.sa-catbars</code>: one row per category with its amount and a 6px one-colour bar scaled to the largest. Under it <code>.sa-kept</code>: Net income, Your expenses, and <b>Kept after expenses</b> in forest, then one meta line explaining it.</td></tr>
     <tr><td><b>Goal card</b> (v1.4)</td><td><code>.sa-goal</code>, three states: in progress (target icon, month, % badge, income "of $6,000", 12px progress bar, "You have {left} left…", Change goal); ended short (same, "You ended {left} short…"); reached (<code>.reached</code>: pink-100 card, reached date in the label, title, body, full bar, "You're {over} above…", Atlas celebrating at card size). Goal progress counts net income before your expenses.</td></tr>
     <tr><td><b>Badge tile</b> (v1.4)</td><td><code>.sa-badgetile</code>: 96px pink-100 art panel with an Atlas pose, title 15.5/800, one-line description, then the reason in numbers and the earned date. Locked: sage panel, greyscale art at 45%, lock chip top right, "what's left" with a 6px progress bar. The latest earned tile has a 2px forest border.</td></tr>
     <tr><td><b>Milestones grid</b> (v1.4)</td><td><code>.sa-badgegrid</code>: 4 columns, 16px gap, under a compact hero with "N of 8 earned", the latest badge and its pose at hero size.</td></tr>
     <tr><td><b>Latest badge row</b> (v1.4)</td><td><code>.sa-latest</code> on Overview: pose at inline size, label with date, badge title, reason, "All" link to Milestones.</td></tr>
-    <tr><td><b>Sidebar / nav</b></td><td>248px white, hairline right. Lockup at top. Nav items 44px pills, icon 20 + 15/600; active forest fill white text; hover sage. Footer: tagline (forest 14/700), PRISM chip, disclaimer.</td></tr>
+    <tr><td><b>Sidebar / nav</b></td><td>248px white, hairline right. Lockup at top. Nav items 44px pills, icon 20 + 15/600; active forest fill white text; hover sage. v1.4.1: one menu, the four screens, a thin rule (<code>.sa-navsep</code>), then My data, Milestones and Settings &amp; privacy with a right-aligned count; the footer keeps only Sign out.</td></tr>
   </table>
   <h3>Goal card · the three states (v1.4)</h3>
   <div id="goalstates" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start;break-inside:avoid"></div>
@@ -194,7 +206,9 @@
   <h2 class="page">5 · Desktop screens (1440 × 900)</h2>
   <p class="cap">Screens 01 to 08 are the v1.1 drawings re-captured with the v1.3 shell in v1.3.1; for the v1.2 changes on those screens the built product (<code>web/_checks/</code>) is the reference.</p>
   <img class="shot" src="../08-screens/desktop/01-overview.png"><p class="cap"><b>01 Overview.</b> September net as the hero, set-aside and best keep-rate beside it; where the gross went; net by platform.</p>
+  <img class="shot" src="../08-screens/desktop/01b-overview-period-menu.png"><p class="cap"><b>01b Period menu open</b> (v1.4.1). The shared dropdown under the period pill: Months newest first (September 2026 checked), then Quarters.</p>
   <img class="shot" src="../08-screens/desktop/02-ledger.png"><p class="cap"><b>02 Ledger.</b> Every record, with its own exchange rate and date; fees, payout fees and tax withheld in separate columns.</p>
+  <img class="shot" src="../08-screens/desktop/02b-ledger-platform-menu.png"><p class="cap"><b>02b Platform filter open</b> (v1.4.1). Column headers with outline icons; the Platform header's menu lists All platforms (checked) and each platform with its mark. CSV sits in the page header.</p>
   <img class="shot" src="../08-screens/desktop/03b-tax-full.png"><p class="cap"><b>03 Tax items (hero).</b> Set-aside at her own 25%, countdown to the next US estimated-tax date, tax withheld by country, form view vs bank view per platform with real numbers (Fiverr flagged as a possible PayPal double report; no 1099-K expected, income still reportable), accountant checklist and export.</p>
   <img class="shot" src="../08-screens/desktop/04-ask.png"><p class="cap"><b>04 Ask.</b> The answer with every figure tied to a step, the agent's 11 tool calls, traced in PRISM.</p>
   <img class="shot" src="../08-screens/desktop/05-report.png"><p class="cap"><b>05 Report.</b> The quarter on one sheet for the accountant; export as PDF or CSV.</p>
@@ -263,7 +277,7 @@
     <li>Every non-USD ledger row shows its rate and the rate's date.</li>
     <li>A missing rate shows the light warning card (hero stays forest, marked incomplete), names the record and leaves it out of totals — no estimated value anywhere on the page.</li>
     <li>Colours in pages come only from <code>--sa-*</code> tokens (no hex in markup or component CSS beyond the token file).</li>
-    <li>Set-aside copy says the rate was chosen by the person; the disclaimer is visible on every screen.</li>
+    <li>Set-aside copy says the rate was chosen by the person; the disclaimer closes the Tax page and the report (v1.4.1: no longer in the sidebar).</li>
     <li>All ten 08-screens match the built pages side by side (ui-diff compare) with no clipped column at 1440×900.</li>
     <li>Only Plus Jakarta Sans (local woff2) and the CJK system font load; no CDN fonts.</li>
     <li>v1.3 · In Your data mode, no request to the server, Ask Atlas or PRISM carries a name, an account ID, an order number or a file (check the network log); accounts appear only as <code>acct ••NNNN</code>.</li>
@@ -276,6 +290,8 @@
     <li>v1.4 · Expenses never use the fee, payout or tax colours; manual sources never use a platform colour.</li>
     <li>v1.3.1 · One currency never mixes rate sources: with your rate file every converted record of it says "Your rate file"; without one every record shows an ECB rate.</li>
     <li>Icons render from the sprite with currentColor; no emoji in the UI.</li>
+    <li>v1.4.1 · No native select menu opens anywhere; every picker opens the shared Side Atlas menu, and every header control is 44px tall.</li>
+    <li>v1.4.1 · Every ledger column header has its outline icon, and no ledger column is clipped at 1440×900.</li>
   </ul>
 </div>
 <script>

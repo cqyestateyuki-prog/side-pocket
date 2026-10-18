@@ -2,10 +2,14 @@
 
 The single place where visual rulings live. Changing a ruling means a new kit version, not an edit to one component.
 
-## v1.4.1 · 17 October 2026 · My data empty state (signed off in chat)
+## v1.4.1 · 17 October 2026 · current standard (each change signed off in chat; shipped in web/ at b023c5e)
 
 | # | Decision | Why |
 |---|---|---|
+| 65 | **One dropdown component** (`web/lib/dropdown.js`) for period, display currency, creator and the ledger's column filters. The trigger keeps its own look (header pill `.sa-pick`, creator pill, table header `.th-pick`); the menu is always `.sa-menu`: surface card, radius 16, float shadow, group labels, 40px options, accent check on the choice, platform marks or initials. Header buttons and pickers share the 44px height. Settings keeps segmented controls for tax home, display currency and set-aside rate. Drawn open in 01b and 02b. | User: the open lists were the system menu and the header controls did not match; Settings mixed a dropdown with button groups. |
+| 66 | **One sidebar menu:** Overview, Ledger, Tax, Ask Atlas, a thin rule, then My data, Milestones and Settings & privacy (same item style, right-aligned "7 files" / "7 of 8"). The tagline, the PRISM chip and the disclaimer leave the sidebar; the footer keeps Sign out; "Estimate only. Not tax, legal, or financial advice." closes the Tax screens (and stays on the report). Supersedes #47's placement. | User asked for My data, Milestones and Settings under Ask Atlas, and for the footer text to go. |
+| 67 | **Column header icons:** every ledger header has a 14px outline icon (Date calendar, Platform/Source layers, Type tag, Original fx, Gross coins, fees percent, Withheld bank, Net wallet); new Lucide icons tag, layers, percent, wallet, coins (icons 34 → 39). | User: give Date, Platform and the other headers a line icon. |
+| 68 | **"Added by you" under the source name** in the v1.4 ledger (a sub-line like Type's reference), not beside it. | With header icons the inline tag pushed Net out of the table at 1440. |
 | 56 | **My data, nothing imported:** title with "Nothing imported yet", one hero headline, the mascot speech bubble and one button (Choose CSV files). Removed: the hero eyebrow, the 8-platform sentence, the drop hint, "Explore demo data" (the sidebar switch does this) and "Try sample statements". | User: the page had too much text; asked to keep the subtitle and the speech bubble and to drop the hint and the sample button. |
 | 57 | **Privacy strip, short form:** three short promises (Saved only in this browser · Server keeps no copy · AI sees totals, not rows) plus a "How your data is handled" link to Settings & privacy, where the full privacy map lives. | Details moved one click away instead of under every promise. |
 | 63 | **Period and display currency are dropdowns** (a pill showing the choice, calendar or currency sign in front, chevron after) instead of segmented buttons: months newest first, then quarters, so more months and years fit. | User: segmented buttons only fit a few fixed choices. |
