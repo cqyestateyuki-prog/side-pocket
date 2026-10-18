@@ -304,3 +304,44 @@ button.sa-who { font: inherit; color: inherit; text-align: left; cursor: pointer
 .sa-nav a .r { margin-left: auto; font: 600 12px/1 var(--sa-font); opacity: .75; }
 .sa-pagenote { margin: 28px 0 8px; font: 500 12.5px/1.4 var(--sa-font); color: var(--sa-meta); }
 .sa-top .right .sa-who { height: 44px; padding-top: 0; padding-bottom: 0; }
+
+/* Tax hero (kit v1.4.1): Atlas at the bottom right like Overview; countdowns sit under the amount */
+.tax-hero, .tax-hero.cn, .tax-hero.both { display: block; min-height: 236px; }
+.tax-hero > div:not(.orb) { position: relative; z-index: 2; padding-right: 170px; }
+.tax-counts { display: flex; flex-wrap: wrap; gap: 14px 36px; margin-top: 20px; }
+.tax-count { display: flex; align-items: center; gap: 14px; }
+.tax-count + .tax-count { padding-left: 36px; border-left: 1px solid var(--sa-on-forest-glass-line); }
+.tax-count .days { font: 800 52px/0.9 var(--sa-font); letter-spacing: -0.04em; color: var(--sa-accent-on-primary); }
+.tax-count .of { font: 700 14px/1.3 var(--sa-font); color: var(--sa-on-forest); white-space: nowrap; }
+.tax-count .glass { margin-top: 6px; }
+
+/* Ask Atlas (kit v1.4.1): the pigeon avatar in the title, Atlas poses in every state, an icon per tool */
+.sa-top h1.with-av { display: flex; align-items: center; gap: 14px; }
+.sa-avatar { width: 44px; height: 44px; border-radius: 14px; flex: none; }
+.examples { position: relative; min-height: 150px; padding-right: 150px; }
+.examples .ex-mascot.ok { position: absolute; right: 18px; bottom: 10px; height: var(--sa-mascot-card); }
+.thinking .think-mascot.ok { height: var(--sa-mascot-card); }
+.steps-empty { align-items: center; }
+.steps-empty .steps-mascot.ok { height: var(--sa-mascot-card); flex: none; }
+.sa-steps .t .tool { width: 14px; height: 14px; margin-right: 6px; vertical-align: -2px; color: var(--sa-forest); }
+.sa-steps li.err .t .tool { color: var(--sa-warn); }
+
+/* Ledger KPI row (kit v1.4.1): icons on the labels; Net is a small hero card with the orb and Atlas */
+.sa-kpirow { grid-template-columns: repeat(4, 1fr) 1.6fr; }
+.sa-kpirow:has(.sa-kpi.net + .sa-card) { grid-template-columns: repeat(3, 1fr) 1.6fr 1.35fr; }
+.sa-kpi .label .sa-icon { width: 14px; height: 14px; color: var(--sa-meta); }
+.sa-kpi.net { position: relative; overflow: hidden; padding: 16px 20px; border-radius: var(--sa-r-card); background: var(--sa-forest); color: var(--sa-on-forest); }
+.sa-kpi.net .label, .sa-kpi.net .label .sa-icon { color: var(--sa-on-forest-mid); }
+.sa-kpi.net .sa-fig { color: var(--sa-on-forest); position: relative; z-index: 2; }
+.sa-kpi.net .orb { position: absolute; right: -60px; bottom: -86px; width: 170px; height: 170px; border-radius: 50%; background: var(--sa-lime); }
+.sa-kpi.net .kpi-mascot.ok { position: absolute; right: 12px; bottom: 2px; height: 74px; z-index: 1; }
+.sa-gap { width: 88px; }
+
+/* Tax already withheld: a flag per country, the platform under it */
+.withheld .who { display: flex; align-items: flex-start; gap: 12px; }
+.sa-flag { width: 24px; height: 16px; flex: none; border-radius: 3px; box-shadow: 0 0 0 1px var(--sa-line); margin-top: 3px; object-fit: cover; }
+.withheld .who b { display: block; font: 800 16px/1.3 var(--sa-font); color: var(--sa-ink); }
+.withheld .who .by { display: inline-flex; align-items: center; margin-top: 4px; font: 600 13px/1.2 var(--sa-font); color: var(--sa-text-mid); }
+.withheld .who .by .sa-picon { width: 14px; height: 14px; margin-right: 6px; }
+.sa-table td:has(> .sa-badge) { white-space: normal; }
+.sa-table td .sa-badge { white-space: normal; line-height: 1.25; max-width: 100%; }

@@ -3,6 +3,9 @@ import { COPY, YOURS } from "./copy.js";
 import { cur, dateShort, esc, icon, mmdd } from "./format.js";
 import { mascot } from "./mascot.js";
 
+// A table header with its outline icon in front (kit v1.4.1).
+export const th = (ic, label, cls = "") => `<th class="${cls}"><span class="th-l">${icon(ic, "sm")}${label}</span></th>`;
+
 export function top(ctx, title, subtitle, { period = true, actions = "" } = {}) {
   return `<div class="sa-top"><div><h1>${title}</h1>${subtitle ? `<p>${subtitle}</p>` : ""}</div>
     <div class="right">${actions}${period ? ctx.periodSeg(ctx) : ""}${ctx.whoPill(ctx)}</div></div>`;
@@ -55,6 +58,8 @@ const KEYS = { "Bilibili": "bilibili", "B站": "bilibili", "YouTube": "youtube",
 export const platformKey = label => KEYS[label] ?? String(label).toLowerCase();
 
 export const COUNTRY = { CN: "China", US: "United States", DE: "Germany", JP: "Japan", CA: "Canada", GB: "United Kingdom" };
+// The country's flag (assets/flags, drawn for Side Atlas) in front of its name.
+export const flag = c => COUNTRY[c] ? `<img class="sa-flag" src="assets/flags/${c.toLowerCase()}.svg" alt="" width="24" height="16">` : icon("globe", "sm");
 
 export function empty(title, body) {
   return `<section class="sa-card sa-empty c12">${icon("info")}${mascot("think", "empty-mascot")}<div><b>${title}</b><div class="meta">${body}</div></div></section>`;

@@ -6,7 +6,7 @@
 import { ask } from "../lib/api.js";
 import { ask as askYours } from "../lib/personal.js";
 import { COPY, YOURS } from "../lib/copy.js";
-import { PLATFORM_KEY, cur, dateLong, esc, icon, monthName, usd } from "../lib/format.js";
+import { PLATFORM_KEY, cur, dateLong, esc, icon, monthName, picon, usd } from "../lib/format.js";
 import { mascot } from "../lib/mascot.js";
 import { english } from "../lib/display.js";
 import { emptyScreen } from "../lib/parts.js";
@@ -104,7 +104,7 @@ function feeChips() {
     .sort((a, b) => b[1] - a[1]);
   if (!rows.length) return "";
   return `<div class="label" style="margin-top:14px">${t().fees}</div><div class="sa-platchips">${rows.map(([p, f]) =>
-    `<span class="sa-chip"><i class="dot" style="background:var(--sa-p-${PLATFORM_KEY[p] ?? p})"></i>${esc(LABEL[p] ?? p)} <span class="num">${money(Number(f))}</span></span>`).join("")}</div>`;
+    `<span class="sa-chip">${picon(PLATFORM_KEY[p] ?? p)}${esc(LABEL[p] ?? p)} <span class="num">${money(Number(f))}</span></span>`).join("")}</div>`;
 }
 
 function lines() {
@@ -144,10 +144,16 @@ function figure(a) {
 
 // ---------------------------------------------------------------- view
 
+// An outline icon per tool, so the steps read at a glance.
+const TOOL_ICON = { find_creator: "search", get_summary: "overview", load_platform: "file", convert_currency: "fx", compute_breakdown: "coins",
+  compare_months: "up", compute_set_aside: "sliders", simulate_patreon_ios: "monitor", get_upwork_contract_fees: "percent", get_fee_details: "percent",
+  tax_items: "tax", form_check: "duplicate", get_manual_income: "pencil", get_expenses: "wallet", get_goal_progress: "target", submit_answer: "send" };
+
 function stepsCard() {
   const steps = toolSteps();
   const running = run && !run.done;
-  if (run?.offline) return `<section class="sa-card c5 steps-card"><div class="head"><h2>${t().steps}</h2></div><div class="steps-empty">${icon("steps")}<div>${t().stepsEmpty}</div></div></section>`;
+  const emptySteps = `<div class="steps-empty">${mascot("ledger", "steps-mascot")}<div>${t().stepsEmpty}</div></div>`;
+  if (run?.offline) return `<section class="sa-card c5 steps-card"><div class="head"><h2>${t().steps}</h2></div>${emptySteps}</section>`;
   const badge = !run ? "" : running ? `<span class="sa-badge sim"><i class="spin"></i> ${t().running}</span>` : `<span class="sa-badge ok">${t().calls(steps.length)}</span>`;
   const groups = [];
   steps.forEach((s, i) => {
@@ -162,26 +168,26 @@ function stepsCard() {
     const res = many ? (s.name === "load_platform" ? `${g.items.reduce((n, x) => n + (x.result?.records ?? 0), 0)} records across ${g.items.length} loads` : `${g.items.length} conversions`) : resultText(s);
     return `<li data-from="${g.from}" data-to="${g.to}" class="${s.status === "error" ? "err" : ""} ${s.name === "submit_answer" ? "final" : ""}">
       <span class="n ${many ? "range" : ""}">${many ? `${g.from}–${g.to}` : g.from}</span>
-      <div><div class="t">${esc(s.name)}${many ? ` ×${g.items.length}` : ""}${args ? `<span class="args"> · ${esc(args)}</span>` : ""}</div><div class="s">${esc(res)}</div></div>
+      <div><div class="t">${icon(TOOL_ICON[s.name] ?? "steps", "sm tool")}${esc(s.name)}${many ? ` ×${g.items.length}` : ""}${args ? `<span class="args"> · ${esc(args)}</span>` : ""}</div><div class="s">${esc(res)}</div></div>
       ${s.status === "error" ? icon("alert", "sm warnicon") : icon("check", "sm")}</li>`;
   }).join("");
   const pending = running ? `<li class="pending"><span class="n"><i class="spin"></i></span><div><div class="s">${t().choosing}</div></div></li>` : "";
   return `<section class="sa-card c5 steps-card">
     <div class="head"><h2>${t().steps}</h2>${badge}</div>
-    ${run ? `<ol class="sa-steps">${items}${pending}</ol>` : `<div class="steps-empty">${icon("steps")}<div>${t().stepsEmpty}</div></div>`}
+    ${run ? `<ol class="sa-steps">${items}${pending}</ol>` : emptySteps}
   </section>`;
 }
 
 function answerBlock() {
   if (!run) {
-    return `<section class="sa-card sage examples"><div class="label">${t().tryAsking}</div>
+    return `<section class="sa-card sage examples">${mascot("laptop", "ex-mascot")}<div class="label">${t().tryAsking}</div>
       <div class="example-list">${examples().map(q => `<button class="sa-chip" data-example="${esc(q)}">${esc(q)}</button>`).join("")}</div></section>`;
   }
   const a = run.answer;
   const bubble = `<div class="sa-bubble">${esc(run.question)}</div>`;
   if (run.offline) return bubble + `<section class="sa-emptycard">${mascot("think")}<div><b>${YOURS.ASK_OFF_TITLE}</b><p>${esc(run.offline)}</p></div></section>`;
   if (run.error) return bubble + `<section class="sa-warncard">${icon("alert")}<div class="wc-body"><h2>The run didn’t finish.</h2><p>${esc(run.error)}</p></div></section>`;
-  if (!a) return bubble + `<section class="sa-card thinking">${mascot("think", "think-mascot")}<div class="meta">${t().thinking}</div></section>`;
+  if (!a) return bubble + `<section class="sa-card thinking">${mascot("laptop", "think-mascot")}<div class="meta">${t().thinking}</div></section>`;
   const fig = figure(a);
   const toolErr = toolSteps().find(s => s.status === "error");
   if (fig == null) {
@@ -194,7 +200,7 @@ function answerBlock() {
   const ls = lines();
   return bubble + `
     <section class="sa-hero sa-answer">
-      ${mascot("wave", "answer-mascot")}
+      ${mascot("envelope", "answer-mascot")}
       <div class="lead">${t().answer}</div>
       <div class="sa-fig num">${fig}${refFor(a.answer) ? `<a class="sa-ref" href="#step-${refFor(a.answer)}">${refFor(a.answer)}</a>` : ""}</div>
       <div class="sub clamp">${prose(a.text) || esc(a.explanation ?? "")}</div>
@@ -213,7 +219,7 @@ function footer() {
 
 function view(ctx) {
   const busy = run && !run.done;
-  return `<div class="sa-top"><div><h1>Ask</h1><p>The agent looks things up step by step; code does the math.</p></div>
+  return `<div class="sa-top"><div><h1 class="with-av"><img class="sa-avatar" src="assets/logo/icon-96.png" alt="" width="44" height="44">Ask Atlas</h1><p>The agent looks things up step by step; code does the math.</p></div>
     <div class="right">${run?.replay ? `<span class="sa-badge sim">${t().replay}</span>` : ""}${ctx.whoPill(ctx)}</div></div>
   <div class="sa-grid">
     <div class="c7 stack ask-col">
@@ -290,7 +296,7 @@ function bind() {
 }
 
 export async function render(ctx) {
-  if (ctx.yours && !ctx.has) return emptyScreen(ctx, "Ask", YOURS.EMPTY_ASK);
+  if (ctx.yours && !ctx.has) return emptyScreen(ctx, "Ask Atlas", YOURS.EMPTY_ASK);
   if (run && run.mode !== ctx.mode) run = null; // a run belongs to the ledger it was asked about
   ctxRef = ctx;
   return view(ctx);

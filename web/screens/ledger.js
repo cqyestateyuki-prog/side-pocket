@@ -1,7 +1,8 @@
 import { YOURS } from "../lib/copy.js";
 import { cur, dateShort, esc, icon, mmdd, periodLabel, picon, usd, weekday } from "../lib/format.js";
-import { emptyScreen, noRateText, top, warnCard } from "../lib/parts.js";
+import { emptyScreen, noRateText, th, top, warnCard } from "../lib/parts.js";
 import { bindDropdowns, dropdown } from "../lib/dropdown.js";
+import { mascot } from "../lib/mascot.js";
 import { openPanel } from "../lib/importPanel.js";
 
 async function load(ctx) {
@@ -25,7 +26,6 @@ function filtered(ctx, rows) {
 
 // Column headers (kit v1.4.1): each has an outline icon; Date sorts, Platform and Type filter through the
 // shared dropdown, and an active filter shows its value in the accent colour.
-const th = (ic, label, cls = "") => `<th class="${cls}"><span class="th-l">${icon(ic, "sm")}${label}</span></th>`;
 
 function head(ctx, L, cols) {
   const f = ctx.query.get("f"), type = ctx.query.get("t"), sort = ctx.query.get("s") === "new" ? "new" : "old";
@@ -39,6 +39,10 @@ function head(ctx, L, cols) {
     ${pick("t", "tag", type || "Type", !!type, type ?? "", [{ value: "", label: "All types" }, ...types.map(x => ({ value: x, label: x }))])}
     ${cols}</tr></thead>`;
 }
+
+// The KPI row: outline icons like the table headers; Net is a small hero card with the orb and Atlas.
+const kpi = (ic, label, fig, color) => `<div class="sa-card sa-kpi"><div class="label">${icon(ic, "sm")}${label}</div><div class="sa-fig num" style="${color ? `color:${color}` : ""}">${fig}</div></div>`;
+const netKpi = (label, fig) => `<div class="sa-kpi net"><div class="orb"></div>${mascot("coin", "kpi-mascot")}<div class="label">${icon("wallet", "sm")}${label}</div><div class="sa-fig num">${fig}</div></div>`;
 
 const csvBtn = `<button class="sa-btn secondary sm" data-csv>${icon("download", "sm")} CSV</button>`;
 
@@ -65,9 +69,10 @@ export async function render(ctx) {
   return top(ctx, "Ledger", "", { actions: csvBtn + importBtn }) + `
   ${L.issues.length ? `<div class="sa-grid" style="margin-bottom:20px">${warnCard(ctx, L.issues)}</div>` : ""}
   <div class="sa-kpirow">
-    ${[["Gross", k.gross, ""], ["Platform fees", -k.platform_fee, "var(--sa-fee-text)"], ["Payout fees", -k.payout_fee, "var(--sa-payout-text)"],
-       ["Tax withheld", -k.withheld, "var(--sa-tax-text)"], ["Net", k.net, "var(--sa-net-text)"]]
-      .map(([l, v, c]) => `<div class="sa-card sa-kpi"><div class="label">${l}</div><div class="sa-fig num" style="${c ? `color:${c}` : ""}">${usd(v)}</div></div>`).join("")}
+    ${[["coins", "Gross", k.gross, ""], ["percent", "Platform fees", -k.platform_fee, "var(--sa-fee-text)"], ["percent", "Payout fees", -k.payout_fee, "var(--sa-payout-text)"],
+       ["bank", "Tax withheld", -k.withheld, "var(--sa-tax-text)"]]
+      .map(([ic, l, v, c]) => kpi(ic, l, usd(v), c)).join("")}
+    ${netKpi("Net", usd(k.net))}
   </div>
   <div class="sa-tablewrap"><table class="sa-table dense">
     ${head(ctx, L, th("fx", "Original") + th("coins", "Gross", "money") + th("percent", "Platform fee", "money") + th("percent", "Payout fee", "money") + th("bank", "Withheld", "money") + th("wallet", "Net", "money"))}
@@ -138,9 +143,9 @@ async function renderYours(ctx) {
   return top(ctx, "Ledger", "", { actions: csvBtn + ctx.currencySeg(ctx) }) + `
   ${L.issues.length ? `<div class="sa-grid" style="margin-bottom:16px">${warnCard(ctx, L.issues)}</div>` : ""}
   <div class="sa-kpirow">
-    ${[["Gross", t.gross, ""], ["Fees", -(t.platform_fee + t.payout_fee), "var(--sa-fee-text)"], ["Tax withheld", -t.withheld, "var(--sa-tax-text)"],
-       [L.issues.length ? "Net · incomplete" : "Net", t.net, "var(--sa-net-text)"]]
-      .map(([l, v, c]) => `<div class="sa-card sa-kpi"><div class="label">${l}</div><div class="sa-fig num" style="${c ? `color:${c}` : ""}">${money(v)}</div></div>`).join("")}
+    ${[["coins", "Gross", t.gross, ""], ["percent", "Fees", -(t.platform_fee + t.payout_fee), "var(--sa-fee-text)"], ["bank", "Tax withheld", -t.withheld, "var(--sa-tax-text)"]]
+      .map(([ic, l, v, c]) => kpi(ic, l, money(v), c)).join("")}
+    ${netKpi(L.issues.length ? "Net · incomplete" : "Net", money(t.net))}
     ${ratesCard}
   </div>
   ${curs.length ? `<div class="sa-note info" style="margin-bottom:14px">${icon("info", "sm")}<span>${withFile ? YOURS.LEDGER_FILE_NOTE : YOURS.LEDGER_ECB_NOTE}</span></div>` : ""}

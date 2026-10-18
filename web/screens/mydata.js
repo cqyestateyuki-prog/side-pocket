@@ -4,6 +4,7 @@
 import { YOURS } from "../lib/copy.js";
 import { dateShort, esc, icon, monthShort, picon, quarterOf } from "../lib/format.js";
 import { mascot } from "../lib/mascot.js";
+import { th } from "../lib/parts.js";
 import * as store from "../lib/store.js";
 import { bodyBytes, labeler, prepare, shortLabel } from "../lib/statements.js";
 import { formats, invalidate, post } from "../lib/personal.js";
@@ -114,7 +115,7 @@ function filesCard(ctx, sum, R) {
   return `<section class="sa-card c12">
       <div class="head"><h2>Imported statements</h2><span class="meta">${X.FILES_NOTE}</span></div>
       <div class="sa-tablewrap"><table class="sa-table sa-files">
-        <thead><tr><th>Platform</th><th>File</th><th class="money">Rows</th><th>Dates</th><th>Currency</th><th>Issues</th><th></th></tr></thead>
+        <thead><tr>${th("layers", "Platform")}${th("file", "File")}${th("ledger", "Rows", "money")}${th("calendar", "Dates")}${th("fx", "Currency")}${th("alert", "Issues")}<th></th></tr></thead>
         <tbody>${rows}</tbody></table></div>
     </section>`;
 }

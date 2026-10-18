@@ -1,6 +1,6 @@
 import { COPY, YOURS } from "../lib/copy.js";
 import { cur, dateLong, daysBetween, esc, icon, localDay, periodLabel, picon, usd } from "../lib/format.js";
-import { COUNTRY, emptyScreen, platformKey, top, warnCard } from "../lib/parts.js";
+import { COUNTRY, emptyScreen, flag, platformKey, th, top, warnCard } from "../lib/parts.js";
 import { mascot } from "../lib/mascot.js";
 import { saveExcluded, saveRate, setAside } from "../lib/prefs.js";
 import { saveSettings } from "../lib/store.js";
@@ -107,25 +107,22 @@ async function page(ctx) {
   <div class="sa-grid">
     ${warnCard(ctx, issues)}
     <section class="sa-hero c8 tax-hero">
+      <div class="orb"></div>
+      ${mascot("piggy-bank", "hero-mascot")}
       <div>
-        <div class="title">${COPY.TAX_HERO}${sa.amount > 0 ? mascot("celebrate", "title-mascot") : ""}</div>
+        <div class="title">${COPY.TAX_HERO}</div>
         ${country === "US" ? "" : `<div class="sub" style="margin-top:8px">${icon("globe", "sm")} ${COUNTRY[country] ?? country} tax home: US estimated-tax dates don’t apply.</div>`}
         <div class="amount">
           ${heroAmount(sa, qLabel)}
         </div>
         ${editor(sa, plats)}
+        ${due?.due_date && country === "US" ? `<div class="tax-counts">${count(due.days_left, "days to next payment", `${dateLong(due.due_date)} · ${usQuarter(due.due_date)}`)}</div>` : ""}
       </div>
-      ${due?.due_date && country === "US" ? `<div class="sa-count">
-        <div class="days num">${due.days_left}</div>
-        <div class="of">days to the next US<br>estimated-tax payment</div>
-        <div class="glass">${icon("calendar", "sm")} ${dateLong(due.due_date)}</div>
-      </div>` : ""}
     </section>
     <section class="sa-card c4">
       <div class="head"><h2>Tax already withheld</h2></div>
       ${withheld.length ? withheld.map(w => `<div class="withheld">
-        <div><span class="sa-badge tax">${icon("globe", "sm")} ${COUNTRY[w.country] ?? w.country} · ${esc(w.platform)}</span>
-          <div class="meta">${w.country === "CN" ? "Individual income tax, withheld by the platform" : esc(w.tax)}</div></div>
+        ${withheldWho(w.country, w.platform)}
         <div class="amt"><div class="sa-fig num">${fmt(w[`withheld_${k}`])}</div>${w.withheld_cny != null && k !== "cny" ? `<div class="meta num">${cur(w.withheld_cny, "CNY")}</div>` : ""}</div>
       </div>`).join("") : `<div class="meta">No platform withheld tax in ${label.split(" · ")[0]}.</div>`}
       ${noneNote ? `<div class="sa-note info" style="margin-top:16px">${icon("info", "sm")}<span>${esc(noneNote.replace("No tax was withheld on income from", "Nothing was withheld on").replace("; the set-aside covers it", ". The set-aside covers that income."))}</span></div>` : ""}
@@ -133,7 +130,7 @@ async function page(ctx) {
     <section class="sa-card c12">
       <div class="head"><h2>${COPY.FORMS_HEADLINE}</h2><span class="sa-ribbon">${icon("info", "sm")} Simulated forms · real 1099-K threshold</span></div>
       <div class="sa-tablewrap"><table class="sa-table">
-        <thead><tr><th>Platform</th><th>Form</th><th class="money">Form view</th><th class="money">Bank view</th><th>${COPY.GAP_LABEL}</th><th class="money">Records</th><th>Status</th></tr></thead>
+        <thead><tr>${th("layers", "Platform")}${th("file", "Form")}${th("report", "Form view", "money")}${th("bank", "Bank view", "money")}${th("duplicate", COPY.GAP_LABEL)}${th("ledger", "Records", "money")}${th("check", "Status")}</tr></thead>
         <tbody>${formsTable(F)}
           <tr class="total"><td colspan="2">Platforms with forms</td><td class="money">${usd(T4.form_view_gross_usd)}</td><td class="money">${usd(T4.bank_view_landed_usd)}</td><td class="num">${usd(-T4.gap_usd)}</td><td></td><td></td></tr>
         </tbody></table></div>
@@ -167,13 +164,17 @@ function cnWindow(T) {
   const taxYear = String(+w.opens.slice(0, 4) - 1);
   return { ...w, taxYear, open, days: open ? daysBetween(now, w.closes) : daysBetween(now, w.opens),
            span: `${shortDate(w.opens)} to ${shortDate(w.closes)}, ${w.closes.slice(0, 4)}`,
-           of: open ? `days left in the ${taxYear}<br>annual filing window` : `days until the ${taxYear}<br>annual filing window opens` };
+           of: open ? "days left to file" : "days until filing opens",
+           ofBoth: open ? "days left to file in China" : "days until China filing opens" };
 }
 
-function countdown(win, tag = "") {
-  return `<div class="sa-count" style="align-self:end">${tag ? `<div class="tag">${tag}</div>` : ""}
-    <div class="days num">${win.days}</div><div class="of">${win.of}</div>
-    <div class="glass" style="margin-top:12px">${icon("calendar", "sm")} ${win.span}</div></div>`;
+// Who withheld: the country's flag and name, the platform underneath.
+const withheldWho = (country, platform) => `<div class="who">${flag(country)}<div><b>${COUNTRY[country] ?? esc(country)}</b>
+  <span class="by">${picon(platformKey(platform))}${esc(platform)}</span></div></div>`;
+
+// One countdown: the big number, a short label, and the date in a glass pill.
+function count(days, of, when) {
+  return `<div class="tax-count"><div class="days num">${days}</div><div><div class="of">${of}</div><div class="glass">${icon("calendar", "sm")} ${when}</div></div></div>`;
 }
 
 // Platforms split by where they pay out from, with the Chinese tax each withheld.
@@ -218,18 +219,19 @@ function china(ctx, T, R) {
   <div class="sa-grid">
     ${warnCard(ctx, T.issues)}
     <section class="sa-hero c8 tax-hero cn">
+      <div class="orb"></div>
+      ${mascot("piggy-bank", "hero-mascot")}
       <div>
         <div class="title">${YOURS.CN_TAX_HERO}</div>
         <div class="amount"><div class="sa-fig num">${money(T.set_aside.amount)}</div>
           <div class="sub">to set aside: ${money(T[`total_net_${k}`])} ${qLabel}net × the ${Math.round(T.set_aside.rate * 100)}% you chose</div></div>
+        ${win ? `<div class="tax-counts">${count(win.days, win.of, win.span)}</div>` : ""}
       </div>
-      ${win ? countdown(win) : ""}
     </section>
     <section class="sa-card c4">
       <div class="head"><h2>Tax already withheld</h2></div>
       ${withheldCn.length ? withheldCn.map(w => `<div class="withheld">
-        <div><span class="sa-badge tax">${icon("globe", "sm")} China · ${esc(w.platform)}</span>
-          <div class="meta">Individual income tax, withheld by the platform</div></div>
+        ${withheldWho("CN", w.platform)}
         <div class="amt"><div class="sa-fig num">${money(w[`withheld_${k}`])}</div>${w.withheld_cny != null && k !== "cny" ? `<div class="meta num">${cur(w.withheld_cny, "CNY")}</div>` : ""}</div>
       </div>`).join("") + `<div class="sa-note info" style="margin-top:16px">${icon("info", "sm")}<span>${YOURS.CN_WITHHELD_NOTE}</span></div>`
       : `<div class="meta">No platform withheld Chinese tax in ${label.split(" · ")[0]}.</div>`}
@@ -238,7 +240,7 @@ function china(ctx, T, R) {
       <div class="head"><h2>Income by where it was paid</h2>${win ? `<span class="meta">${YOURS.CN_WINDOW_LABEL.replace("2026", win.taxYear).replace("March 1 to June 30, 2027", `${monthDay(win.opens)} to ${monthDay(win.closes)}, ${win.closes.slice(0, 4)}`)}</span>` : ""}</div>
       ${outside.length ? `<div class="sa-note warn" style="margin-bottom:14px">${icon("globe", "sm")}<span>${YOURS.CN_FOREIGN_FLAG}</span></div>` : ""}
       <div class="sa-tablewrap"><table class="sa-table">
-        <thead><tr><th>Platform</th><th class="money">Records</th><th class="money">Gross</th><th class="money">Net</th><th class="money">Chinese tax withheld</th></tr></thead>
+        <thead><tr>${th("layers", "Platform")}${th("ledger", "Records", "money")}${th("coins", "Gross", "money")}${th("wallet", "Net", "money")}${th("bank", "Chinese tax withheld", "money")}</tr></thead>
         <tbody>
           ${inside.length ? `<tr class="group"><td colspan="5">Inside China <span class="sa-badge tax">Withheld at withdrawal</span></td></tr>${inside.map(row).join("")}` : ""}
           ${outside.length ? `<tr class="group"><td colspan="5">Outside China · ${outside.length} platform${outside.length === 1 ? "" : "s"} <span class="sa-badge warn">No Chinese tax withheld</span></td></tr>${outside.map(row).join("")}` : ""}
@@ -266,17 +268,19 @@ function both(ctx, T, R) {
     ...(dup ? [esc(`${dup.label} pays out through ${dup.payout_method}: the same money may appear on two 1099-Ks.`)] : []),
     ...T.issues.map(i => esc(issueLine(i))),
   ];
-  const usCount = due?.due_date ? `<div class="sa-count"><div class="tag">United States</div><div class="days num">${due.days_left}</div><div class="of">days to the next<br>estimated-tax payment</div><div class="glass" style="margin-top:12px">${icon("calendar", "sm")} ${dateLong(due.due_date)} · ${usQuarter(due.due_date)}</div></div>` : "";
+  const usCount = due?.due_date ? count(due.days_left, "days to next US payment", `${dateLong(due.due_date)} · ${usQuarter(due.due_date)}`) : "";
   return top(ctx, "Tax", "") + `
   <div class="sa-grid">
     ${warnCard(ctx, T.issues)}
     <section class="sa-hero c12 tax-hero both">
+      <div class="orb"></div>
+      ${mascot("piggy-bank", "hero-mascot")}
       <div>
         <div class="title">${YOURS.BOTH_HERO}</div>
         <div class="amount"><div class="sa-fig num">${money(T.set_aside.amount)}</div>
           <div class="sub">to set aside: ${money(T[`total_net_${k}`])} ${qLabel}net × the ${rate}% you chose</div></div>
+        <div class="tax-counts">${usCount}${win ? count(win.days, win.ofBoth, win.span) : ""}</div>
       </div>
-      <div class="sa-counts">${usCount}${win ? countdown(win, "China") : ""}</div>
     </section>
     <div class="c12 sa-note info">${icon("globe", "sm")}<span>${YOURS.BOTH_FLAG}</span></div>
     <section class="sa-card c12">
