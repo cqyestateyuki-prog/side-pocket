@@ -1,8 +1,9 @@
-"""Atlas v2 poses: generate on Nicrron (google/nano-banana-pro), cut to transparent PNG, build the contact sheet.
+"""Tilly (formerly Atlas) poses: generate on Nicrron (google/nano-banana-pro), cut to transparent PNG, build contact sheets.
 
-    .venv/bin/python design/mascots/atlas_v2/make.py gen [pose ...] [--cand a|b]
+    .venv/bin/python design/mascots/atlas_v2/make.py gen [pose ...] [--cand a|b|c|d|e|f]
     .venv/bin/python design/mascots/atlas_v2/make.py cut
-    .venv/bin/python design/mascots/atlas_v2/make.py sheet
+    .venv/bin/python design/mascots/atlas_v2/make.py sheet     # v2 candidates a/b -> sheet.png, pick.html
+    .venv/bin/python design/mascots/atlas_v2/make.py sheet3    # product poses vs original wave, picks -> sheet-v3.png
 
 Nicrron's image endpoint takes only model, prompt and seed (no reference image), so consistency comes from
 reusing the character and style wording of the original atlas_flat sheet word for word. Candidates differ by seed.
@@ -25,7 +26,7 @@ load_dotenv(ROOT / ".env")
 
 # Character and style sentences copied from the prompt that made design/mascots/atlas_flat/sheet.png.
 CHARACTER = (
-    "The character: Atlas, a chubby carrier pigeon with a round lilac head, blush-pink body, small pink beak, eyes always drawn as happy closed "
+    "The character: Tilly, a chubby carrier pigeon with a round lilac head, blush-pink body, small pink beak, eyes always drawn as happy closed "
     "upward crescent arcs like ^ ^ with rosy cheek blush, a small brown cross-body satchel with gold coins, a cream map-print neck scarf."
 )
 STYLE = (
@@ -37,7 +38,12 @@ FRAME = (
     "no text, no letters, no numbers, no symbols, no logos. Not a die-cut sticker: no white sticker edge, no outer outline, no drop shadow."
 )
 # Details the original sheet shows that a single pose tends to lose.
-DETAILS = "Small pink feet. The scarf is a cream bandana neckerchief tied in a small knot at the side, with a faint beige map print."
+DETAILS = (
+    "Small pink feet. The scarf is a cream bandana neckerchief tied in a small knot at the side, with a faint beige map print. "
+    # Round d/e/f: the original wave/celebrate art has these, and a/b lost them on some poses (e.g. all-pink trophy wings).
+    "Both wings are blush pink with soft lilac-purple tips on the outer flight feathers, and the short tail feathers are lilac, "
+    "the same lilac as the head."
+)
 EYES = "The eyes are closed happy arcs ^ ^ with no pupils and no dots."
 
 POSES = {
@@ -58,7 +64,10 @@ POSES = {
     "sleeping": "Pose: curled up asleep on a soft lavender pillow, eyes closed as gentle downward arcs, a few small round sleep bubbles.",
     "star-badge": "Pose: holding up a big shiny gold star badge with both wings.",
 }
-SEEDS = {"a": 1100, "b": 2200, "c": 3300}  # c: one retry for poses that came out off-model
+SEEDS = {"a": 1100, "b": 2200, "c": 3300, "d": 4400, "e": 5500, "f": 6600}  # c: retry; d/e/f: lilac-wing round
+ROUND3 = ("d", "e", "f")
+PRODUCT_POSES = ("coin", "coin-stack", "trophy", "medal", "piggy-bank", "ledger",
+                 "receipt", "laptop", "globe", "envelope", "flag", "star-badge")
 
 
 def prompt_for(pose: str) -> str:
@@ -67,6 +76,17 @@ def prompt_for(pose: str) -> str:
 
 
 def generate(pose: str, cand: str) -> str:
+    """One job; an upstream failure (Nicrron reported "upstream fal returned 403") is retried with backoff."""
+    for wait in (30, 90, 180, 0):
+        result = _generate_once(pose, cand)
+        if " failed {" not in result or not wait:
+            return result
+        print(f"{result[:160]} ... retrying in {wait}s", flush=True)
+        time.sleep(wait)
+    return result
+
+
+def _generate_once(pose: str, cand: str) -> str:
     base = os.environ.get("NICRRON_BASE_URL", "https://api.nicrron.ai/v1")
     headers = {"Authorization": "Bearer " + os.environ["NICRRON_API_KEY"]}
     origin = base.split("/v1")[0]
@@ -90,7 +110,7 @@ def generate(pose: str, cand: str) -> str:
             continue
         job = g.json()
     if job.get("status") in ("failed", "error") or not job.get("content_url"):
-        return f"{pose}-{cand}: failed {str(job)[:200]}"
+        return f"{pose}-{cand}: failed {str({k: v for k, v in job.items() if k != 'prompt'})[:300]}"
     for _ in range(8):  # right after "succeeded" the file can answer 410 for a second or two
         img = httpx.get(origin + job["content_url"], headers=headers, timeout=120, follow_redirects=True)
         if img.status_code == 200 and img.headers.get("content-type", "").startswith("image"):
@@ -124,6 +144,8 @@ def cut_background(img: Image.Image) -> Image.Image:
 def cut() -> None:
     OUT.mkdir(exist_ok=True)
     for raw in sorted(RAW.glob("*.png")):
+        if (OUT / raw.name).exists():
+            continue
         img = cut_background(Image.open(raw))
         img = img.crop(img.getbbox())
         scale = 496 / max(img.size)
@@ -196,6 +218,39 @@ PICK_HTML = """<!doctype html>
 """
 
 
+# Product pick per pose after the lilac-wing check (lilac wing tips and tail, crescent eyes, flat, no text).
+# Round d/e/f could not run (Nicrron image upstream "fal returned 403"), so trophy and ledger moved to the
+# existing candidates that already have the lilac tips and tail; the rest already had them.
+PICKS3: dict[str, str] = {
+    "coin": "b", "coin-stack": "a", "trophy": "b", "medal": "a", "piggy-bank": "b", "ledger": "b",
+    "receipt": "a", "laptop": "a", "globe": "a", "envelope": "a", "flag": "a", "star-badge": "a",
+}
+
+
+def sheet3() -> None:
+    """sheet-v3.png: the original wave.png first for comparison, then every candidate of each product pose, pick outlined."""
+    ref = ROOT / "web/assets/mascot/wave.png"
+    cells = [(ref, "original wave", False)] + [
+        (OUT / f"{pose}-{cand}.png", f"{pose} · {cand}", PICKS3.get(pose) == cand)
+        for pose in PRODUCT_POSES for cand in SEEDS if (OUT / f"{pose}-{cand}.png").exists()]
+    cols, cell, label_h = 7, 260, 34
+    rows = -(-len(cells) // cols)
+    page = Image.new("RGB", (cols * cell, rows * (cell + label_h)), "#F8F7FC")
+    font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 18)
+    draw = ImageDraw.Draw(page)
+    for i, (f, label, pick) in enumerate(cells):
+        x, y = (i % cols) * cell, (i // cols) * (cell + label_h)
+        if pick or i == 0:
+            draw.rounded_rectangle((x + 4, y + 4, x + cell - 4, y + cell + label_h - 4), 18,
+                                   outline="#6B5BC2" if pick else "#C42F78", width=4)
+        im = Image.open(f)
+        im.thumbnail((cell - 32, cell - 32), Image.LANCZOS)
+        page.paste(im, (x + (cell - im.width) // 2, y + (cell - im.height) // 2 + 6), im)
+        draw.text((x + 16, y + cell - 2), label, fill="#4B4D66", font=font)
+    page.save(HERE / "sheet-v3.png", optimize=True)
+    print("sheet-v3", page.size, len(cells))
+
+
 if __name__ == "__main__":
     cmd, args = sys.argv[1], sys.argv[2:]
     if cmd == "gen":
@@ -208,3 +263,5 @@ if __name__ == "__main__":
         cut()
     elif cmd == "sheet":
         sheet()
+    elif cmd == "sheet3":
+        sheet3()
