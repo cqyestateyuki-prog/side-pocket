@@ -6,6 +6,9 @@ Every fact below is checked against the repo. Sources in brackets. "I" in the ca
 - Product name now **Side Pocket**; mascot and assistant **Tilly** ("Ask Tilly"). Renamed 2026-10-17 21:33 because the founder felt "Side Atlas" sounded robotic. GPT-6 Astra proposed 12 names (Roost, Side Pocket, Patchwork, Breadbox, Pigeon Post, Side Table, Common Thread, Daybook, Take Home, Gather Round, Loose Ends, Second Helping); the founder picked Side Pocket. Astra proposed 8 pigeon names; the founder picked Tilly. [commit cf642b0, docs/product_brief.md]
 - Submitted to MONEY TALKS 2 (AI x Finance hackathon, New York, Money Operations track) on 2026-10-17 as **Side Atlas**; internal codename 到手 Daoshou ("take home"). [到手 Daoshou 需求文档 v2.md, docs/devpost_story.md]
 - First commit 2026-10-17 11:43 (PRISM tracing set up). Devpost submission before the 4:15 PM deadline. Post-hackathon work the same evening, last commit in scope 21:35. 67 commits that day. [git log]
+- Repo renamed to github.com/cqyestateyuki-prog/side-pocket; live app https://side-pocket-app.vercel.app. [git remote; coordinator note]
+- PRISM wording was removed from the product UI after the hackathon (commit 64b0774, 22:03); tracing stays on in the backend; the privacy center row now reads "Run logs". [git log]
+- One account instead of the "Your data / Demo data" switch: being merged now (evening of 2026-10-17); the interim switch reads "Moon Spirit / My uploads" (commit 687fc1a). [coordinator note, git log]
 - Hackathon requirements: build on PRISM by Block Convey with three proofs (a Sessions run with 6+ steps; an alert firing on a real run; a Root Cause cluster of 3+ failed runs, then v2 on the same inputs no longer failing); model calls through the Nicrron API. [README.md proofs table]
 
 ## Problem (original idea, then the pivot)
@@ -44,6 +47,7 @@ Every fact below is checked against the repo. Sources in brackets. "I" in the ca
 - Palette lab note on forest: steady and trustworthy like a ledger, but mismatched with the pink and lilac mascot; on violet: creative without losing professionalism, best match with the pigeon. [design/palette-lab/board.html]
 - Palette lab: the same prototype with only colour variables swapped: forest, Instagram gradient, violet, pink, forest + pink, then three "less purple" violets. Chosen: soft violet #6B5BC2 + pink #FF7AB6 with WCAG AA fixes (on-primary text 4.71:1, meta #696B83 5.21:1, pink text on white #C42F78 5.22:1). [design/palette-lab/board.html, purple.html, decisions #19, #20]
 - Mascot: Pop Mart blind-box style concepts first (3D); an owl was ruled out as too close to Duolingo; round shiny eyes were too Duolingo-like, so crescent ^ ^ eyes; 3D became a flat sticker illustration; the first size was too big, so mascot sizes became tokens (128 / 84 / 56 / 40 px). [design/mascots/m1*.png, board.html, decision #21]
+- Logo options (Google nano-banana-pro, 2026-10-17): pigeon head on a violet rounded square (chosen, in use), a flying dove with a globe, a winged coin globe, a folded map shaped like a bird (kept on file as a possible formal brand mark). [design/logo/README.md, icon_sheet.png]
 - Navigation: too many items, cut to exactly four screens (Overview, Ledger, Tax, Ask); duplicates merged, nothing unique removed; bilingual labels dropped, the UI became English only. [decisions #23 to #29]
 
 ## Iteration 3: bring your own data, privately (v1.3, v1.3.1)
@@ -69,19 +73,22 @@ Every fact below is checked against the repo. Sources in brackets. "I" in the ca
 - The founder rejected lines as AI-written: "Your tax items, together.", "Your forms and bank deposits, side by side", "to set aside: $5,428.94 net × the 25% you chose". All 137 UI strings went back to GPT-6 Astra with a plain microcopy guide (docs/copy_style.md). Examples after: "Tax summary"; "Forms vs deposits"; "25% of Q3 net income ($15,910.15)"; "September net income"; welcome headline "Side Pocket tracks your global side income." [commit cf642b0, docs/copy_style.md]
 - One meaning error caught in review: Astra turned "keeps the most" (highest share of gross kept) into "Highest fee share"; reverted. [commit cf642b0 review]
 
-## Iteration 7: from tax tool to all side income (v1.4, designed, being built)
-- Manual income and expenses (notes stay in the browser), kept after expenses, monthly goal with progress, 8 milestone badges computed by code (first $1,000 month, best month so far, 3 months of growth, new source, 5 sources, new currency, $10,000 total, a complete month). Sample numbers for Moon Spirit: September kept after expenses $5,913.34; goal $6,000 reached Sep 28; 7 of 8 badges. [commit 38851fe, eb793a6, decisions #47 to #55]
+## Iteration 7: from tax tool to all side income (v1.4, BUILT and live at commit 836ec6f, 21:58)
+- Built (836ec6f): Ledger mixes entries with statement rows ("Added by you", Income / Expenses filters), KPI row Gross income / Fees / Tax withheld / Expenses / Kept after expenses, an entry sheet that adds, edits and deletes (notes stay in the browser); Overview income first with one rounding so hero, kept box and goal agree; goal card (empty, in progress, ended short, reached); latest badge; Milestones page with Tilly poses per badge and the earned date only; goal sheet; the accountant report lists recorded income and expenses; backups carry entries; the sample account keeps its own changes in the browser. Live numbers for Moon Spirit, September 2026: net income $6,118.33 from $8,247.61 gross across 9 sources; $776.54 from 2 sources she added; expenses $204.99; kept after expenses $5,913.34; goal $6,000 reached Sep 28 ($118.33 above); latest badge Highest income month; 7 of 8 badges. [git show 836ec6f; live site]
+- Designed first: manual income and expenses (notes stay in the browser), kept after expenses, monthly goal with progress, 8 milestone badges computed by code (first $1,000 month, best month so far, 3 months of growth, new source, 5 sources, new currency, $10,000 total, a complete month). Sample numbers for Moon Spirit: September kept after expenses $5,913.34; goal $6,000 reached Sep 28; 7 of 8 badges. [commit 38851fe, eb793a6, decisions #47 to #55]
 
 ## Results (as of 2026-10-17 evening)
 - Hackathon: all three PRISM proofs done; Devpost submitted. [README.md]
 - v1 72/81 → v2 9/9 on v1's failures, 89/89 overall; alert fired on a real run.
-- Live app and landing page on Vercel; 122 tests passing; design kit v1.4.1 with 73 logged decisions and a 47-page spec.
+- Live app and landing page on Vercel (https://side-pocket-app.vercel.app); v1.4 live; 122 tests passing before v1.4 (v1.4 added tests/test_demo_entries.py); design kit v1.4.1 with 73 logged decisions and a 47-page spec.
 - What's next (from the submission plus later decisions): official API connections for YouTube, Twitch, Patreon, Upwork and PayPal; forwarded emails for platforms without APIs; bank matching; real 1099 import; more countries' withholding rules; check the 8 statement formats against real exports; a Chinese language switch. [docs/devpost_story.md, commit f754a5f note]
 
 ## Images (docs/case_study_assets/)
-- 01-v1-forest.png: kit v1, forest green with Linktree form [design/palette-lab/a_forest_overview.png]
-- 02-palette-lab.png: five palettes on the same Overview [design/palette-lab/*_overview.png]
-- 03-mascot-iterations.png: 3D round eyes → 3D crescent eyes → flat sticker [design/mascots/m1_pigeon.png, m1c_pigeon_crescent.png, web/assets/mascot/wave.png]
-- 04-tilly-poses.png: the 16 v2 poses [design/mascots/atlas_v2/sheet.png]
-- 05..10: PRISM proofs [docs/prism_screens]
-- 11/12: My data before/after; 13/14: Ledger before/after; 15/16: Tax hero before/after; 17: CNY ledger with ECB labels; 18: rate file stop; 19: Settings & privacy; 20: current Overview.
+- 01-v1-forest-overview.png: kit v1 Overview, forest green with Linktree form
+- 02-palette-lab.png: palette lab grid (forest, Instagram gradient, violet / pink, forest with pink, soft violet chosen)
+- 03-mascot-iterations.png: 3D round eyes, 3D crescent eyes, flat sticker
+- 04-tilly-poses.png: the 16 v2 poses (29 candidates, picks outlined)
+- 26-logo-options.png: four logo options; pigeon head chosen
+- 06/07: PRISM traces of the same question: v1 invented rate, v2 stops
+- 12/13: My data before/after; 14/15: Ledger kit v1.1 vs live v1.4; 16/17: Tax before/after
+- 18: CNY ledger with ECB labels; 19: rate file stop; 20: Settings and privacy (live, Run logs row); 21: imported statements with 4-digit labels; 22: Ask Tilly answer (live replay); 23: Overview v1.4 live; 24: Milestones live
