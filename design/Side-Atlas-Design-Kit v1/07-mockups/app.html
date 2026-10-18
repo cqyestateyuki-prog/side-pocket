@@ -77,9 +77,13 @@ const dateShort = d => new Date(d + "T12:00:00").toLocaleString("en-US", { month
 function who(name, cjk, meta) {
   return `<div class="sa-who"><div class="av">${cjk ? `<span class="cjk">${cjk}</span>` : name[0]}</div><div><b>${name}</b><span>${meta}</span></div></div>`;
 }
+// v1.4.1: period and currency are dropdown pills (a native select in the product), so the list can grow.
+const PERIOD_LONG = { Jul: "July 2026", Aug: "August 2026", Sep: "September 2026", "Q3 2026": "Q3 2026" };
 function periodSeg(on) {
-  return `<div class="sa-seg">${["Jul", "Aug", "Sep", "Q3 2026"].map(p => `<button class="${p === on ? "on" : ""}">${p}</button>`).join("")}</div>`;
+  return `<span class="sa-pick">${icon("calendar", "sm")}<span>${PERIOD_LONG[on] ?? on}</span>${icon("chevron", "sm chev")}</span>`;
 }
+const thPick = (label, on) => `<span class="th-pick ${on ? "on" : ""}">${label}${icon("chevron", "sm chev")}</span>`;
+const csvBtn = () => `<span class="sa-btn secondary sm">${icon("download", "sm")} CSV</span>`;
 const moon = () => who("Moon Spirit", "", "New York · US tax home · single-member LLC");
 
 /* ---------------- Overview ---------------- */
@@ -135,19 +139,13 @@ function ledger() {
   const rows = [...L.rows].sort((a, b) => a.date.localeCompare(b.date) || a.platform.localeCompare(b.platform));
   const cell = (v, cls) => `<td class="money ${v === 0 ? "zero" : cls}">${v === 0 ? "—" : usd(cls === "net" ? v : -v)}</td>`;
   return `
-  <div class="sa-top"><div><h1>Ledger</h1></div><div class="right">${periodSeg("Sep")}${moon()}</div></div>
+  <div class="sa-top"><div><h1>Ledger</h1></div><div class="right">${csvBtn()}${periodSeg("Sep")}${moon()}</div></div>
   <div class="sa-kpirow">
     ${[["Gross", t.gross, ""], ["Platform fees", -t.platform_fee, "var(--sa-fee-text)"], ["Payout fees", -t.payout_fee, "var(--sa-payout-text)"], ["Tax withheld", -t.withheld, "var(--sa-tax-text)"], ["Net", t.net, "var(--sa-forest)"]]
       .map(([l, v, c]) => `<div class="sa-card sa-kpi"><div class="label">${l}</div><div class="sa-fig num" style="${c ? `color:${c}` : ""}">${usd(v)}</div></div>`).join("")}
   </div>
-  <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
-    <span class="sa-chip on">All · ${rows.length} records</span>
-    ${D.overview_c01_sep.platforms.map(p => `<span class="sa-chip">${PICON(p.platform)}${p.label}</span>`).join("")}
-    <span style="margin-left:auto" class="sa-btn secondary sm">${icon("filter", "sm")} Type</span>
-    <span class="sa-btn secondary sm">${icon("download", "sm")} CSV</span>
-  </div>
   <div class="sa-tablewrap"><table class="sa-table dense">
-    <thead><tr><th>Date</th><th>Platform</th><th>Type</th><th>Original</th><th class="money">Gross</th><th class="money">Platform fee</th><th class="money">Payout fee</th><th class="money">Withheld</th><th class="money">Net</th></tr></thead>
+    <thead><tr><th>${thPick("Date")}</th><th>${thPick("Platform")}</th><th>${thPick("Type")}</th><th>Original</th><th class="money">Gross</th><th class="money">Platform fee</th><th class="money">Payout fee</th><th class="money">Withheld</th><th class="money">Net</th></tr></thead>
     <tbody>${rows.map(r => `<tr>
       <td class="num">${r.date.slice(5).replace("-", "/")}</td>
       <td>${PICON(r.platform)}${r.platform_label}</td>
@@ -426,7 +424,7 @@ function bindSettings() {
 // "Your data" screens re-use creator C01's exports as if the person uploaded them (data-v13.js, real ledger
 // numbers). The person is "You": no name, no account; account IDs appear only as pseudonymised labels.
 const you = () => `<div class="sa-who"><div class="av">${icon("lock", "sm")}</div><div><b>You</b><span>Your data · kept in this browser</span></div></div>`;
-const curSeg = on => `<div class="sa-seg cur" aria-label="Display currency">${[["USD", "$"], ["CNY", "¥"]].map(([c, g]) => `<button class="${c === on ? "on" : ""}"><span>${g}</span>${c}</button>`).join("")}</div>`;
+const curSeg = on => `<span class="sa-pick"><b class="g">${on === "CNY" ? "¥" : "$"}</b><span>${on}</span>${icon("chevron", "sm chev")}</span>`;
 // Where each export lives (same list as the product's import drawer; paths may change).
 const WHERE = [
   ["upwork", "Upwork", "upwork_transactions.csv", "Reports → Transaction history → Download CSV"],
@@ -752,7 +750,7 @@ function ledgerCnyCase(kind) {
   </section>` : ""}
   <div class="sa-note info" style="margin-bottom:14px">${icon("info", "sm")}<span>${kind === "ecb" ? X.LEDGER_ECB_NOTE : X.LEDGER_FILE_NOTE}</span></div>
   <div class="sa-tablewrap"><table class="sa-table dense">
-    <thead><tr><th>Date</th><th>Platform</th><th>Type</th><th>Original</th><th class="money">Gross (CNY)</th><th class="money">Fees</th><th class="money">Withheld</th><th class="money">Net (CNY)</th></tr></thead>
+    <thead><tr><th>${thPick("Date")}</th><th>${thPick("Platform")}</th><th>${thPick("Type")}</th><th>Original</th><th class="money">Gross (CNY)</th><th class="money">Fees</th><th class="money">Withheld</th><th class="money">Net (CNY)</th></tr></thead>
     <tbody>${LG.rows.map(r => r.issue ? `<tr class="missing">${head(r)}
       <td class="money"><span class="sa-badge warn">rate missing</span>${rateLine(r)}</td><td colspan="3" class="money meta">left out of totals</td></tr>` : `<tr>${head(r)}
       <td class="money">${r.gross_cny ? yen(r.gross_cny) : "—"}${rateLine(r)}</td>${cell(r.platform_fee_cny + r.payout_fee_cny, "fee", true)}${cell(r.withheld_cny, "tax", true)}<td class="money net">${yen(r.net_cny)}</td></tr>`).join("")}
@@ -848,18 +846,13 @@ function ledgerV14() {
   };
   return `
   <div class="sa-top"><div><h1>Ledger</h1></div>
-    <div class="right"><a class="sa-btn secondary sm">${icon("upload", "sm")} Add statements</a><a class="sa-btn primary sm" href="#entry-expense">${icon("plus", "sm")} Add entry</a>${periodSeg("Sep")}</div></div>
+    <div class="right"><a class="sa-btn secondary sm">${icon("upload", "sm")} Add statements</a><a class="sa-btn primary sm" href="#entry-expense">${icon("plus", "sm")} Add entry</a>${csvBtn()}${periodSeg("Sep")}</div></div>
   <div class="sa-kpirow">
     ${[["Gross income", t.gross, ""], ["Fees", -t.fees, "var(--sa-fee-text)"], ["Tax withheld", -t.withheld, "var(--sa-tax-text)"], ["Your expenses", -t.expenses, ""], ["Kept after expenses", t.kept, "var(--sa-forest)"]]
       .map(([l, v, c]) => `<div class="sa-card sa-kpi"><div class="label">${l}</div><div class="sa-fig num" style="${c ? `color:${c}` : ""}">${money(v)}</div></div>`).join("")}
   </div>
-  <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
-    <span class="sa-chip on">All <span class="n">${L.counts.all}</span></span><span class="sa-chip">${icon("up", "sm")} Income <span class="n">${L.counts.income}</span></span><span class="sa-chip">${icon("down", "sm")} Expenses <span class="n">${L.counts.expenses}</span></span>
-    <span class="meta" style="margin-left:12px;display:flex;gap:6px;align-items:center">${youTag()} ${L.counts.own} entries this month</span>
-    <span style="margin-left:auto" class="sa-btn secondary sm">${icon("filter", "sm")} Source</span><span class="sa-btn secondary sm">${icon("download", "sm")} CSV</span>
-  </div>
   <div class="sa-tablewrap"><table class="sa-table dense">
-    <thead><tr><th>Date</th><th>Source</th><th>Type</th><th>Original</th><th class="money">Gross</th><th class="money">Fees</th><th class="money">Withheld</th><th class="money">Net</th></tr></thead>
+    <thead><tr><th>${thPick("Date")}</th><th>${thPick("Source")}</th><th>${thPick("Type")}</th><th>Original</th><th class="money">Gross</th><th class="money">Fees</th><th class="money">Withheld</th><th class="money">Net</th></tr></thead>
     <tbody>${L.rows.map(row).join("")}
       <tr class="total"><td colspan="4">${monthName(m)} total · net income ${money(t.net)}, kept after expenses ${money(t.kept)}</td><td class="money">${money(t.gross)}</td><td class="money">${money(-t.fees)}</td><td class="money">${money(-t.withheld)}</td><td class="money">${money(t.net_after_expenses)}</td></tr>
     </tbody></table></div>`;

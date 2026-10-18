@@ -17,10 +17,28 @@ async function load(ctx) {
 }
 
 function filtered(ctx, rows) {
-  const f = ctx.query.get("f"), t = ctx.query.get("t");
+  const f = ctx.query.get("f"), t = ctx.query.get("t"), dir = ctx.query.get("s") === "new" ? -1 : 1;
   return rows.filter(r => (!f || r.platform === f) && (!t || r.type === t))
-    .sort((a, b) => a.date.localeCompare(b.date) || a.platform.localeCompare(b.platform));
+    .sort((a, b) => dir * a.date.localeCompare(b.date) || a.platform.localeCompare(b.platform));
 }
+
+// Column filters (kit v1.4.1): Date sorts, Platform and Type filter. Each header is a small pill over a
+// native select; an active filter shows its value in the accent colour.
+function head(ctx, L, cols) {
+  const f = ctx.query.get("f"), type = ctx.query.get("t"), sort = ctx.query.get("s") === "new" ? "new" : "old";
+  const types = [...new Set(L.rows.filter(r => !f || r.platform === f).map(r => r.type))].sort();
+  const pick = (key, text, on, options) => `<label class="th-pick ${on ? "on" : ""}">${esc(text)}${icon("chevron", "sm chev")}
+    <select data-col="${key}" aria-label="${key === "s" ? "Sort by date" : key === "f" ? "Filter by platform" : "Filter by type"}">${options}</select></label>`;
+  const opt = (v, label, sel) => `<option value="${esc(v)}" ${sel ? "selected" : ""}>${esc(label)}</option>`;
+  const plat = f && L.platforms.find(p => p.platform === f);
+  return `<thead><tr>
+    <th>${pick("s", "Date", sort === "new", opt("old", "Oldest first", sort === "old") + opt("new", "Newest first", sort === "new"))}</th>
+    <th>${pick("f", plat ? plat.label : "Platform", !!plat, opt("", "All platforms", !f) + L.platforms.map(p => opt(p.platform, p.label, p.platform === f)).join(""))}</th>
+    <th>${pick("t", type || "Type", !!type, opt("", "All types", !type) + types.map(x => opt(x, x, x === type)).join(""))}</th>
+    ${cols}</tr></thead>`;
+}
+
+const csvBtn = `<button class="sa-btn secondary sm" data-csv>${icon("download", "sm")} CSV</button>`;
 
 function original(r) {
   if (r.original.currency === "USD") return `<span class="meta">USD</span>`;
@@ -37,23 +55,20 @@ export async function render(ctx) {
   const L = await load(ctx);
   const t = L.totals;
   const rows = filtered(ctx, L.rows);
-  const f = ctx.query.get("f"), type = ctx.query.get("t");
-  const types = [...new Set(L.rows.filter(r => !f || r.platform === f).map(r => r.type))].sort();
-  const link = extra => ctx.href("ledger", { c: ctx.creator, p: ctx.period, f, t: type, ...extra });
+  const f = ctx.query.get("f");
   // One home for the totals: the KPI row follows the platform filter (no repeated total row).
   const k = (f && L.platforms.find(p => p.platform === f)) || t;
 
   const importBtn = `<button class="sa-btn primary sm" data-import-open>${icon("upload", "sm")} Import statements</button>`;
-  return top(ctx, "Ledger", periodLabel(ctx.period), { actions: importBtn }) + `
+  return top(ctx, "Ledger", "", { actions: csvBtn + importBtn }) + `
   ${L.issues.length ? `<div class="sa-grid" style="margin-bottom:20px">${warnCard(ctx, L.issues)}</div>` : ""}
   <div class="sa-kpirow">
     ${[["Gross", k.gross, ""], ["Platform fees", -k.platform_fee, "var(--sa-fee-text)"], ["Payout fees", -k.payout_fee, "var(--sa-payout-text)"],
        ["Tax withheld", -k.withheld, "var(--sa-tax-text)"], ["Net", k.net, "var(--sa-net-text)"]]
       .map(([l, v, c]) => `<div class="sa-card sa-kpi"><div class="label">${l}</div><div class="sa-fig num" style="${c ? `color:${c}` : ""}">${usd(v)}</div></div>`).join("")}
   </div>
-  ${filters(ctx, L, link, types)}
   <div class="sa-tablewrap"><table class="sa-table dense">
-    <thead><tr><th>Date</th><th>Platform</th><th>Type</th><th>Original</th><th class="money">Gross</th><th class="money">Platform fee</th><th class="money">Payout fee</th><th class="money">Withheld</th><th class="money">Net</th></tr></thead>
+    ${head(ctx, L, `<th>Original</th><th class="money">Gross</th><th class="money">Platform fee</th><th class="money">Payout fee</th><th class="money">Withheld</th><th class="money">Net</th>`)}
     <tbody>${rows.map(r => `<tr class="${r.net_usd == null ? "missing" : ""}">
       <td class="num">${mmdd(r.date)}</td>
       <td>${picon(r.platform)}${esc(r.platform_label)}</td>
@@ -61,17 +76,6 @@ export async function render(ctx) {
       <td class="num">${original(r)}</td>
       ${r.gross_usd == null ? cell(null) : `<td class="money">${usd(r.gross_usd)}</td>`}${cell(r.platform_fee_usd, "fee")}${cell(r.payout_fee_usd, "payout")}${cell(r.withheld_usd, "tax")}${cell(r.net_usd, "net")}</tr>`).join("")}
     </tbody></table></div>`;
-}
-
-function filters(ctx, L, link, types) {
-  const f = ctx.query.get("f"), type = ctx.query.get("t");
-  return `<div class="sa-filters">
-    <a class="sa-chip ${f ? "" : "on"}" href="${link({ f: null, t: null })}">All · ${L.rows.length} records</a>
-    ${L.platforms.map(p => `<a class="sa-chip ${f === p.platform ? "on" : ""}" href="${link({ f: f === p.platform ? null : p.platform, t: null })}">${picon(p.platform)}${p.label}</a>`).join("")}
-    <label class="sa-btn secondary sm select">${icon("filter", "sm")} ${type ? esc(type) : "Type"}
-      <select data-type aria-label="Record type"><option value="">All types</option>${types.map(x => `<option ${x === type ? "selected" : ""}>${esc(x)}</option>`).join("")}</select></label>
-    <button class="sa-btn secondary sm" data-csv>${icon("download", "sm")} CSV</button>
-  </div>`;
 }
 
 // ---------------------------------------------------------------- Your data (kit 17)
@@ -96,9 +100,7 @@ async function renderYours(ctx) {
   const money = ctx.money, k = ctx.cur.toLowerCase();
   const L = await load(ctx);
   const rows = filtered(ctx, L.rows);
-  const f = ctx.query.get("f"), type = ctx.query.get("t");
-  const types = [...new Set(L.rows.filter(r => !f || r.platform === f).map(r => r.type))].sort();
-  const link = extra => ctx.href("ledger", { p: ctx.period, f, t: type, ...extra });
+  const f = ctx.query.get("f");
   const t = (f && L.platforms.find(p => p.platform === f)) || L.totals;
   const left = rows.filter(r => r.issue).length;
 
@@ -131,7 +133,7 @@ async function renderYours(ctx) {
   }).join("");
   const label = periodLabel(ctx.period).split(" · ")[0];
 
-  return top(ctx, "Ledger", "", { actions: ctx.currencySeg(ctx) }) + `
+  return top(ctx, "Ledger", "", { actions: csvBtn + ctx.currencySeg(ctx) }) + `
   ${L.issues.length ? `<div class="sa-grid" style="margin-bottom:16px">${warnCard(ctx, L.issues)}</div>` : ""}
   <div class="sa-kpirow">
     ${[["Gross", t.gross, ""], ["Fees", -(t.platform_fee + t.payout_fee), "var(--sa-fee-text)"], ["Tax withheld", -t.withheld, "var(--sa-tax-text)"],
@@ -140,18 +142,20 @@ async function renderYours(ctx) {
     ${ratesCard}
   </div>
   ${curs.length ? `<div class="sa-note info" style="margin-bottom:14px">${icon("info", "sm")}<span>${withFile ? YOURS.LEDGER_FILE_NOTE : YOURS.LEDGER_ECB_NOTE}</span></div>` : ""}
-  ${filters(ctx, L, link, types)}
   <div class="sa-tablewrap"><table class="sa-table dense">
-    <thead><tr><th>Date</th><th>Platform</th><th>Type</th><th>Original</th><th class="money">Gross (${ctx.cur})</th><th class="money">Fees</th><th class="money">Withheld</th><th class="money">Net (${ctx.cur})</th></tr></thead>
+    ${head(ctx, L, `<th>Original</th><th class="money">Gross (${ctx.cur})</th><th class="money">Fees</th><th class="money">Withheld</th><th class="money">Net (${ctx.cur})</th>`)}
     <tbody>${body}
-      <tr class="total"><td colspan="4">${esc(label)} total${left ? ` · ${left} record${left === 1 ? "" : "s"} left out` : ""}</td><td class="money">${money(t.gross)}</td><td class="money">${money(-(t.platform_fee + t.payout_fee))}</td><td class="money">${money(-t.withheld)}</td><td class="money">${money(t.net)}</td></tr>
+      <tr class="total"><td colspan="4">${esc(label)} total · ${rows.length} record${rows.length === 1 ? "" : "s"}${left ? ` · ${left} record${left === 1 ? "" : "s"} left out` : ""}</td><td class="money">${money(t.gross)}</td><td class="money">${money(-(t.platform_fee + t.payout_fee))}</td><td class="money">${money(-t.withheld)}</td><td class="money">${money(t.net)}</td></tr>
     </tbody></table></div>`;
 }
 
 export function mount(ctx, root) {
-  root.querySelector("[data-type]")?.addEventListener("change", ev => {
-    location.hash = ctx.href("ledger", { c: ctx.yours ? null : ctx.creator, p: ctx.period, f: ctx.query.get("f"), t: ev.target.value || null });
-  });
+  root.querySelectorAll("[data-col]").forEach(sel => sel.addEventListener("change", () => {
+    const q = { f: ctx.query.get("f"), t: ctx.query.get("t"), s: ctx.query.get("s") };
+    q[sel.dataset.col] = sel.value && !(sel.dataset.col === "s" && sel.value === "old") ? sel.value : null;
+    if (sel.dataset.col === "f") q.t = null; // types differ per platform
+    location.hash = ctx.href("ledger", { c: ctx.yours ? null : ctx.creator, p: ctx.period, ...q });
+  }));
   root.querySelector("[data-csv]")?.addEventListener("click", () => downloadCsv(ctx));
   const open = () => openPanel(ctx, root, () => {
     if (ctx.query.get("import")) history.replaceState(null, "", ctx.href("ledger", { c: ctx.creator, p: ctx.period, f: ctx.query.get("f"), t: ctx.query.get("t") }));

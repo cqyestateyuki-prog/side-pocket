@@ -5,7 +5,7 @@
 // in this browser, POST /api/personal/*). Screens ask ctx.load() and don't care which.
 import { COPY } from "./lib/copy.js";
 import { get } from "./lib/api.js";
-import { cur, esc, icon, monthShort, quarterOf } from "./lib/format.js";
+import { cur, esc, icon, monthName, monthShort, quarterOf } from "./lib/format.js";
 import * as overview from "./screens/overview.js";
 import * as ledger from "./screens/ledger.js";
 import * as tax from "./screens/tax.js";
@@ -82,8 +82,7 @@ export function href(screen, params) {
 function periodsOf(ctx) {
   if (!ctx.yours) return PERIODS;
   const { months, quarters } = yourPeriods(ctx.data);
-  const q = ctx.period ? quarterOf(ctx.period) : quarters.at(-1);
-  return [...months.filter(m => quarterOf(m) === q), ...quarters];
+  return [...months, ...quarters];
 }
 
 function periodFor(target, ctx) {
@@ -92,10 +91,16 @@ function periodFor(target, ctx) {
   return periodsOf(ctx).includes(ctx.period) ? ctx.period : null;
 }
 
-const periodName = p => p.includes("Q") ? `Q${p.slice(-1)} ${p.slice(0, 4)}` : monthShort(p);
+const periodName = p => p.includes("Q") ? `Q${p.slice(-1)} ${p.slice(0, 4)}` : `${monthName(p)} ${p.slice(0, 4)}`;
 
+// Period and display currency are dropdowns (kit v1.4.1): a pill that shows the choice over a native
+// select, so the list can grow with more months, quarters and years.
 export function periodSeg(ctx) {
-  return `<div class="sa-seg">${periodsOf(ctx).map(p => `<a href="${href(ctx.screen.key, { c: ctx.yours ? null : ctx.creator, p })}" class="${p === ctx.period ? "on" : ""}">${periodName(p)}</a>`).join("")}</div>`;
+  if (!ctx.period) return "";
+  const all = periodsOf(ctx), opt = p => `<option value="${p}" ${p === ctx.period ? "selected" : ""}>${periodName(p)}</option>`;
+  const group = (label, ps) => ps.length ? `<optgroup label="${label}">${ps.slice().reverse().map(opt).join("")}</optgroup>` : "";
+  return `<label class="sa-pick" title="Period">${icon("calendar", "sm")}<span>${periodName(ctx.period)}</span>${icon("chevron", "sm chev")}
+    <select data-period-switch aria-label="Period">${group("Months", all.filter(p => !p.includes("Q")))}${group("Quarters", all.filter(p => p.includes("Q")))}</select></label>`;
 }
 
 const issueText = c => c.data_issues?.length
@@ -118,10 +123,12 @@ export function whoPill(ctx) {
 }
 
 // Display currency switch (Your data only; the demo is in USD). Saving it re-renders the screen.
+const CURRENCIES = [["USD", "$", "US dollar"], ["CNY", "¥", "Chinese yuan"]];
 export function currencySeg(ctx) {
   if (!ctx.yours) return "";
-  return `<div class="sa-seg cur" aria-label="Display currency">${[["USD", "$"], ["CNY", "¥"]].map(([c, g]) =>
-    `<button type="button" data-currency="${c}" class="${c === ctx.cur ? "on" : ""}"><span>${g}</span>${c}</button>`).join("")}</div>`;
+  const [, g] = CURRENCIES.find(([c]) => c === ctx.cur) ?? CURRENCIES[0];
+  return `<label class="sa-pick" title="Display currency"><b class="g">${g}</b><span>${ctx.cur}</span>${icon("chevron", "sm chev")}
+    <select data-currency-switch aria-label="Display currency">${CURRENCIES.map(([c, , n]) => `<option value="${c}" ${c === ctx.cur ? "selected" : ""}>${c} · ${n}</option>`).join("")}</select></label>`;
 }
 
 let renderSeq = 0;
@@ -167,9 +174,12 @@ async function go() {
     const issueMonth = ctx.screen.period === "month" ? next?.data_issues?.[0]?.month : null;
     location.hash = href(ctx.screen.key, { c: ev.target.value, p: issueMonth ?? (ctx.screen.period ? ctx.period : null) });
   });
-  main.querySelectorAll("[data-currency]").forEach(b => b.addEventListener("click", async () => {
-    if (b.dataset.currency === ctx.cur) return;
-    await store.saveSettings({ currency: b.dataset.currency });
+  main.querySelector("[data-period-switch]")?.addEventListener("change", ev => {
+    location.hash = href(ctx.screen.key, { c: ctx.yours ? null : ctx.creator, p: ev.target.value });
+  });
+  main.querySelectorAll("[data-currency-switch]").forEach(sel => sel.addEventListener("change", async () => {
+    if (sel.value === ctx.cur) return;
+    await store.saveSettings({ currency: sel.value });
     go();
   }));
 }

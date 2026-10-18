@@ -267,3 +267,17 @@ a.sa-prism { text-decoration: none; }
 .sa-legend li { grid-template-columns: 18px 1fr auto 92px; }
 .sa-legend .sa-picon { margin-right: 0; }
 .sa-chip .sa-picon { width: 14px; height: 14px; margin-right: 0; vertical-align: -2px; }
+
+/* Dropdown pickers (kit v1.4.1): period and display currency in the page header, column filters in the ledger */
+.sa-pick { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px; background: var(--sa-surface); border: 1px solid var(--sa-line); border-radius: var(--sa-r-pill); font: 700 14px/1 var(--sa-font); color: var(--sa-ink); white-space: nowrap; cursor: pointer; }
+.sa-pick:hover { border-color: var(--sa-line-strong); }
+.sa-pick:focus-within { outline: 2px solid var(--sa-forest); outline-offset: 2px; }
+.sa-pick > .sa-icon { color: var(--sa-meta); }
+.sa-pick .g { color: var(--sa-forest); font-weight: 800; }
+.sa-pick select, .th-pick select { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; font: inherit; }
+.th-pick { position: relative; display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; margin: -4px -8px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+.th-pick:hover { background: var(--sa-forest-100); }
+.th-pick:focus-within { outline: 2px solid var(--sa-forest); outline-offset: 1px; }
+.th-pick .chev { width: 12px; height: 12px; color: var(--sa-meta); }
+.th-pick.on { color: var(--sa-forest); background: var(--sa-forest-100); text-transform: none; letter-spacing: 0; }
+.th-pick.on .chev { color: var(--sa-forest); }
