@@ -192,7 +192,7 @@ function renderNav(ctx) {
     `<a href="#${s.key}" class="${s.key === current ? "on" : ""}">${icon(s.icon)}<span>${esc(s.label)}</span>${s.key === "mydata" && files ? `<span class="r">${files} file${files === 1 ? "" : "s"}</span>` : ""}</a>`).join("");
   const keep = SCREENS.find(s => s.key === current && s.nav !== false) ? current : "overview";
   document.getElementById("mode").innerHTML =
-    `<a href="#${keep}" data-mode="yours" class="${ctx.yours ? "on" : ""}">${icon("lock", "sm")}Your data</a><a href="#${keep}" data-mode="demo" class="${ctx.yours ? "" : "on"}">Demo data</a>`;
+    `<a href="#${keep}" data-mode="demo" class="${ctx.yours ? "" : "on"}"><span class="av-mini">M</span>Moon Spirit</a><a href="#${keep}" data-mode="yours" class="${ctx.yours ? "on" : ""}">${icon("lock", "sm")}My uploads</a>`;
 }
 
 document.getElementById("signout").addEventListener("click", () => {

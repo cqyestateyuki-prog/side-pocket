@@ -349,3 +349,4 @@ button.sa-who { font: inherit; color: inherit; text-align: left; cursor: pointer
 /* Settings: Tilly with the globe in the card's empty corner */
 .sa-settings { position: relative; }
 .sa-settings .settings-mascot.ok { position: absolute; right: 22px; bottom: 18px; height: var(--sa-mascot-card); pointer-events: none; }
+.sa-mode .av-mini { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; background: var(--sa-forest-100); color: var(--sa-forest); font: 800 10px/1 var(--sa-font); }
