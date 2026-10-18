@@ -8,6 +8,8 @@ The single place where visual rulings live. Changing a ruling means a new kit ve
 |---|---|---|
 | 56 | **My data, nothing imported:** title with "Nothing imported yet", one hero headline, the mascot speech bubble and one button (Choose CSV files). Removed: the hero eyebrow, the 8-platform sentence, the drop hint, "Explore demo data" (the sidebar switch does this) and "Try sample statements". | User: the page had too much text; asked to keep the subtitle and the speech bubble and to drop the hint and the sample button. |
 | 57 | **Privacy strip, short form:** three short promises (Saved only in this browser · Server keeps no copy · AI sees totals, not rows) plus a "How your data is handled" link to Settings & privacy, where the full privacy map lives. | Details moved one click away instead of under every promise. |
+| 60 | **Badge art is live:** `gen_data_v14.py --js` now finds the Atlas v2 picks, so every badge has its own pose (coin, trophy, coin-stack, envelope, star-badge, globe, medal, ledger; flag for a reached goal). Closes the note in #55. | The v2 poses landed. |
+| 59 | **Badge tiles show the earned date only** ("Earned Jul 4, 2026", in the accent colour); the reason in numbers is gone from the tiles, the Milestones hero and the Overview latest-badge card. Locked tiles keep their progress line. Supersedes the "reason in numbers" part of #51. | User: the reason line repeated what the badge name says. |
 | 58 | **Where to download** is a collapsed `details` card ("Where do I find my CSV files?"); file names are dropped, the menu paths stay. | Most visits don't need it. |
 
 ## v1.4 · 17 October 2026 · current standard (drawn; waiting for sign-off before build)

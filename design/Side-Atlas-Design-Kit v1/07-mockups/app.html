@@ -794,7 +794,7 @@ const goalCard = g => g.reached
       <div class="sa-progress"><i style="width:${Math.min(100, g.net / g.amount * 100).toFixed(1)}%"></i></div>
       <div class="note"><span>${Y.GOAL_SHORT.replace("{left}", `<b class="num">${money(g.remaining)}</b>`).replace("{goal}", money0(g.amount))}</span><a href="#goal-sheet">Change goal</a></div></section>`;
 const latestCard = b => `<section class="sa-card sa-latest"><img class="sa-mascot" src="${b.art}" alt="">
-  <div><div class="label">${Y.LATEST_BADGE} · ${dateShort(b.earned_on)}</div><b>${Y[b.key + "_NAME"]}</b><span class="s">${b.reason}</span></div><a href="#milestones">All ${icon("chevron", "sm rot")}</a></section>`;
+  <div><div class="label">${Y.LATEST_BADGE} · ${dateShort(b.earned_on)}</div><b>${Y[b.key + "_NAME"]}</b></div><a href="#milestones">All ${icon("chevron", "sm rot")}</a></section>`;
 
 /* ---------------- 20 · Overview v1.4 (income first, then expenses, goal and latest badge); 22b reached ---------------- */
 function overviewV14(m) {
@@ -891,14 +891,14 @@ function milestones() {
     <section class="sa-hero c12" style="min-height:0;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;padding-top:24px;padding-bottom:24px">
       <div><div class="lead">${Y.LATEST_BADGE} · ${b0.date_label}</div>
         <div class="sa-fig num" style="font-size:44px;margin:10px 0 8px">${earned.length} of ${W.badges.length} earned</div>
-        <div class="sub">${Y[b0.key + "_NAME"]}: ${b0.reason}</div></div>
+        <div class="sub">${Y[b0.key + "_NAME"]}</div></div>
       <img class="sa-mascot" src="${b0.art}" alt="" style="height:var(--sa-mascot-hero);position:relative">
     </section>
     <div class="c12 sa-badgegrid">${W.badges.map(b => `<div class="sa-badgetile ${b.earned ? "" : "locked"} ${b === b0 ? "latest" : ""}">
       ${b.earned ? "" : `<span class="lock">${icon("lock", "sm")}</span>`}
       <div class="art"><img src="${b.art}" alt=""></div>
       <b>${Y[b.key + "_NAME"]}</b><span class="d">${Y[b.key + "_DESC"]}</span>
-      ${b.earned ? `<div class="why">${b.reason}<span>Earned ${b.date_label}</span></div>`
+      ${b.earned ? `<div class="why">Earned ${b.date_label}</div>`
         : `<div class="why">${b.left}<div class="sa-progress"><i style="width:${(b.progress.current / b.progress.target * 100).toFixed(1)}%"></i></div></div>`}
     </div>`).join("")}</div>
   </div>`;
