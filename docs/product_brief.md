@@ -1,14 +1,14 @@
 # Product fact sheet (input for copywriting — facts only, no marketing language)
 
-Product name: **Side Atlas**. Internal codename only: Daoshou. English-only UI.
+Product name: **Side Pocket** (renamed on 2026-10-17; the hackathon submission was called Side Pocket). Internal codename only: Daoshou. English-only UI.
 
 ## Product in one line
 One ledger for all of a person's side income from global platforms, in every currency, with a tax layer on top that sorts out the tax items they will probably need. Core = the ledger. Demo centrepiece = the tax layer. Growth coaching is roadmap only.
 
 ## Look and feel
 - Soft violet (#6B5BC2) with pink accents, calm white tables, every money figure dark and tabular; WCAG AA contrast checked.
-- Mascot: **Atlas**, a chubby lilac-and-pink carrier pigeon with crescent "^ ^" smiling eyes, a coin satchel and a map scarf, drawn as a flat sticker illustration (generated with Google nano-banana-pro via Nicrron). Atlas waves on the overview, thinks while the agent works, looks worried when data is missing, celebrates when the set-aside is ready.
-- Four screens: Overview, Ledger (with an "Import statements" panel), Tax, Ask Atlas.
+- Mascot: **Tilly**, a chubby lilac-and-pink carrier pigeon with crescent "^ ^" smiling eyes, a coin satchel and a map scarf, drawn as a flat sticker illustration (generated with Google nano-banana-pro via Nicrron). Tilly waves on the overview, works at a laptop while the agent runs, flies in with an envelope when the answer arrives, drops a coin in a piggy bank on the Tax page, and celebrates milestones.
+- Four screens: Overview, Ledger, Tax, Ask Tilly; plus My data and Settings & privacy.
 
 ## Who it is for
 - People anywhere who earn side income through global platforms:
@@ -37,17 +37,17 @@ One ledger for all of a person's side income from global platforms, in every cur
 - Imports each platform's own export format: drop many files at once, the platform is detected automatically, and each platform shows where to download its export.
 - Converts every non-USD record at that record's own date's rate, traceable to a date and rate.
 - Breaks each dollar down: gross → platform fee → payout/payment fees → tax withheld (its own line, never mixed into fees) → net.
-- If a rate is missing, Side Atlas stops and names the record instead of guessing.
+- If a rate is missing, Side Pocket stops and names the record instead of guessing.
 - Planned: automatic connections via official APIs (YouTube, Twitch, Patreon, Upwork, PayPal), email forwarding for the rest, bank matching.
 
 ### Tax layer
 - Tax already withheld, by platform and country.
-- Set-aside at a rate the person chooses (editable; Side Atlas does not suggest a rate).
+- Set-aside at a rate the person chooses (editable; Side Pocket does not suggest a rate).
 - Countdown to the next US estimated-tax date.
 - **Forms vs bank:** what a 1099-style form would show per platform next to what actually landed, with the gap itemised (platform fees, payout fees, tax withheld, refunds), the real 1099-K threshold, and a possible-duplicate flag (e.g. Fiverr paid out to PayPal). Form types are simulated assumptions.
 - An accountant checklist and an "Export for my accountant" report.
 
-### Ask Atlas
+### Ask Tilly
 Q&A where you watch the agent's tool steps live; every number in the answer links to the step that produced it, and every run is traced in PRISM.
 
 ## What it deliberately does not do
@@ -81,5 +81,5 @@ Q&A where you watch the agent's tool steps live; every number in the answer link
 - **Nicrron API:**
   - the agent runs on Claude Fable 5.1 (first v1/v2 runs) and Claude Opus 5.5 (cheaper, same 89/89);
   - all product and pitch copy is by GPT-6 Astra;
-  - the Atlas mascot and app icon are by Google nano-banana-pro.
+  - the Tilly mascot and app icon are by Google nano-banana-pro.
 - Built at MONEY TALKS 2 (AI × Finance hackathon, New York, Oct 17 2026), Money Operations track.

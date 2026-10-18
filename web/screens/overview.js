@@ -54,16 +54,16 @@ export async function render(ctx) {
       <div class="chips">
         ${o.complete ? "" : `<span class="glass">${icon("alert", "sm")} Incomplete · ${o.issues.length} record${o.issues.length === 1 ? "" : "s"} waiting for a rate</span>`}
         ${mom ? `<span class="glass">${icon(mom.change >= 0 ? "up" : "down", "sm")} ${usd(mom.change)} vs ${monthName(mom.previous_month)}${mom.change_pct != null ? ` (${mom.change_pct > 0 ? "+" : ""}${pct(mom.change_pct)})` : ""}</span>` : ""}
-        ${foreign.length ? `<span class="glass">${icon("fx", "sm")} ${foreign.join(" & ")} converted at each record’s own date</span>` : ""}
+        ${foreign.length ? `<span class="glass">${icon("fx", "sm")} ${foreign.join(" & ")} converted using record-date rates</span>` : ""}
       </div>
     </section>
     <section class="sa-card c5">
-      <div class="head"><h2>By platform</h2><span class="meta">net · kept of gross</span></div>
+      <div class="head"><h2>Platform breakdown</h2><span class="meta">Net · share of gross</span></div>
       <div class="sa-bar">${plats.map(p => `<span title="${p.label}" style="width:${(p.share_of_net * 100).toFixed(2)}%;background:${pcol(p.platform).fill}"></span>`).join("")}</div>
       <ul class="sa-legend">${plats.map(p => `<li class="${p.platform === best && o.platforms.length > 1 ? "best" : ""}">${picon(p.platform)}<span>${p.label}${p.platform === best && o.platforms.length > 1 ? ` <span class="sa-badge ok">keeps the most</span>` : ""}</span><span class="amt">${usd(p.net)}</span><span class="pct">${pct(p.net_rate)}</span></li>`).join("")}</ul>
     </section>
     <section class="sa-card c7">
-      <div class="head"><h2>Where the gross went</h2></div>
+      <div class="head"><h2>Gross income breakdown</h2></div>
       <div class="sa-bar">${bar.map(([l, v, c]) => v > 0 ? `<span title="${l}" style="width:${(v / t.gross * 100).toFixed(2)}%;background:${c}"></span>` : "").join("")}</div>
       <ul class="sa-legend">
         <li><span class="dot" style="background:var(--sa-line-strong)"></span><span>Gross income</span><span class="amt">${usd(t.gross)}</span><span class="pct">100%</span></li>

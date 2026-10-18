@@ -218,7 +218,7 @@ def parse_file(name: str, text: str) -> ParsedFile:
         return pf
     found = _rows(text)
     if found is None:
-        pf.message = ("These columns don't match a statement Side Atlas can read yet. Supported: "
+        pf.message = ("These columns don't match a statement Side Pocket can read yet. Supported: "
                       + ", ".join(ledger.LABEL[p] for p in STATEMENTS) + ", and exchange-rate files.")
         return pf
     header, rows, header_line = found

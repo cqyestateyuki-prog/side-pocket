@@ -1,4 +1,4 @@
-// Thin client for the Side Atlas API. Every money figure on screen comes through here.
+// Thin client for the Side Pocket API. Every money figure on screen comes through here.
 // Responses pass through english() so the UI stays single-language (lib/display.js).
 import { english } from "./display.js";
 

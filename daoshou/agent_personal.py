@@ -1,4 +1,4 @@
-"""Ask Atlas over statements a user uploaded.
+"""Ask Tilly over statements a user uploaded.
 
 Same rule as v2: code does the math, the model orchestrates and explains. On top of that, the
 model only ever sees totals. The tools return per-platform and per-month aggregates, the tax
@@ -22,7 +22,7 @@ from decimal import Decimal
 from . import bookkeeping, ledger, rewards, tax_home
 from .prism_tracing import ToolError
 
-SYSTEM = """You are Atlas, the assistant in Side Atlas. You answer questions about one person's \
+SYSTEM = """You are Tilly, the assistant in Side Pocket. You answer questions about one person's \
 side income, using statements they uploaded from platforms such as Upwork, Fiverr, Freelancer.com, \
 Contra, YouTube, Twitch, Patreon and Bilibili (shown as B站).
 

@@ -58,14 +58,14 @@ const KEYS = { "Bilibili": "bilibili", "B站": "bilibili", "YouTube": "youtube",
 export const platformKey = label => KEYS[label] ?? String(label).toLowerCase();
 
 export const COUNTRY = { CN: "China", US: "United States", DE: "Germany", JP: "Japan", CA: "Canada", GB: "United Kingdom" };
-// The country's flag (assets/flags, drawn for Side Atlas) in front of its name.
+// The country's flag (assets/flags, drawn for Side Pocket) in front of its name.
 export const flag = c => COUNTRY[c] ? `<img class="sa-flag" src="assets/flags/${c.toLowerCase()}.svg" alt="" width="24" height="16">` : icon("globe", "sm");
 
 export function empty(title, body) {
   return `<section class="sa-card sa-empty c12">${icon("info")}${mascot("think", "empty-mascot")}<div><b>${title}</b><div class="meta">${body}</div></div></section>`;
 }
 
-// Your data before any import (kit 16): Atlas thinking, one title, one sentence, one link to My data.
+// Your data before any import (kit 16): Tilly thinking, one title, one sentence, one link to My data.
 export function emptyCard(text) {
   return `<div class="sa-emptycard">${mascot("think")}<div><b>${YOURS.EMPTY_TITLE}</b><p>${text}</p></div>
     <a class="sa-btn primary sm" href="#mydata">${icon("upload", "sm")} Go to My data</a></div>`;

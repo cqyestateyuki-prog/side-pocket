@@ -1,7 +1,8 @@
 // Settings & privacy (kit 12 and 12b): tax home, display currency and set-aside rate for Your data;
-// where each kind of data goes; backup export and load; Delete all my data behind a confirmation.
+// where each kind of data goes; backup export and load; Delete all data behind a confirmation.
 import { COPY, YOURS } from "../lib/copy.js";
 import { esc, icon, localDay } from "../lib/format.js";
+import { mascot } from "../lib/mascot.js";
 import { clearPrefs, setMode } from "../lib/prefs.js";
 import * as store from "../lib/store.js";
 import { shortLabel } from "../lib/statements.js";
@@ -29,7 +30,7 @@ function dialog(ctx) {
     <h2 id="dlg-title">${X.DIALOG_TITLE}</h2>
     <p>${X.DIALOG_BODY}</p>
     <ul><li><span>Statements</span><span>${files} file${files === 1 ? "" : "s"}</span></li><li><span>Records</span><span>${records}</span></li><li><span>Settings</span><span>tax home, currency, set-aside rate</span></li></ul>
-    <div class="actions"><button type="button" class="sa-btn danger solid" data-delete-confirm>${icon("trash", "sm")} Delete all my data</button><button type="button" class="sa-btn secondary" data-export>${icon("download", "sm")} Export backup first</button><button type="button" class="sa-btn ghost cancel" data-dialog-close>Cancel</button></div>
+    <div class="actions"><button type="button" class="sa-btn danger solid" data-delete-confirm>${icon("trash", "sm")} Delete all data</button><button type="button" class="sa-btn secondary" data-export>${icon("download", "sm")} Export backup first</button><button type="button" class="sa-btn ghost cancel" data-dialog-close>Cancel</button></div>
   </div>`;
 }
 
@@ -41,11 +42,12 @@ export async function render(ctx) {
   const nowrap = t => `<span style="white-space:nowrap">${esc(t)}</span>`;
   const intro = label ? X.PRIVACY_INTRO.replace(/Upwork · acct ••\d{4}/, label) : X.PRIVACY_INTRO;
   return `
-  <div class="sa-top"><div><h1>Settings &amp; privacy</h1><p>${X.SETTINGS_SUB}</p></div><div class="right">${ctx.whoPill(ctx)}</div></div>
+  <div class="sa-top"><div><h1>Settings &amp; privacy</h1>${X.SETTINGS_SUB ? `<p>${X.SETTINGS_SUB}</p>` : ""}</div><div class="right">${ctx.whoPill(ctx)}</div></div>
   <div class="sa-grid">
     ${ctx.data.persistent ? "" : `<div class="c12 sa-note warn">${icon("alert", "sm")}<span>${X.STORAGE_OFF}</span></div>`}
     <div class="c12" data-notes></div>
     <section class="sa-card sa-settings c6">
+      ${mascot("globe", "settings-mascot")}
       <div class="head" style="margin:10px 0 2px"><h2>Settings</h2></div>
       <div class="row"><h3>${icon("globe", "sm")} Tax home</h3>
         <div class="ctl"><div class="sa-seg">${HOMES.map(([k, l]) => `<button type="button" data-home="${k}" class="${k === home[0] ? "on" : ""}">${l}</button>`).join("")}</div></div>
@@ -61,8 +63,8 @@ export async function render(ctx) {
       <div class="sub" style="margin-top:10px;font-size:15px;line-height:1.5;max-width:520px;color:var(--sa-on-forest)">${esc(intro)}</div>
       <ul class="sa-datamap">
         <li><span class="ic">${icon("monitor", "sm")}</span><div><b>This browser</b><span>${X.MAP_BROWSER}</span></div></li>
-        <li><span class="ic">${icon("server", "sm")}</span><div><b>Side Atlas server</b><span>${X.MAP_SERVER}</span></div></li>
-        <li><span class="ic">${icon("ask", "sm")}</span><div><b>Ask Atlas</b><span>${X.MAP_AI.replace("{label}", nowrap(label ?? "Upwork · acct ••4821"))}</span></div></li>
+        <li><span class="ic">${icon("server", "sm")}</span><div><b>Side Pocket server</b><span>${X.MAP_SERVER}</span></div></li>
+        <li><span class="ic">${icon("ask", "sm")}</span><div><b>Ask Tilly</b><span>${X.MAP_AI.replace("{label}", nowrap(label ?? "Upwork · acct ••4821"))}</span></div></li>
         <li><span class="ic">${icon("steps", "sm")}</span><div><b>PRISM traces</b><span>${X.MAP_PRISM}</span></div></li>
         <li><span class="ic">${icon("fx", "sm")}</span><div><b>Exchange rates</b><span>${X.MAP_FX}</span></div></li>
       </ul>
@@ -73,7 +75,7 @@ export async function render(ctx) {
           <div class="btns"><button type="button" class="sa-btn secondary" data-export>${icon("download", "sm")} Export backup</button>
             <button type="button" class="sa-btn ghost sm" data-load>${icon("upload", "sm")} Load a backup</button></div>
           <input type="file" data-backup accept=".json,application/json" hidden></div>
-        <div><h3>Delete all my data</h3><p>${X.DELETE_HELP}</p><button type="button" class="sa-btn danger" data-delete>${icon("trash", "sm")} Delete all my data</button></div>
+        <div><h3>Delete all data</h3><p>${X.DELETE_HELP}</p><button type="button" class="sa-btn danger" data-delete>${icon("trash", "sm")} Delete all data</button></div>
       </div>
     </section>
   </div>`;

@@ -112,7 +112,7 @@ def _read(req: PersonalRequest, *, reference_rates: bool) -> tuple[statements.Up
 def _load(req: PersonalRequest) -> tuple[statements.Upload, dict]:
     upload, entries = _read(req, reference_rates=req.reference_rates)
     if not any(f.records for f in upload.statements()) and not entries:
-        raise HTTPException(422, {"message": "None of these files is a statement Side Atlas can read, and there "
+        raise HTTPException(422, {"message": "None of these files is a statement Side Pocket can read, and there "
                                              "are no manual entries.", "import": upload.summary()})
     goal = req.monthly_goal
     c = statements.profile(upload, tax_home=req.tax_home, set_aside_rate=req.set_aside_rate,
@@ -262,10 +262,10 @@ def ask(req: PersonalAsk) -> StreamingResponse:
     if not question:
         raise HTTPException(422, "question is empty")
     if not os.environ.get("NICRRON_API_KEY"):
-        raise HTTPException(503, "Ask Atlas isn't available on this server because it has no model key. "
+        raise HTTPException(503, "Ask Tilly isn't available on this server because it has no model key. "
                                  "Every other page works without one.")
     if not os.environ.get("PRISMTRACE_API_KEY") or not os.environ.get("PRISMTRACE_PROJECT_ID"):
-        raise HTTPException(503, "Ask Atlas isn't available on this server because run tracing isn't set up.")
+        raise HTTPException(503, "Ask Tilly isn't available on this server because run tracing isn't set up.")
     upload, c = _load(req)
     events: queue.Queue = queue.Queue()
 

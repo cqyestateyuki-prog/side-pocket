@@ -1,4 +1,4 @@
-"""Side Atlas HTTP API.
+"""Side Pocket HTTP API.
 
 Every number comes from daoshou/ledger.py (deterministic Decimal math). The model only
 runs in POST /api/ask, which streams the v2 agent's steps as Server-Sent Events and is
@@ -35,7 +35,7 @@ from api import personal, views  # noqa: E402
 from daoshou import agent_v2, data, ledger  # noqa: E402
 from daoshou.prism_tracing import TracedAgent, default_model, nicrron_client  # noqa: E402
 
-app = FastAPI(title="Side Atlas API", version="0.1")
+app = FastAPI(title="Side Pocket API", version="0.1")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 personal.install(app)  # POST /api/personal/*: the same pages from statements the user uploads
 

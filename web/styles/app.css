@@ -345,3 +345,7 @@ button.sa-who { font: inherit; color: inherit; text-align: left; cursor: pointer
 .withheld .who .by .sa-picon { width: 14px; height: 14px; margin-right: 6px; }
 .sa-table td:has(> .sa-badge) { white-space: normal; }
 .sa-table td .sa-badge { white-space: normal; line-height: 1.25; max-width: 100%; }
+
+/* Settings: Tilly with the globe in the card's empty corner */
+.sa-settings { position: relative; }
+.sa-settings .settings-mascot.ok { position: absolute; right: 22px; bottom: 18px; height: var(--sa-mascot-card); pointer-events: none; }

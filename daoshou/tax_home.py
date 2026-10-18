@@ -1,7 +1,7 @@
 """What a US or China tax home means for the tax page: deadlines, reminders and where each rule comes from.
 
 Informational only. Every rule says whether it is a real rule (with its source) or a simulated
-assumption used by Side Atlas, so the page can label it. Amounts come from the caller, which takes
+assumption used by Side Pocket, so the page can label it. Amounts come from the caller, which takes
 them from the ledger; nothing here does money math beyond adding up what it is given.
 """
 from __future__ import annotations
@@ -81,7 +81,7 @@ def sections(*, tax_home: str, months: list[str], after: str, withheld: list[dic
                               "source": "Income is reportable even without a tax form"})
             if has_cny_income:
                 items.append({"text": "If your accounts outside the US held more than $10,000 in total at any "
-                                      "point in the year, an FBAR (FinCEN Form 114) is due. Side Atlas can't see "
+                                      "point in the year, an FBAR (FinCEN Form 114) is due. Side Pocket can't see "
                                       "account balances.", "basis": REAL,
                               "source": "FinCEN Form 114, due April 15 with an automatic extension to October 15"})
             out.append({"country": "US", "label": "United States", "deadlines": deadlines, "items": items,
@@ -111,7 +111,7 @@ def sections(*, tax_home: str, months: list[str], after: str, withheld: list[dic
                                         "annual filing.", "basis": REAL,
                               "source": "Implementing Regulations of the PRC Individual Income Tax Law, Article 3"})
             items.append({"text": "China converts foreign-currency income at the RMB central parity rate for the "
-                                  "last day of the month before you file. Side Atlas converts each record at its own "
+                                  "last day of the month before you file. Side Pocket converts each record at its own "
                                   "date, so filed amounts can differ slightly.", "basis": REAL,
                           "source": "Implementing Regulations of the PRC Individual Income Tax Law, Article 32"})
             if tax_home == "CN":  # someone who is also a US taxpayer gives a W-9 instead

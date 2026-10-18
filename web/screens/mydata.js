@@ -143,21 +143,18 @@ async function importedView(ctx) {
     ...(failed ? [failed] : []),
   ];
 
-  const t = R?.totals;
-  const kept = ctx.data.persistent ? "Kept in this browser" : "Kept in this tab only";
   return `
-  <div class="sa-top"><div><h1>My data</h1><p>${X.IMPORTED_SUB.replace("{files}", read).replace("{records}", sum.records)}</p></div>
-    <div class="right"><button type="button" class="sa-btn primary sm" data-choose>${icon("upload", "sm")} Add statements</button>${fileInput}${ctx.whoPill(ctx)}</div></div>
+  <div class="sa-top"><div><h1>My data</h1></div><div class="right">${ctx.whoPill(ctx)}</div></div>
   <div class="sa-grid" data-drop>
     ${ctx.data.persistent ? "" : `<div class="c12 sa-note warn">${icon("alert", "sm")}<span>${X.STORAGE_OFF}</span></div>`}
     ${noteList()}
-    <section class="sa-hero c7" style="min-height:0">
+    <section class="sa-hero drop c7" style="min-height:0">
       <div class="orb"></div>
-      ${mascot("celebrate", "hero-mascot")}
-      <div class="lead">${cov ? X.LEDGER_HERO.replace("Q3 2026", cov.label) : X.LEDGER_HERO.replace("Q3 2026 ", "")}</div>
-      ${t ? `<div class="sa-fig num">${ctx.money(t.net)}</div>
-      <div class="sub">net from <b class="num">${ctx.money(t.gross)}</b> gross · ${sum.records} records${first ? ` · ${dateShort(first)} to ${dateShort(last)}` : ""}</div>` : ""}
-      <div class="actions"><a class="sa-btn on-dark sm" href="#ledger">${icon("ledger", "sm")} Open the ledger</a><span class="glass">${icon("lock", "sm")} ${kept}</span></div>
+      ${mascot("receipt", "hero-mascot")}
+      <div class="sa-fig num">${read} statement${read === 1 ? "" : "s"}</div>
+      <div class="sub">${sum.records} records${first ? ` · ${dateShort(first)} to ${dateShort(last)}` : ""}</div>
+      <div class="actions"><button type="button" class="sa-btn on-dark" data-choose>${icon("upload", "sm")} Add statements</button></div>
+      ${fileInput}
     </section>
     <section class="sa-card c5">
       <div class="head"><h2>Import check</h2><span class="sa-badge ok">${icon("check", "sm")} ${read} file${read === 1 ? "" : "s"} read</span></div>

@@ -39,8 +39,8 @@ let ed = null; // the open set-aside editor: { creator, rate (whole %), out: Set
 let fmt = usd;  // money in the display currency (Your data can show CNY)
 
 function heroBase(sa, qLabel) {
-  return `<div class="sub" data-sa-base>to set aside: ${fmt(sa.base)} ${qLabel}net${sa.excluded.size ? " (some platforms left out)" : ""} × the
-      <button class="rate-chip" data-rate-edit aria-expanded="false">${Math.round(sa.rate * 100)}% ${icon("sliders", "sm")}</button> you chose</div>`;
+  return `<div class="sub" data-sa-base><button class="rate-chip" data-rate-edit aria-expanded="false">${Math.round(sa.rate * 100)}% ${icon("sliders", "sm")}</button>
+      of ${qLabel}net income (${fmt(sa.base)})${sa.excluded.size ? ", some platforms left out" : ""}</div>`;
 }
 
 function heroAmount(sa, qLabel) {
@@ -116,16 +116,16 @@ async function page(ctx) {
           ${heroAmount(sa, qLabel)}
         </div>
         ${editor(sa, plats)}
-        ${due?.due_date && country === "US" ? `<div class="tax-counts">${count(due.days_left, "days to next payment", `${dateLong(due.due_date)} · ${usQuarter(due.due_date)}`)}</div>` : ""}
+        ${due?.due_date && country === "US" ? `<div class="tax-counts">${count(due.days_left, "days until payment", `${dateLong(due.due_date)} · ${usQuarter(due.due_date)}`)}</div>` : ""}
       </div>
     </section>
     <section class="sa-card c4">
-      <div class="head"><h2>Tax already withheld</h2></div>
+      <div class="head"><h2>Tax withheld</h2></div>
       ${withheld.length ? withheld.map(w => `<div class="withheld">
         ${withheldWho(w.country, w.platform)}
         <div class="amt"><div class="sa-fig num">${fmt(w[`withheld_${k}`])}</div>${w.withheld_cny != null && k !== "cny" ? `<div class="meta num">${cur(w.withheld_cny, "CNY")}</div>` : ""}</div>
       </div>`).join("") : `<div class="meta">No platform withheld tax in ${label.split(" · ")[0]}.</div>`}
-      ${noneNote ? `<div class="sa-note info" style="margin-top:16px">${icon("info", "sm")}<span>${esc(noneNote.replace("No tax was withheld on income from", "Nothing was withheld on").replace("; the set-aside covers it", ". The set-aside covers that income."))}</span></div>` : ""}
+      ${noneNote ? `<div class="sa-note info" style="margin-top:16px">${icon("info", "sm")}<span>${esc(noneNote.replace(/^No tax was withheld on income from (.*?); the set-aside covers it\.?$/, "The set-aside includes $1 income, which had no tax withheld."))}</span></div>` : ""}
     </section>
     <section class="sa-card c12">
       <div class="head"><h2>${COPY.FORMS_HEADLINE}</h2><span class="sa-ribbon">${icon("info", "sm")} Simulated forms · real 1099-K threshold</span></div>
@@ -140,7 +140,7 @@ async function page(ctx) {
       </div>
     </section>
     <section class="sa-card c12 accountant">
-      <div><div class="head"><h2>For your accountant</h2></div>
+      <div><div class="head"><h2>Accountant checklist</h2></div>
         <ul class="sa-check" data-checklist>${accountant.map(x => `<li><button class="box" aria-label="Mark done"></button><span>${esc(x)}</span></li>`).join("")}</ul></div>
       <a class="sa-btn primary" href="${ctx.href("report", { c: ctx.yours ? null : ctx.creator, p: ctx.period })}">${icon("download", "sm")} Export for my accountant</a>
     </section>
@@ -165,7 +165,7 @@ function cnWindow(T) {
   return { ...w, taxYear, open, days: open ? daysBetween(now, w.closes) : daysBetween(now, w.opens),
            span: `${shortDate(w.opens)} to ${shortDate(w.closes)}, ${w.closes.slice(0, 4)}`,
            of: open ? "days left to file" : "days until filing opens",
-           ofBoth: open ? "days left to file in China" : "days until China filing opens" };
+           ofBoth: open ? "days left to file in China" : "days until China filing" };
 }
 
 // Who withheld: the country's flag and name, the platform underneath.
@@ -191,7 +191,7 @@ const periodWord = period => period.includes("Q") ? `Q${period.slice(-1)}` : per
 
 function accountantCard(ctx, items) {
   return `<section class="sa-card c12 accountant">
-      <div><div class="head"><h2>For your accountant</h2></div>
+      <div><div class="head"><h2>Accountant checklist</h2></div>
         <ul class="sa-check" data-checklist>${items.map(x => `<li><button class="box" aria-label="Mark done"></button><span>${x}</span></li>`).join("")}</ul>
         ${ctx.data.settings.tax_home === "CN" ? `<div class="meta" style="margin-top:10px;display:flex;gap:6px;align-items:center">${icon("info", "sm")} ${YOURS.US_HIDDEN}</div>` : ""}</div>
       <a class="sa-btn primary" href="${ctx.href("report", { p: ctx.period })}">${icon("download", "sm")} Export for my accountant</a>
@@ -224,12 +224,12 @@ function china(ctx, T, R) {
       <div>
         <div class="title">${YOURS.CN_TAX_HERO}</div>
         <div class="amount"><div class="sa-fig num">${money(T.set_aside.amount)}</div>
-          <div class="sub">to set aside: ${money(T[`total_net_${k}`])} ${qLabel}net × the ${Math.round(T.set_aside.rate * 100)}% you chose</div></div>
+          <div class="sub">${Math.round(T.set_aside.rate * 100)}% of ${qLabel}net income (${money(T[`total_net_${k}`])})</div></div>
         ${win ? `<div class="tax-counts">${count(win.days, win.of, win.span)}</div>` : ""}
       </div>
     </section>
     <section class="sa-card c4">
-      <div class="head"><h2>Tax already withheld</h2></div>
+      <div class="head"><h2>Tax withheld</h2></div>
       ${withheldCn.length ? withheldCn.map(w => `<div class="withheld">
         ${withheldWho("CN", w.platform)}
         <div class="amt"><div class="sa-fig num">${money(w[`withheld_${k}`])}</div>${w.withheld_cny != null && k !== "cny" ? `<div class="meta num">${cur(w.withheld_cny, "CNY")}</div>` : ""}</div>
@@ -237,7 +237,7 @@ function china(ctx, T, R) {
       : `<div class="meta">No platform withheld Chinese tax in ${label.split(" · ")[0]}.</div>`}
     </section>
     <section class="sa-card c12">
-      <div class="head"><h2>Income by where it was paid</h2>${win ? `<span class="meta">${YOURS.CN_WINDOW_LABEL.replace("2026", win.taxYear).replace("March 1 to June 30, 2027", `${monthDay(win.opens)} to ${monthDay(win.closes)}, ${win.closes.slice(0, 4)}`)}</span>` : ""}</div>
+      <div class="head"><h2>Income by payment location</h2>${win ? `<span class="meta">${YOURS.CN_WINDOW_LABEL.replace("2026", win.taxYear).replace("March 1 to June 30, 2027", `${monthDay(win.opens)} to ${monthDay(win.closes)}, ${win.closes.slice(0, 4)}`)}</span>` : ""}</div>
       ${outside.length ? `<div class="sa-note warn" style="margin-bottom:14px">${icon("globe", "sm")}<span>${YOURS.CN_FOREIGN_FLAG}</span></div>` : ""}
       <div class="sa-tablewrap"><table class="sa-table">
         <thead><tr>${th("layers", "Platform")}${th("ledger", "Records", "money")}${th("coins", "Gross", "money")}${th("wallet", "Net", "money")}${th("bank", "Chinese tax withheld", "money")}</tr></thead>
@@ -268,7 +268,7 @@ function both(ctx, T, R) {
     ...(dup ? [esc(`${dup.label} pays out through ${dup.payout_method}: the same money may appear on two 1099-Ks.`)] : []),
     ...T.issues.map(i => esc(issueLine(i))),
   ];
-  const usCount = due?.due_date ? count(due.days_left, "days to next US payment", `${dateLong(due.due_date)} · ${usQuarter(due.due_date)}`) : "";
+  const usCount = due?.due_date ? count(due.days_left, "days until US payment", `${dateLong(due.due_date)} · ${usQuarter(due.due_date)}`) : "";
   return top(ctx, "Tax", "") + `
   <div class="sa-grid">
     ${warnCard(ctx, T.issues)}
@@ -278,7 +278,7 @@ function both(ctx, T, R) {
       <div>
         <div class="title">${YOURS.BOTH_HERO}</div>
         <div class="amount"><div class="sa-fig num">${money(T.set_aside.amount)}</div>
-          <div class="sub">to set aside: ${money(T[`total_net_${k}`])} ${qLabel}net × the ${rate}% you chose</div></div>
+          <div class="sub">${rate}% of ${qLabel}net income (${money(T[`total_net_${k}`])})</div></div>
         <div class="tax-counts">${usCount}${win ? count(win.days, win.ofBoth, win.span) : ""}</div>
       </div>
     </section>
@@ -287,13 +287,13 @@ function both(ctx, T, R) {
       <div class="sa-section-head"><span class="sa-badge sim">${icon("bank", "sm")} United States</span><h2>Estimated tax and forms</h2><a class="sa-btn secondary sm" href="${ctx.href("tax", { p: ctx.period, view: "us" })}">Open the forms check</a></div>
       <div class="sa-facts">
         <div><div class="label">Next payment</div><b>${due?.due_date ? dateLong(due.due_date) : "—"}</b><span class="s">${due?.due_date ? `for ${usQuarter(due.due_date)} · ${due.days_left} days` : ""}</span></div>
-        <div><div class="label">Set aside at your ${rate}%</div><b class="num">${money(T.set_aside.amount)}</b><span class="s">of ${money(T[`total_net_${k}`])} ${qLabel}net</span></div>
-        <div><div class="label">Form view vs bank view</div><b class="num">${T4 ? usd(T4.form_view_gross_usd) : "—"}</b><span class="s">${T4 ? `${usd(T4.bank_view_landed_usd)} landed · gap ${usd(T4.gap_usd)}` : ""}</span></div>
+        <div><div class="label">Set aside (${rate}%)</div><b class="num">${money(T.set_aside.amount)}</b><span class="s">of ${money(T[`total_net_${k}`])} ${qLabel}net</span></div>
+        <div><div class="label">Forms vs deposits</div><b class="num">${T4 ? usd(T4.form_view_gross_usd) : "—"}</b><span class="s">${T4 ? `${usd(T4.bank_view_landed_usd)} landed · gap ${usd(T4.gap_usd)}` : ""}</span></div>
         <div><div class="label">Possible duplicate</div><b>${dup ? esc(dup.label) : "None found"}</b><span class="s">${dup ? `paid out to ${esc(dup.payout_method)}: check both forms` : "for platforms with forms"}</span></div>
       </div>
     </section>
     <section class="sa-card c12">
-      <div class="sa-section-head"><span class="sa-badge tax">${icon("globe", "sm")} China</span><h2>Withholding and the annual filing</h2><a class="sa-btn secondary sm" href="${ctx.href("tax", { p: ctx.period, view: "cn" })}">Open China details</a></div>
+      <div class="sa-section-head"><span class="sa-badge tax">${icon("globe", "sm")} China</span><h2>Withholding and annual filing</h2><a class="sa-btn secondary sm" href="${ctx.href("tax", { p: ctx.period, view: "cn" })}">Open China details</a></div>
       <div class="sa-facts">
         <div><div class="label">Withheld by ${withheldCn.length ? esc(withheldCn.map(w => w.platform).join(" and ")) : "Chinese platforms"}</div><b class="num tax">${money(sum(inside, "cn_tax"))}</b><span class="s">${withheldCn[0]?.withheld_cny != null && k !== "cny" ? `${cur(withheldCn[0].withheld_cny, "CNY")} · ` : ""}individual income tax</span></div>
         <div><div class="label">${bili ? `${esc(bili.label)} income` : "Income inside China"}</div><b class="num">${money(sum(inside, "gross"))}</b><span class="s">gross${bili?.native_cny && k !== "cny" ? ` · ${cur(bili.native_cny.gross, "CNY")}` : ""}</span></div>

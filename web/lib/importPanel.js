@@ -29,7 +29,7 @@ function fileLines(ctx) {
     const p = PLATFORMS[f.platform];
     return p
       ? `<li>${picon(f.platform)}<span><b>${esc(f.name)}</b><span class="r">${p.label} export · ${f.mine == null ? `${f.rows} rows` : `${f.mine} of ${f.rows} rows are ${esc(ctx.persona(ctx.me).display)}’s`}</span></span>${icon("check", "sm ok")}</li>`
-      : `<li class="bad"><i class="sa-pdot"></i><span><b>${esc(f.name)}</b><span class="r">Not a format Side Atlas reads yet</span></span>${icon("alert", "sm")}</li>`;
+      : `<li class="bad"><i class="sa-pdot"></i><span><b>${esc(f.name)}</b><span class="r">Not a format Side Pocket reads yet</span></span>${icon("alert", "sm")}</li>`;
   }).join("")}</ul>
   <div class="meta">Checked in your browser only; nothing is uploaded in this demo.</div>`;
 }

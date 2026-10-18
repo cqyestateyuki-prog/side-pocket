@@ -26,7 +26,7 @@ export async function render(ctx) {
   <div class="sa-grid">
     ${warnCard(ctx, R.issues)}
     <div class="c8 sa-sheet" id="sheet">
-      <div class="band"><div class="label">Side Atlas · ${label} report</div><h1>${COPY.REPORT_COVER}</h1>
+      <div class="band"><div class="label">Side Pocket · ${label} report</div><h1>${COPY.REPORT_COVER}</h1>
         <div class="meta">${meta} · prepared ${dateLong(R.generated_on)}</div></div>
       <div class="body">
         <div class="sa-totals">${[["Gross", t.gross], ["Platform fees", -t.platform_fee], ["Payout fees", -t.payout_fee], ["Tax withheld", -t.withheld]].map(([l, v]) => `<div><span class="label">${l}</span><b>${money(v)}</b></div>`).join("")}<div class="net"><span class="label">Net</span><b>${money(t.net)}</b></div></div>

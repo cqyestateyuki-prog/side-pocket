@@ -40,7 +40,7 @@ function head(ctx, L, cols) {
     ${cols}</tr></thead>`;
 }
 
-// The KPI row: outline icons like the table headers; Net is a small hero card with the orb and Atlas.
+// The KPI row: outline icons like the table headers; Net is a small hero card with the orb and Tilly.
 const kpi = (ic, label, fig, color) => `<div class="sa-card sa-kpi"><div class="label">${icon(ic, "sm")}${label}</div><div class="sa-fig num" style="${color ? `color:${color}` : ""}">${fig}</div></div>`;
 const netKpi = (label, fig) => `<div class="sa-kpi net"><div class="orb"></div>${mascot("coin", "kpi-mascot")}<div class="label">${icon("wallet", "sm")}${label}</div><div class="sa-fig num">${fig}</div></div>`;
 

@@ -1,4 +1,4 @@
-// Side Atlas front end: hash router + shared shell (nav, data switch, creator switcher, period switcher).
+// Side Pocket front end: hash router + shared shell (nav, data switch, creator switcher, period switcher).
 // Screens live in screens/*.js and register below; each exports render(ctx) -> Promise<html>
 // and may export mount(ctx) to wire up events after the html is in the page.
 // Two ledgers: "Demo data" (the fictional creators, GET /api/*) and "Your data" (statements uploaded
@@ -25,7 +25,7 @@ const SCREENS = [
   { key: "overview", label: "Overview", icon: "overview", module: overview, period: "month" },
   { key: "ledger", label: "Ledger", icon: "ledger", module: ledger, period: "month" },
   { key: "tax", label: "Tax", icon: "tax", module: tax, period: "quarter" },
-  { key: "ask", label: "Ask Atlas", icon: "ask", module: ask, period: null },
+  { key: "ask", label: "Ask Tilly", icon: "ask", module: ask, period: null },
   { key: "report", label: "Report", icon: "report", module: report, period: "quarter", nav: false, navAs: "tax" },
   { key: "welcome", label: "Welcome", module: welcome, period: null, nav: false, bare: true },
   { key: "mydata", label: "My data", icon: "upload", module: mydata, period: null, nav: false, yours: true },

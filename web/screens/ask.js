@@ -15,14 +15,14 @@ const LABEL = { bilibili: "Bilibili", youtube: "YouTube", twitch: "Twitch", patr
 // UI labels. The UI is English-only (user decision); a language switch is deferred.
 const T = {
   en: {
-    examples: ["How much did I actually make in September, across every platform?", "Who took my money in Q3: platform fees or tax?", "What tax items do I have this quarter?"],
-    placeholder: COPY.ASK_PLACEHOLDER, promise: COPY.ASK_PROMISE, button: "Ask", tryAsking: "Try asking", answer: "Answer",
-    steps: "Agent steps", calls: n => `${n} tool calls`, running: "running", choosing: "The agent is choosing its next step…",
-    stepsEmpty: "Each lookup and calculation shows up here as the agent works, and is traced in PRISM.",
-    thinking: "Atlas is working through the steps…", replay: "Replay of a real traced run",
+    examples: ["What was my September net income across all platforms?", "Were Q3 platform fees higher than tax withheld?", "What tax items need review this quarter?"],
+    placeholder: COPY.ASK_PLACEHOLDER, promise: COPY.ASK_PROMISE, button: "Ask", tryAsking: "Example questions", answer: "Answer",
+    steps: "Agent steps", calls: n => `${n} tool calls`, running: "running", choosing: "Choosing the next step…",
+    stepsEmpty: "Lookups and calculations appear here as they run, with traces in PRISM.",
+    thinking: "Tilly is working…", replay: "Recorded run replay",
     lines: ["Gross income", "Platform fees", "Payout & payment fees", "Tax withheld by platforms", "Net (what landed)"],
-    setAside: r => `Set aside at your ${r}%`, nextDue: "Next US estimated tax", where: m => `Where ${monthName(m)}’s gross went`,
-    fees: "Platform fees by platform",
+    setAside: r => `Set aside (${r}%)`, nextDue: "Next US estimated tax", where: m => `${monthName(m)} gross income breakdown`,
+    fees: "Fees by platform",
   },
 };
 const REPLAY = "demo/ask-c01-sep.json";
@@ -219,7 +219,7 @@ function footer() {
 
 function view(ctx) {
   const busy = run && !run.done;
-  return `<div class="sa-top"><div><h1 class="with-av"><img class="sa-avatar" src="assets/logo/icon-96.png" alt="" width="44" height="44">Ask Atlas</h1><p>The agent looks things up step by step; code does the math.</p></div>
+  return `<div class="sa-top"><div><h1 class="with-av"><img class="sa-avatar" src="assets/logo/icon-96.png" alt="" width="44" height="44">Ask Tilly</h1><p>Tilly uses tools to retrieve data; code handles calculations.</p></div>
     <div class="right">${run?.replay ? `<span class="sa-badge sim">${t().replay}</span>` : ""}${ctx.whoPill(ctx)}</div></div>
   <div class="sa-grid">
     <div class="c7 stack ask-col">
@@ -296,7 +296,7 @@ function bind() {
 }
 
 export async function render(ctx) {
-  if (ctx.yours && !ctx.has) return emptyScreen(ctx, "Ask Atlas", YOURS.EMPTY_ASK);
+  if (ctx.yours && !ctx.has) return emptyScreen(ctx, "Ask Tilly", YOURS.EMPTY_ASK);
   if (run && run.mode !== ctx.mode) run = null; // a run belongs to the ledger it was asked about
   ctxRef = ctx;
   return view(ctx);

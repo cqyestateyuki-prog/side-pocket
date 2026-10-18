@@ -49,7 +49,7 @@ const MODE = "sideatlas.mode";
 export const mode = () => (read(MODE) === "yours" ? "yours" : "demo");
 export const setMode = m => write(MODE, m === "yours" ? "yours" : null);
 
-// Delete all my data also clears this viewer's Side Atlas preferences (set-aside choices, mode).
+// Delete all my data also clears this viewer's Side Pocket preferences (set-aside choices, mode).
 export function clearPrefs() {
   try {
     Object.keys(localStorage).filter(k => k.startsWith("sideatlas.")).forEach(k => localStorage.removeItem(k));

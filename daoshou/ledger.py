@@ -395,7 +395,7 @@ def form_check(creator: dict, months: list[str], *, skip_missing: bool = False) 
             "gap_items_usd": {"platform_fees": cents(s["platform_fee"]), "payout_fees": cents(s["payment_fee"]),
                               "tax_withheld": cents(s["withheld"]), "refunds": cents(s["refunds"])},
             "transactions": s["transactions"],
-            "calendar_year": {"basis": f"records for {coverage[0]}–{coverage[-1]} (the months in Side Atlas)",
+            "calendar_year": {"basis": f"records for {coverage[0]}–{coverage[-1]} (the months in Side Pocket)",
                               "so_far_form_gross_usd": cents(year["form_gross"]),
                               "so_far_transactions": year["transactions"],
                               "projected_full_year_gross_usd": cents(proj_gross),

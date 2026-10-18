@@ -1,6 +1,6 @@
 // One dropdown for every picker (kit v1.4.1 · #65): period, display currency, creator and the ledger's
 // column filters. The trigger keeps its own look (header pill, creator pill or table header) and the
-// menu is drawn by Side Atlas, so the open list matches the app instead of the system menu.
+// menu is drawn by Side Pocket, so the open list matches the app instead of the system menu.
 import { esc, icon } from "./format.js";
 
 // options: [{ value, label, icon?: html, meta?: text, group?: text }]
