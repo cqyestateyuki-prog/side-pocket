@@ -124,8 +124,10 @@ function lines() {
 // The agent's reply, lightly formatted: **bold** kept, the first two paragraphs, one line.
 function prose(text) {
   if (!text) return "";
-  // Markdown tables repeat the lines below the answer, so they are left out of the summary.
-  return text.split("\n").filter(l => !l.trim().startsWith("|")).join("\n").split(/\n\s*\n/).filter(p => p.trim()).slice(0, 2).join(" ").replace(/^#+\s*/gm, "").replace(/\n/g, " ")
+  // Markdown tables and lists repeat the lines and chips below the answer, so the summary keeps only the
+  // prose, without the "Net by platform:" lead-ins and bold-only subheads they leave behind.
+  const kept = text.split("\n").filter(l => !/^\s*(\||[-*•]\s|\d+\.\s)/.test(l) && !/[:：]$/.test(l.replace(/[*_`]/g, "").trim()) && !/^\s*\*\*[^*]+\*\*\s*$/.test(l));
+  return kept.join("\n").split(/\n\s*\n/).filter(p => p.trim()).slice(0, 2).join(" ").replace(/^#+\s*/gm, "").replace(/\n/g, " ")
     .split(/(\*\*[^*]+\*\*)/).map(part => part.startsWith("**") ? `<b>${esc(part.slice(2, -2))}</b>` : esc(part.replace(/[*_`]/g, ""))).join("");
 }
 
