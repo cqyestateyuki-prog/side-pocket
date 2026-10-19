@@ -9,7 +9,7 @@ export const End: React.FC<{ dur: number }> = ({ dur }) => {
   const { fps } = useVideoConfig();
   const open = prog(f, 0, s(0.8), easeInOut);
   const tilly = spring({ frame: f - s(0.7), fps, config: { damping: 12, stiffness: 120 } });
-  const brand = spring({ frame: f - s(3.0), fps, config: { damping: 18, stiffness: 120 } });
+  const brand = spring({ frame: f - s(2.69), fps, config: { damping: 18, stiffness: 120 } });
   return (
     <AbsoluteFill style={{ clipPath: `circle(${open * 1250}px at 50% 58%)` }}>
       <AbsoluteFill style={{ background: `linear-gradient(160deg, ${C.violet} 0%, ${C.violet700} 100%)` }} />

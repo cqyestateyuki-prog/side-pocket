@@ -25,7 +25,7 @@ export const MONO = '"SF Mono", ui-monospace, Menlo, "PingFang SC", monospace';
 export const FPS = 30;
 export const W = 1920;
 export const H = 1080;
-export const DURATION = 1782; // 59.4 s
+export const DURATION = 1834; // 61.1 s, ends on the downbeat of bar 34
 
 /** Seconds to frames. */
 export const s = (sec: number) => Math.round(sec * FPS);

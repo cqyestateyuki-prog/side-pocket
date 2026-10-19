@@ -20,7 +20,7 @@ const PAYOUTS = [
 export const Payouts: React.FC = () => {
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const at = (i: number) => s(0.1) + i * s(0.26);
+  const at = (i: number) => s(0.1 + i * 0.224); // eighth notes from the drop
   const sp = (i: number) => spring({ frame: f - at(i), fps, config: { damping: 18, stiffness: 190, mass: 0.8 } });
   const zoom = 1 + 0.035 * prog(f, 0, s(2.7));
   return (
@@ -101,7 +101,7 @@ export const Statements: React.FC = () => {
   return (
     <AbsoluteFill>
       {SHEETS.map((sh, i) => {
-        const p = spring({ frame: f - s(0.05) - i * s(0.15), fps, config: { damping: 20, stiffness: 160, mass: 0.9 } });
+        const p = spring({ frame: f - s(0.08 + i * 0.224), fps, config: { damping: 20, stiffness: 160, mass: 0.9 } });
         const wob = Math.sin(t * 0.9 + i * 1.7) * 0.7;
         return (
           <div
@@ -151,7 +151,7 @@ export const Breakdown: React.FC = () => {
   const bw = 176;
   const gap = 86;
   const x0 = (1920 - (5 * bw + 4 * gap)) / 2;
-  const starts = [s(0.15), s(0.55), s(0.8), s(1.0)];
+  const starts = [s(0.15), s(0.6), s(0.82), s(1.05)];
   let top = base - max;
   const bars = BARS.map((b, i) => {
     const h = Math.max(4, hOf(b.v));
